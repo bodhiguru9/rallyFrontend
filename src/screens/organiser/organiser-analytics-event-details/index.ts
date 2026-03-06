@@ -1,0 +1,1 @@
+export { OrganiserAnalyticsEventDetailsScreen } from './OrganiserAnalyticsEventDetailsScreen';

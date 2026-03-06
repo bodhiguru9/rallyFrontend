@@ -1,0 +1,73 @@
+{
+  "expo": {
+    "name": "Rally App",
+    "slug": "rally-app",
+    "version": "1.0.0",
+    "scheme": "rally-app",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rally.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.rally.app",
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Roboto-Regular.ttf",
+            "./assets/fonts/Roboto-Medium.ttf",
+            "./assets/fonts/Roboto-Bold.ttf",
+            "./assets/fonts/NotoSans-Regular.ttf",
+            "./assets/fonts/NotoSans-Medium.ttf",
+            "./assets/fonts/NotoSans-SemiBold.ttf",
+            "./assets/fonts/NotoSans-Bold.ttf"
+          ]
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Rally uses your location to show nearby events and personalize your experience."
+        }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.rally.app",
+          "enableGooglePay": true
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5381cc57-a596-48f3-b013-4e9d88b3876c"
+
+      },
+      "googleOAuth": {
+        "iosClientId": "204335986948-l22091iooiff6vn3m08k8cq2756tgpo6.apps.googleusercontent.com",
+        "androidClientId": "204335986948-l22091iooiff6vn3m08k8cq2756tgpo6.apps.googleusercontent.com",
+        "webClientId": "204335986948-l22091iooiff6vn3m08k8cq2756tgpo6.apps.googleusercontent.com"
+      }
+    }
+  }
+}

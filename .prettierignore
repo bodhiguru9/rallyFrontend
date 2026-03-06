@@ -1,0 +1,19 @@
+node_modules
+dist
+build
+coverage
+android
+ios
+.bundle
+
+# Generated files
+*.log
+*.lock
+yarn.lock
+package-lock.json
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo

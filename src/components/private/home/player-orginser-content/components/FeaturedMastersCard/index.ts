@@ -1,0 +1,1 @@
+export { FeaturedMastersCard } from './FeaturedMastersCard';

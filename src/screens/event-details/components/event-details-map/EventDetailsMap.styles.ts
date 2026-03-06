@@ -1,0 +1,76 @@
+import { StyleSheet } from 'react-native';
+import { colors, getFontStyle } from '@theme';
+
+export const styles = StyleSheet.create({
+  container: {
+    height: 150,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  placeholder: {
+    flex: 1,
+    backgroundColor: colors.background.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 150,
+  },
+  mapText: {
+    ...getFontStyle(12, 'regular'),
+    color: colors.text.tertiary,
+    marginTop: 4,
+  },
+  tapHint: {
+    ...getFontStyle(10, 'regular'),
+    color: colors.text.tertiary,
+    marginTop: 2,
+  },
+  webView: {
+    flex: 1,
+    minHeight: 150,
+    backgroundColor: colors.background.secondary,
+  },
+  fullscreenContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    backgroundColor: colors.background.primary,
+  },
+  fullscreenWebView: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#fff',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.card.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  closeButton: {
+    position: 'absolute',
+    right: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.card.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+});

@@ -1,0 +1,2 @@
+export { ChangePasswordScreen } from './ChangePasswordScreen';
+

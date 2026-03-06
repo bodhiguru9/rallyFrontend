@@ -1,0 +1,367 @@
+import React from 'react';
+import { ScrollView, TouchableOpacity, Image, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '@navigation';
+import { spacing } from '@theme';
+import { styles } from './style/EventDetailsScreen.styles';
+import { MembersModal } from './MembersModal';
+import { CancelBookingModal } from './cancel-booking-modal';
+import { BookingModal } from './BookingModal';
+import { Dropdown } from '@designSystem/molecules/dropdown';
+import { IconTag } from '@components/global/IconTag';
+import { Calendar1, Users, Users2 } from 'lucide-react-native';
+import { formatDate } from '@utils';
+import { YellowBanner, EventDetailsMap } from './components';
+import { Card } from '@components/global/Card';
+import { Seperator, TextDs, ImageDs, Avatar } from '@components';
+import { ArrowIcon } from '@components/global/ArrowIcon';
+import { useEventDetails } from './use-event-details';
+import { FlexView } from '@designSystem/atoms/FlexView';
+import { BackdropBlur } from '@components/global/BackdropBlur';
+type EventDetailsScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'EventDetails'
+>;
+
+export const EventDetailsScreen: React.FC = () => {
+  const navigation = useNavigation<EventDetailsScreenNavigationProp>();
+  const insets = useSafeAreaInsets();
+
+  const {
+    event,
+    isLoading,
+    isAuthenticated,
+    guestsCount,
+    setGuestsCount,
+    isPaymentExpanded,
+    setIsPaymentExpanded,
+    isMembersModalVisible,
+    totalPrice,
+    variant,
+    buttonText,
+    isAddingReminder,
+    isJoiningWaitlist,
+    isSendingJoinRequest,
+    isBookingEvent,
+    isLeavingEvent,
+    handleShare,
+    handleSignIn,
+    handleBookNow,
+    isBookingModalVisible,
+    handleCloseBookingModal,
+    handleOpenMembersModal,
+    handleCloseMembersModal,
+    getRefundDate,
+    showPayNow,
+    handlePayNow,
+    canCancelBooking,
+    isCancelBookingModalVisible,
+    handleCloseCancelBookingModal,
+    handleCancelBooking,
+    handleCancelBookingSuccess,
+    handleApplePay,
+    handleBookEvent,
+    cancelBookingId,
+    eventId,
+  } = useEventDetails();
+
+  const handleOrganiserPress = () => {
+    const organiserId = event?.creator?.userId;
+    if (!organiserId) {
+      return;
+    }
+    navigation.navigate('EventOrginserProfilePlayer', { organiserId: String(organiserId) });
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <FlexView style={styles.loadingContainer}>
+          <TextDs style={styles.loadingText}>Loading event details...</TextDs>
+        </FlexView>
+      </SafeAreaView>
+    );
+  }
+
+  if (!event) {
+    return null;
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
+      <FlexView style={styles.header}>
+        <ArrowIcon variant="left" onClick={() => navigation.goBack()} />
+        <TextDs style={styles.headerTitle}>Event Details</TextDs>
+        <FlexView style={styles.headerRight} />
+      </FlexView>
+
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Event Overview Card */}
+        <FlexView style={styles.card}>
+          <FlexView style={styles.eventOverview}>
+            <Image
+              source={{
+                uri: event.eventImages?.[0],
+              }}
+              style={styles.eventImage}
+            />
+            <FlexView style={styles.eventInfo}>
+              <TextDs style={styles.eventTitle}>{event.eventName}</TextDs>
+              <TextDs style={styles.organizerName}>
+                by {event.creator?.fullName || event.eventCreatorName || 'Unknown Organizer'}
+              </TextDs>
+              <FlexView style={styles.categoriesContainer}>
+                <IconTag title={event.eventSports?.[0] ?? 'Sport'} variant="orange" />
+                <IconTag title={event.eventType ?? 'Event'} variant="teal" />
+              </FlexView>
+            </FlexView>
+            <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
+              <ImageDs image="PaperPlane" size={24} />
+            </TouchableOpacity>
+          </FlexView>
+        </FlexView>
+
+        {/* Date and Location Card */}
+        <FlexView style={styles.card}>
+          <FlexView style={styles.infoRow}>
+            <ImageDs image="Time" size={16} />
+            <TextDs style={styles.infoText}>{formatDate(event.eventDateTime ?? '', 'display-range')}</TextDs>
+          </FlexView>
+          <FlexView style={styles.infoRow}>
+            <ImageDs image="LocationPin" size={16} />
+            <TextDs style={styles.infoText}>{event.eventLocation}</TextDs>
+          </FlexView>
+          <FlexView style={styles.mapContainer}>
+            <EventDetailsMap address={event.eventLocation} />
+          </FlexView>
+        </FlexView>
+
+        {/* Approval Needed Banner - only show if event is private and requires approval */}
+        <YellowBanner
+          variant={variant}
+          eventRegistrationStartTime={event.eventRegistrationStartTime}
+        />
+
+        {/* Members & Guests Card */}
+        <Card style={{ padding: spacing.base, marginBottom: spacing.base }}>
+          <TextDs style={styles.cardTitle}>Members & Guests</TextDs>
+          <FlexView style={styles.membersSection}>
+            {/* Guest count dropdown - only show if guests are allowed and cancel booking is not shown */}
+            {event.eventOurGuestAllowed !== false && !((event?.isJoined || event?.userJoinStatus?.action === 'payment-pending') && !showPayNow) && (
+              <Dropdown
+                // label="Number of Guests"
+                placeholder="Select guests"
+                options={
+                  event.eventMaxGuest && event.eventMaxGuest > 0
+                    ? Array.from({ length: event.eventMaxGuest }, (_, i) => ({
+                      label: `${i + 1} ${i + 1 === 1 ? 'Guest' : 'Guests'}`,
+                      value: String(i + 1),
+                    }))
+                    : []
+                }
+                value={String(guestsCount)}
+                onSelect={(value) => setGuestsCount(Number(value))}
+                disabled={!event.spotsInfo?.totalSpots || event.spotsInfo.totalSpots === 0}
+                containerStyle={{ marginBottom: spacing.sm, width: 140 }}
+              />
+            )}
+            <FlexView style={styles.spotsAndParticipants}>
+              <TouchableOpacity onPress={handleOpenMembersModal} activeOpacity={0.7}>
+                <TextDs style={styles.spotsAvailable}>
+                  {event.availableSpots !== undefined && event.availableSpots > 0
+                    ? 'Spots Available'
+                    : 'Waiting List'}
+                </TextDs>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleOpenMembersModal}
+                activeOpacity={0.7}
+                style={styles.participantsContainer}
+              >
+                {event.participants?.slice(0, 3).map((participant, index) => (
+                  <FlexView
+                    key={participant.userId}
+                    style={[styles.participantAvatarWrap, { marginLeft: index > 0 ? -8 : 0 }]}
+                  >
+                    <Avatar
+                      imageUri={participant.profilePic}
+                      fullName={participant.fullName}
+                      size="sm"
+                    />
+                  </FlexView>
+                ))}
+                {event.participants && event.participants.length > 3 && (
+                  <FlexView
+                    style={[styles.participantAvatar, styles.moreParticipants, { marginLeft: -8 }]}
+                  >
+                    <TextDs style={styles.moreParticipantsText}>
+                      +{event.participants.length - 3}
+                    </TextDs>
+                  </FlexView>
+                )}
+              </TouchableOpacity>
+            </FlexView>
+          </FlexView>
+          <TextDs style={styles.refundText}>Refundable until {getRefundDate()}</TextDs>
+        </Card>
+
+        {/* About Event Card */}
+        <Card style={{ marginBottom: spacing.base }}>
+          <TextDs style={styles.cardTitle}>About Event</TextDs>
+          <TextDs style={styles.descriptionText}>
+            {event.eventDescription ||
+              `Join us for an exciting ${event.eventType} event. A perfect mix of sport, fun, and community!`}
+          </TextDs>
+          <Seperator />
+          {/* Restrictions Card */}
+          <TextDs style={styles.cardTitle}>Restrictions</TextDs>
+          <TextDs style={styles.restrictionsText}>Male Only, 12-24 yrs, Intermediate Level</TextDs>
+        </Card>
+
+        {/* Organiser Profile Card */}
+        <TouchableOpacity
+          style={[styles.card, { marginBottom: spacing.base }]}
+          onPress={handleOrganiserPress}
+          activeOpacity={0.8}
+        >
+          <FlexView style={styles.organizerSection}>
+            <FlexView style={styles.organizerAvatarWrap}>
+              <Avatar
+                imageUri={event.creator?.profilePic || event.eventCreatorProfilePic}
+                fullName={event.creator?.fullName || event.eventCreatorName}
+                size="xl"
+              />
+            </FlexView>
+            <FlexView flex={1} gap={spacing.md}>
+              <TextDs size={14} weight="regular">
+                {event.creator?.fullName || event.eventCreatorName || 'Unknown Organizer'}
+              </TextDs>
+              <FlexView style={styles.organizerStats}>
+                <IconTag
+                  title={`${event.creator?.eventsCreated || 0} Hosted`}
+                  icon={Calendar1}
+                  variant="purple"
+                />
+                <IconTag
+                  title={`${event.creator?.totalAttendees || 0} Attendees`}
+                  icon={Users}
+                  variant="yellow"
+                />
+              </FlexView>
+            </FlexView>
+          </FlexView>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Pay Now / Cancel Booking - Show when user has joined or payment is pending */}
+      {/* Combined Sticky Footer Container */}
+      <View style={styles.persistentFooter}>
+        <BackdropBlur intensity={80} px={spacing.base} pb={insets.bottom + spacing.sm} pt={spacing.sm}>
+
+          {/* 1. THE TOTAL ROW: Only show this in the 'Book Now' flow AND only when modal is hidden */}
+          {(!event?.isJoined && event?.userJoinStatus?.action !== 'payment-pending') && !isBookingModalVisible && (
+            <FlexView style={[styles.card, { marginBottom: spacing.base }]}>
+              <TextDs style={styles.cardTitle}>Payment Details</TextDs>
+              <FlexView style={styles.footerTotalRow}>
+                <TextDs style={styles.totalLabel}>Total ({guestsCount})</TextDs>
+                <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
+                  <ImageDs image="dhiramIcon" size={14} style={styles.priceIcon} />
+                  <TextDs size={16} weight='semibold' color='blueGray'>{totalPrice.toFixed(2)}</TextDs>
+                </FlexView>
+              </FlexView>
+            </FlexView>
+          )}
+
+          {/* 2. THE BUTTONS: Your existing conditional logic lives here */}
+          {event?.isJoined || event?.userJoinStatus?.action === 'payment-pending' ? (
+            // --- FIRST BLOCK (Joined/Pending) ---
+            showPayNow ? (
+              <TouchableOpacity style={styles.bookButton} onPress={handlePayNow} disabled={isBookingEvent}>
+                <TextDs style={styles.bookButtonText}>{isBookingEvent ? 'Processing...' : 'Pay Now'}</TextDs>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.cancelButton, !canCancelBooking && styles.cancelButtonDisabled]}
+                onPress={handleCancelBooking}
+                disabled={isLeavingEvent || !canCancelBooking}
+              >
+                <TextDs style={[styles.cancelButtonText, !canCancelBooking && styles.cancelButtonTextDisabled]}>
+                  {isLeavingEvent ? 'Cancelling...' : 'Cancel Booking'}
+                </TextDs>
+              </TouchableOpacity>
+            )
+          ) : (
+            // --- SECOND BLOCK (Book Now/Sign In) ---
+            !isAuthenticated ? (
+              <TouchableOpacity style={styles.bookButton} onPress={handleSignIn}>
+                <TextDs style={styles.bookButtonText}>Sign In</TextDs>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.bookButton, (isBookingEvent || event?.isPending) && styles.bookButtonDisabled]}
+                onPress={handleBookNow}
+                disabled={isBookingEvent || event?.isPending}
+              >
+                <TextDs style={styles.bookButtonText}>{buttonText}</TextDs>
+              </TouchableOpacity>
+            )
+          )}
+        </BackdropBlur>
+      </View>
+
+      {/* Members Modal */}
+      {event && (
+        <MembersModal
+          visible={isMembersModalVisible}
+          eventTitle={event.eventName ?? 'Event'}
+          organizerName={event.creator?.fullName || event.eventCreatorName || 'Unknown Organizer'}
+          participants={
+            event.participants?.map((p) => ({
+              userId: p.userId,
+              userType: p.userType || 'player',
+              email: p.email || '',
+              mobileNumber: p.mobileNumber || '',
+              profilePic: p.profilePic,
+              fullName: p.fullName,
+              dob: p.dob,
+              gender: p.gender,
+              sport1: p.sport1,
+              sport2: p.sport2,
+              joinedAt: p.joinedAt,
+            })) || []
+          }
+          spotsFilled={event.spotsInfo?.spotsBooked || 0}
+          totalSpots={event.spotsInfo?.totalSpots || 0}
+          onClose={handleCloseMembersModal}
+        />
+      )}
+
+      {/* Cancel Booking Modal – shown when user cancels after refund deadline (no refund) */}
+      <CancelBookingModal
+        visible={isCancelBookingModalVisible}
+        onClose={handleCloseCancelBookingModal}
+        bookingId={cancelBookingId}
+        onCancelSuccess={handleCancelBookingSuccess}
+      />
+      <BookingModal
+        visible={isBookingModalVisible}
+        totalPrice={totalPrice}
+        currency="AED"
+        guestsCount={guestsCount}
+        eventId={eventId}
+        onClose={handleCloseBookingModal}
+        onBookEvent={handleBookEvent}
+        onApplePay={handleApplePay}
+        primaryButtonText="Book Event"
+      />
+
+    </SafeAreaView>
+  );
+};

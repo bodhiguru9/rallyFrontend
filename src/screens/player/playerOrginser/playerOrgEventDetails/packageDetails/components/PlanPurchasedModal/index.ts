@@ -1,0 +1,2 @@
+export { PlanPurchasedModal } from './PlanPurchasedModal';
+

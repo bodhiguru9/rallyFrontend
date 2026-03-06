@@ -1,0 +1,1 @@
+export { PlayerOrgEventDetailsScreen } from './PlayerOrgEventDetailsScreen';
