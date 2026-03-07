@@ -74,11 +74,14 @@ export const ForgotPasswordScreen: React.FC = () => {
                   style={styles.whatsappLink}
                   activeOpacity={0.7}
                 >
-                  <TextDs style={styles.whatsappLinkText}>💬 Use WhatsApp</TextDs>
+                    <ImageDs image="WhatsappIcon" size={14} />
+                  <TextDs style={styles.whatsappLinkText}> 
+                    Use WhatsApp
+                    </TextDs>
                 </TouchableOpacity>
               </FlexView>
               <FormInput
-                label="email"
+                label=""
                 placeholder="Enter your email"
                 value={email}
                 onChangeText={setEmail}
