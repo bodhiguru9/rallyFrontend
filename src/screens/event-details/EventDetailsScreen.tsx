@@ -266,8 +266,8 @@ export const EventDetailsScreen: React.FC = () => {
           {/* 1. THE TOTAL ROW: Only show this in the 'Book Now' flow AND only when modal is hidden and not pending invitation */}
           {(!event?.isJoined && event?.userJoinStatus?.action !== 'payment-pending' && !pendingInvitation) && !isBookingModalVisible && (
             <FlexView style={[styles.card, { marginBottom: spacing.base }]}>
-              <TouchableOpacity 
-                activeOpacity={0.7} 
+              <TouchableOpacity
+                activeOpacity={0.7}
                 onPress={!isAuthenticated ? handleSignIn : handleBookNow}
                 disabled={isBookingEvent || event?.isPending}
               >
@@ -299,9 +299,9 @@ export const EventDetailsScreen: React.FC = () => {
                   {declineInvitationMutation.isPending ? 'Declining...' : 'Decline'}
                 </TextDs>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.bookButton, { flex: 1 }]} 
-                onPress={() => acceptInvitationMutation.mutate(pendingInvitation.inviteId ?? '')} 
+              <TouchableOpacity
+                style={[styles.bookButton, { flex: 1 }]}
+                onPress={() => acceptInvitationMutation.mutate(pendingInvitation.inviteId ?? '')}
                 disabled={acceptInvitationMutation.isPending}
               >
                 <TextDs style={styles.bookButtonText}>
@@ -330,7 +330,7 @@ export const EventDetailsScreen: React.FC = () => {
             // --- SECOND BLOCK (Book Now/Sign In) ---
             !isAuthenticated ? (
               <TouchableOpacity style={styles.bookButton} onPress={handleSignIn}>
-                <TextDs style={styles.bookButtonText}>Sign In</TextDs>
+                <TextDs style={styles.bookButtonText}>Sign Up</TextDs>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
