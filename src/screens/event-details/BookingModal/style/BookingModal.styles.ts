@@ -4,10 +4,10 @@ import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   bottomFixedSection: {
-  paddingHorizontal: spacing.base,
-  paddingBottom: spacing.base,
-  backgroundColor: colors.background.white,
-},
+    paddingHorizontal: spacing.base,
+    paddingBottom: spacing.base,
+    backgroundColor: colors.background.white,
+  },
   persistentFooter: {
     position: 'absolute',
     bottom: 0,
@@ -36,43 +36,44 @@ export const styles = StyleSheet.create({
   modalHeaderButtonContainer: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.sm,
-    backgroundColor: 'white', // Matches modal background
+    backgroundColor: '#FFFDEF',
   },
   // Ensure the modal container doesn't have extra padding at the top 
   // that would disconnect the button from the handle
-   paymentSummaryCard: {
-  backgroundColor: colors.card.primary,
-  borderRadius: borderRadius.xxl,
-  padding: spacing.base,
-  marginHorizontal: spacing.base,
-  marginBottom: spacing.sm,
-  borderWidth: 2, // Increased from 1
-  borderColor: '#FF0000', // Red border for debugging
-},
-paymentSummaryRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-},
-paymentSummaryLabel: {
-  ...getFontStyle(14, 'semibold'),
-  color: colors.text.primary,
-},
-paymentSummaryAmount: {
-  ...getFontStyle(16, 'semibold'),
-  color: colors.text.blueGray,
-},
+  paymentSummaryCard: {
+    backgroundColor: "#effcffff",
+    borderRadius: borderRadius.xxl,
+    padding: spacing.base,
+    marginHorizontal: spacing.base,
+    marginBottom: spacing.sm,
+    borderWidth: 2, // Increased from 1
+    borderColor: '#FF0000', // Red border for debugging
+  },
+  paymentSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  paymentSummaryLabel: {
+    ...getFontStyle(14, 'semibold'),
+    color: colors.text.primary,
+  },
+  paymentSummaryAmount: {
+    ...getFontStyle(16, 'semibold'),
+    color: colors.text.blueGray,
+  },
   overlay: {
-  flex: 1,
-  backgroundColor: 'rgba(0, 0, 0, 0.5)', // Add semi-transparent backdrop
-  justifyContent: 'flex-end', // Position modal at bottom
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Add semi-transparent backdrop
+    justifyContent: 'flex-end', // Position modal at bottom
   },
   modalContainer: {
-    backgroundColor: colors.background.white,
+    padding: spacing.md,
+    backgroundColor: '#effcffff',
     borderTopLeftRadius: borderRadius.xxl,
     borderTopRightRadius: borderRadius.xxl,
     maxHeight: '70%', // Takes up to 90% of screen height
-    minHeight:200,
+    minHeight: 200,
     ...shadows.lg,
     paddingTop: spacing.xs,
   },
@@ -98,10 +99,10 @@ paymentSummaryAmount: {
   },
   section: {
     marginBottom: spacing.lg,
-    padding:spacing.md
+    padding: spacing.md
   },
   sectionTitle: {
-    ...getFontStyle(14, 'semibold'),
+    ...getFontStyle(14, 'bold'),
     color: colors.text.primary,
     marginBottom: spacing.md,
   },
@@ -132,7 +133,7 @@ paymentSummaryAmount: {
     marginBottom: spacing.md,
   },
   paymentDetailsContent: {
-    backgroundColor: colors.background.white,
+    backgroundColor: '#effcffff',
     borderRadius: borderRadius.lg,
     padding: spacing.base,
     marginBottom: spacing.md,
@@ -212,13 +213,13 @@ paymentSummaryAmount: {
     justifyContent: 'space-between',
   },
   disclaimer: {
-  ...getFontStyle(10, 'regular'), // Changed from whatever it was to 10px
-  color: '#8A8A8A', // Changed to exact color from Figma
-  textAlign: 'center',
-  paddingHorizontal: spacing.base,
-  marginTop: spacing.md,
-  lineHeight: 14, // Added for better readability
-},
+    ...getFontStyle(10, 'regular'), // Changed from whatever it was to 10px
+    color: '#8A8A8A', // Changed to exact color from Figma
+    textAlign: 'center',
+    paddingHorizontal: spacing.base,
+    marginTop: spacing.md,
+    lineHeight: 14, // Added for better readability
+  },
   buttonsContainer: {
     gap: spacing.md,
   },

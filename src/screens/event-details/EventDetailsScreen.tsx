@@ -11,7 +11,7 @@ import { CancelBookingModal } from './cancel-booking-modal';
 import { BookingModal } from './BookingModal';
 import { Dropdown } from '@designSystem/molecules/dropdown';
 import { IconTag } from '@components/global/IconTag';
-import { Calendar1, Users } from 'lucide-react-native';
+import { Calendar1, Users, ChevronUp } from 'lucide-react-native';
 import { formatDate } from '@utils';
 import { YellowBanner, EventDetailsMap } from './components';
 import { Card } from '@components/global/Card';
@@ -266,7 +266,16 @@ export const EventDetailsScreen: React.FC = () => {
           {/* 1. THE TOTAL ROW: Only show this in the 'Book Now' flow AND only when modal is hidden and not pending invitation */}
           {(!event?.isJoined && event?.userJoinStatus?.action !== 'payment-pending' && !pendingInvitation) && !isBookingModalVisible && (
             <FlexView style={[styles.card, { marginBottom: spacing.base }]}>
-              <TextDs style={styles.cardTitle}>Payment Details</TextDs>
+              <TouchableOpacity 
+                activeOpacity={0.7} 
+                onPress={!isAuthenticated ? handleSignIn : handleBookNow}
+                disabled={isBookingEvent || event?.isPending}
+              >
+                <FlexView flexDirection="row" alignItems="center" justifyContent="space-between" style={{ marginBottom: spacing.md }}>
+                  <TextDs style={[styles.cardTitle, { marginBottom: 0 }]}>Payment Details</TextDs>
+                  <ChevronUp size={20} color="#000" />
+                </FlexView>
+              </TouchableOpacity>
               <FlexView style={styles.footerTotalRow}>
                 <TextDs style={styles.totalLabel}>Total ({guestsCount})</TextDs>
                 <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>

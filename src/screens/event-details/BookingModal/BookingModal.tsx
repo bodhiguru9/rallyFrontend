@@ -10,7 +10,7 @@ import {
   Animated,
   Alert,
 } from 'react-native';
-import { ArrowRight, Calendar, ChevronUp, X } from 'lucide-react-native';
+import { ArrowRight, Calendar, ChevronUp, ChevronDown, X } from 'lucide-react-native';
 import { colors, spacing } from '@theme';
 import type { IBookingModalProps } from './BookingModal.types';
 import { styles } from './style/BookingModal.styles';
@@ -38,13 +38,14 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   const [cvv, setCvv] = useState('');
   const [showExpiryPicker, setShowExpiryPicker] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isPaymentDetailsExpanded, setIsPaymentDetailsExpanded] = useState(false);
 
   const { confirmPayment, initPaymentSheet, presentPaymentSheet } = useStripe();
 
   const renderAmount = (value: string, textStyle: object) =>
     currency === 'AED' ? (
-      <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
-        <ImageDs image="dhiramWhiteIcon" size={16} style={styles.priceIcon} />
+      <FlexView width={60} flexDirection="row" alignItems="center" gap={spacing.xs}>
+        <ImageDs image="dhiramGrayIcon" size={16} style={styles.priceIcon} />
         <TextDs style={textStyle}>{value}</TextDs>
       </FlexView>
     ) : (
@@ -349,58 +350,79 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
               </FlexView>
             </FlexView>
 
-            {/* Payment Details Section - Always Expanded */}
+            {/* Payment Details Section */}
             <FlexView style={styles.section}>
-              <FlexView style={styles.paymentDetailsHeader}>
-                <TextDs style={styles.sectionTitle}>Payment Details</TextDs>
-                <ChevronUp size={20} color={colors.text.secondary} />
-              </FlexView>
-              <FlexView style={styles.paymentDetailsContent}>
-                {/* Reservation Charge */}
-                <FlexView style={styles.paymentRow}>
-                  <TextDs style={styles.paymentLabel}>Reservation Charge</TextDs>
-                  {renderAmount(reservationCharge.toFixed(2), styles.paymentAmount)}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setIsPaymentDetailsExpanded(!isPaymentDetailsExpanded)}
+              >
+                <FlexView style={styles.paymentDetailsHeader}>
+                  <TextDs style={[styles.sectionTitle, { marginBottom: 0 }]}>Payment Details</TextDs>
+                  {isPaymentDetailsExpanded ? (
+                    <ChevronUp size={20} color={colors.text.secondary} />
+                  ) : (
+                    <ChevronDown size={20} color={colors.text.secondary} />
+                  )}
                 </FlexView>
+              </TouchableOpacity>
+              
+              <FlexView style={styles.paymentDetailsContent}>
+                {isPaymentDetailsExpanded && (
+                  <>
+                    {/* Reservation Charge */}
+                    <FlexView style={styles.paymentRow}>
+                      <TextDs style={styles.paymentLabel}>Reservation Charge</TextDs>
+                      {renderAmount(reservationCharge.toFixed(2), styles.paymentAmount)}
+                    </FlexView>
 
-                {/* Promo Code Discount */}
-                {appliedPromoCode && promoDiscount > 0 ? (
-                  <FlexView style={styles.paymentRow}>
-                    <TextDs style={styles.paymentLabel}>Promo Code</TextDs>
-                    {currency === 'AED' ? (
-                      <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
-                        <ImageDs image="dhiramWhiteIcon" size={16} style={styles.priceIcon} />
-                        <TextDs style={styles.paymentDiscount}>-{promoDiscount.toFixed(2)}</TextDs>
+                    {/* Promo Code Discount */}
+                    {appliedPromoCode && promoDiscount > 0 ? (
+                      <FlexView style={styles.paymentRow}>
+                        <TextDs style={styles.paymentLabel}>Promo Code</TextDs>
+                        {currency === 'AED' ? (
+                          <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
+                            <ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />
+                            <TextDs style={styles.paymentDiscount}>-{promoDiscount.toFixed(2)}</TextDs>
+                          </FlexView>
+                        ) : (
+                          <TextDs style={styles.paymentDiscount}>{currency} -{promoDiscount.toFixed(2)}</TextDs>
+                        )}
                       </FlexView>
                     ) : (
-                      <TextDs style={styles.paymentDiscount}>{currency} -{promoDiscount.toFixed(2)}</TextDs>
+                      <FlexView style={styles.paymentRow}>
+                        <TextDs style={styles.paymentLabel}>Promo Code</TextDs>
+                        {renderAmount('0.00', styles.paymentAmount)}
+                      </FlexView>
                     )}
-                  </FlexView>
-                ) : (
-                  <FlexView style={styles.paymentRow}>
-                    <TextDs style={styles.paymentLabel}>Promo Code</TextDs>
-                    {renderAmount('0.00', styles.paymentAmount)}
-                  </FlexView>
+
+                    {/* Platform Fee */}
+                    <FlexView style={styles.paymentRow}>
+                      <TextDs style={styles.paymentLabel}>Platform Fee</TextDs>
+                      {renderAmount(platformFee.toFixed(2), styles.paymentAmount)}
+                    </FlexView>
+
+                    {/* VAT */}
+                    <FlexView style={styles.paymentRow}>
+                      <TextDs style={styles.paymentLabel}>VAT</TextDs>
+                      {renderAmount(vat.toFixed(2), styles.paymentAmount)}
+                    </FlexView>
+
+                    {/* Divider */}
+                    <FlexView style={styles.paymentDivider} />
+                  </>
                 )}
 
-                {/* Platform Fee */}
-                <FlexView style={styles.paymentRow}>
-                  <TextDs style={styles.paymentLabel}>Platform Fee</TextDs>
-                  {renderAmount(platformFee.toFixed(2), styles.paymentAmount)}
-                </FlexView>
-
-                {/* VAT */}
-                <FlexView style={styles.paymentRow}>
-                  <TextDs style={styles.paymentLabel}>VAT</TextDs>
-                  {renderAmount(vat.toFixed(2), styles.paymentAmount)}
-                </FlexView>
-
-                {/* Divider */}
-                <FlexView style={styles.paymentDivider} />
-
                 {/* Total */}
-                <FlexView style={styles.totalRow}>
+                <FlexView style={[styles.totalRow, !isPaymentDetailsExpanded && { marginTop: 0 }]}>
                   <TextDs style={styles.totalLabel}>Total ({guestsCount})</TextDs>
-                  {renderAmount(finalTotal.toFixed(2), styles.totalPrice)}
+                  {currency === 'AED' ? (
+                    <FlexView width={60} flexDirection="row" alignItems="center" gap={spacing.xs}>
+                      <ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />
+                      <TextDs style={styles.totalPrice}>{finalTotal.toFixed(2)}</TextDs>
+                    </FlexView>
+                  ) : (
+                    <TextDs style={styles.totalPrice}>{currency} {finalTotal.toFixed(2)}</TextDs>
+                  )}
                 </FlexView>
               </FlexView>
             </FlexView>

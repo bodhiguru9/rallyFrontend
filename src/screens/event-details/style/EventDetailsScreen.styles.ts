@@ -8,7 +8,7 @@ export const styles = StyleSheet.create({
   },
   persistentFooter: {
   // Remove position: 'absolute', bottom: 0, etc.
-  backgroundColor: colors.background.white, // Matches the modal background',
+  backgroundColor: '#FFFDEF80', // Matches the modal background
   borderTopLeftRadius: 24,
   borderTopRightRadius: 24,
   // Shadow to give it that "elevated" look from the image
