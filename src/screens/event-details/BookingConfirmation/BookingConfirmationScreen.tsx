@@ -129,7 +129,7 @@ export const BookingConfirmationScreen: React.FC = () => {
               {currency === 'AED' ? (
                 <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
                   <ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />
-                  <TextDs size={14} weight="regular" color="blueGray">
+                  <TextDs size={14} weight="regular" color="#3D6F92">
                     {amountPaid.toFixed(2)}
                   </TextDs>
                 </FlexView>
