@@ -17,6 +17,7 @@ import {
   useLeaveEvent,
 } from '@hooks/use-events';
 import { usePlayerBookings } from '@hooks/use-bookings';
+import { useMyEventInvitations, useAcceptEventInvitation, useDeclineEventInvitation } from '@hooks/use-event-invites'; 
 import { formatDate, shareEvent } from '@utils';
 import { logger } from '@dev-tools/logger';
 
@@ -36,7 +37,26 @@ export const useEventDetails = () => {
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  const { data: event, isLoading, error } = useEvent(eventId, { forPlayer: true });
+  // Fetch my invitations first so we can check if I'm invited
+  const { data: invitesData, isLoading: isInvitesLoading } = useMyEventInvitations();
+  
+  // Check for ANY invitation (pending or accepted) — not just pending
+  const myInvitation = invitesData?.invitations?.find(
+    (inv) => (inv.inviteId ?? inv.event.eventId) === eventId && (inv.status === 'pending' || inv.status === 'accepted')
+  );
+  const pendingInvitation = myInvitation?.status === 'pending' ? myInvitation : undefined;
+
+
+
+  // Always allow private events — the backend handles access control.
+  // The frontend should not block viewing private events for authenticated users.
+  const { data: event, isLoading, error } = useEvent(eventId, { 
+    forPlayer: true, 
+    allowPrivate: true   // Backend is the source of truth for access control
+  });
+
+
+
   const { data: playerBookingsData } = usePlayerBookings({
     enabled: isAuthenticated && !!eventId,
   });
@@ -53,28 +73,48 @@ export const useEventDetails = () => {
 
   const { mutate: addReminder, isPending: isAddingReminder } = useAddEventReminder();
 
-  const { mutate: bookEvent, isPending: isBookingEvent } = useBookEvent();
+  const { isPending: isBookingEvent } = useBookEvent();
 
   const { mutate: leaveEvent, isPending: isLeavingEvent } = useLeaveEvent();
 
+  const acceptInvitationMutation = useAcceptEventInvitation();
+  const declineInvitationMutation = useDeclineEventInvitation();
+
   useEffect(() => {
-    if (error && !isLoading) {
-      navigation.navigate('Home');
+    // Only redirect if there's genuinely an error fetching (like 404), and we're not invited
+    if (error && !isLoading && !isInvitesLoading) {
+      // If error is "Event not found" and it's a private event, we only redirect if we 
+      // definitely don't have a pending invitation.
+      if (!pendingInvitation) {
+
+        navigation.navigate('Home');
+      }
     }
-  }, [error, isLoading, navigation]);
+  }, [error, isLoading, isInvitesLoading, pendingInvitation, navigation]);
 
   // Reset guestsCount when event doesn't allow guests
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
     if (event) {
       // If guests are not allowed (eventOurGuestAllowed is false), set to 0
-      if (event.eventOurGuestAllowed === false) {
-        setGuestsCount(0);
+      if (event.eventOurGuestAllowed === false && guestsCount !== 0) {
+        timeoutId = setTimeout(() => {
+          setGuestsCount(0);
+        }, 0);
       } else if (guestsCount === 0 && event.eventOurGuestAllowed === true) {
         // If guests are allowed and current count is 0, reset to 1
-        setGuestsCount(1);
+        timeoutId = setTimeout(() => {
+          setGuestsCount(1);
+        }, 0);
       }
     }
-  }, [event?.eventOurGuestAllowed, event?.eventId]);
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event?.eventOurGuestAllowed, event?.eventId, guestsCount]);
 
   // Check if registration is open by comparing current time with registration start time
   const isRegistrationOpen = (() => {
@@ -386,6 +426,11 @@ const handleApplePay = () => {
       return 'Leave Event';
     }
 
+    // Priority 1b: Check if user has pending invitation
+    if (pendingInvitation) {
+      return 'Accept Invitation';
+    }
+
     // Priority 2: Check if request is pending (organiser reviewing)
     if (event.isPending) {
       return 'Request Pending';
@@ -472,6 +517,7 @@ return {
   isAuthenticated,
   isRegistrationOpen,
   eventId,
+  pendingInvitation,
 
   // State
   guestsCount,
@@ -482,8 +528,8 @@ return {
   totalPrice,
   variant,
   buttonText,
-  isBookingModalVisible, // ADD THIS
-  handleCloseBookingModal, // ADD THIS
+  isBookingModalVisible, 
+  handleCloseBookingModal,
 
   // Loading states
   isAddingReminder,
@@ -491,6 +537,10 @@ return {
   isSendingJoinRequest,
   isBookingEvent,
   isLeavingEvent,
+
+  // Mutations
+  acceptInvitationMutation,
+  declineInvitationMutation,
 
   // Handlers
   handleShare,
@@ -500,7 +550,7 @@ return {
   handleCloseMembersModal,
   getRefundDate,
   generateBookingId,
-  handleBookEvent, // ADD THIS
+  handleBookEvent,
   handleApplePay, 
   showPayNow,
   handlePayNow,

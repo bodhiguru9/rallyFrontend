@@ -33,7 +33,7 @@ export const OrganiserProfileScreen: React.FC = () => {
   });
 
   const { data: createdEventsData, isLoading: isLoadingEvents } = useOrganiserCreatedEvents(
-    2,
+    1,
     10,
     { enabled: userId > 0 },
   );

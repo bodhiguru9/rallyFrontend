@@ -11,7 +11,7 @@ import { CancelBookingModal } from './cancel-booking-modal';
 import { BookingModal } from './BookingModal';
 import { Dropdown } from '@designSystem/molecules/dropdown';
 import { IconTag } from '@components/global/IconTag';
-import { Calendar1, Users, Users2 } from 'lucide-react-native';
+import { Calendar1, Users } from 'lucide-react-native';
 import { formatDate } from '@utils';
 import { YellowBanner, EventDetailsMap } from './components';
 import { Card } from '@components/global/Card';
@@ -35,17 +35,10 @@ export const EventDetailsScreen: React.FC = () => {
     isAuthenticated,
     guestsCount,
     setGuestsCount,
-    isPaymentExpanded,
-    setIsPaymentExpanded,
     isMembersModalVisible,
     totalPrice,
     variant,
     buttonText,
-    isAddingReminder,
-    isJoiningWaitlist,
-    isSendingJoinRequest,
-    isBookingEvent,
-    isLeavingEvent,
     handleShare,
     handleSignIn,
     handleBookNow,
@@ -65,6 +58,11 @@ export const EventDetailsScreen: React.FC = () => {
     handleBookEvent,
     cancelBookingId,
     eventId,
+    pendingInvitation,
+    acceptInvitationMutation,
+    declineInvitationMutation,
+    isBookingEvent,
+    isLeavingEvent,
   } = useEventDetails();
 
   const handleOrganiserPress = () => {
@@ -265,8 +263,8 @@ export const EventDetailsScreen: React.FC = () => {
       <View style={styles.persistentFooter}>
         <BackdropBlur intensity={80} px={spacing.base} pb={insets.bottom + spacing.sm} pt={spacing.sm}>
 
-          {/* 1. THE TOTAL ROW: Only show this in the 'Book Now' flow AND only when modal is hidden */}
-          {(!event?.isJoined && event?.userJoinStatus?.action !== 'payment-pending') && !isBookingModalVisible && (
+          {/* 1. THE TOTAL ROW: Only show this in the 'Book Now' flow AND only when modal is hidden and not pending invitation */}
+          {(!event?.isJoined && event?.userJoinStatus?.action !== 'payment-pending' && !pendingInvitation) && !isBookingModalVisible && (
             <FlexView style={[styles.card, { marginBottom: spacing.base }]}>
               <TextDs style={styles.cardTitle}>Payment Details</TextDs>
               <FlexView style={styles.footerTotalRow}>
@@ -280,7 +278,29 @@ export const EventDetailsScreen: React.FC = () => {
           )}
 
           {/* 2. THE BUTTONS: Your existing conditional logic lives here */}
-          {event?.isJoined || event?.userJoinStatus?.action === 'payment-pending' ? (
+          {pendingInvitation ? (
+            // --- INVITATION BLOCK ---
+            <FlexView flexDirection="row" gap={spacing.sm} style={{ marginTop: spacing.xs }}>
+              <TouchableOpacity
+                style={[styles.cancelButton, { flex: 1, backgroundColor: 'rgba(255,255,255,0.1)' }]}
+                onPress={() => declineInvitationMutation.mutate(pendingInvitation.inviteId ?? '')}
+                disabled={declineInvitationMutation.isPending}
+              >
+                <TextDs style={styles.cancelButtonText}>
+                  {declineInvitationMutation.isPending ? 'Declining...' : 'Decline'}
+                </TextDs>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.bookButton, { flex: 1 }]} 
+                onPress={() => acceptInvitationMutation.mutate(pendingInvitation.inviteId ?? '')} 
+                disabled={acceptInvitationMutation.isPending}
+              >
+                <TextDs style={styles.bookButtonText}>
+                  {acceptInvitationMutation.isPending ? 'Accepting...' : 'Accept Invite'}
+                </TextDs>
+              </TouchableOpacity>
+            </FlexView>
+          ) : event?.isJoined || event?.userJoinStatus?.action === 'payment-pending' ? (
             // --- FIRST BLOCK (Joined/Pending) ---
             showPayNow ? (
               <TouchableOpacity style={styles.bookButton} onPress={handlePayNow} disabled={isBookingEvent}>

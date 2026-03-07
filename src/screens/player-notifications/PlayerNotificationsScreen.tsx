@@ -176,17 +176,26 @@ export const PlayerNotificationsScreen: React.FC = () => {
   };
 
   const handleAcceptInvitation = (invitationId: string) => {
-    // Find the original invitation data to get event details
-    const originalInvitation = invitesData?.invitations?.find(
-      (inv) => (inv.inviteId ?? inv.event.eventId) === invitationId
-    );
+    // Call the mutation to accept the invitation
+    acceptInvitationMutation.mutate(invitationId, {
+      onSuccess: () => {
+        // Find the original invitation data to get event details
+        const originalInvitation = invitesData?.invitations?.find(
+          (inv) => (inv.inviteId ?? inv.event.eventId) === invitationId
+        );
 
-    if (originalInvitation?.event?.eventId) {
-      // Navigate to EventDetails screen which will handle the booking flow
-      navigation.navigate('EventDetails', { 
-        eventId: originalInvitation.event.eventId 
-      });
-    }
+        if (originalInvitation?.event?.eventId) {
+          // Navigate to EventDetails screen after successfully accepting
+          navigation.navigate('EventDetails', { 
+            eventId: originalInvitation.event.eventId 
+          });
+        }
+      },
+      onError: (err: any) => {
+        console.error('Failed to accept invitation:', err);
+        // Optional: you could show a toast or alert here if it fails
+      }
+    });
   };
 
   const handleDeclineInvitation = (invitationId: string) => {

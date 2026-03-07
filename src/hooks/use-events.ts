@@ -1,5 +1,6 @@
-import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { eventService } from '@services/event-service';
+import { organiserService } from '@services/organiser-service';
 import { bookingService } from '@services/booking-service';
 import { apiClient } from '@services/api/api-client';
 import type { EventData, EventFilters, FilterOptionsData } from '@app-types';
@@ -36,6 +37,8 @@ export const useEvents = (filters?: EventFilters) => {
 export interface UseEventOptions {
   /** When true, private events (IsPrivateEvent) are treated as not found for players. */
   forPlayer?: boolean;
+  /** When true, bypasses the private event check even if forPlayer is true. Used when a player has an invitation. */
+  allowPrivate?: boolean;
 }
 
 /**
@@ -44,9 +47,9 @@ export interface UseEventOptions {
  * When forPlayer is true, private events are not shown (throws so UI shows not found).
  */
 export const useEvent = (id: string, options?: UseEventOptions) => {
-  const { forPlayer = false } = options ?? {};
+  const { forPlayer = false, allowPrivate = false } = options ?? {};
   return useQuery({
-    queryKey: ['event', id, forPlayer],
+    queryKey: ['event', id, forPlayer, allowPrivate],
     queryFn: async () => {
       const response = await apiClient.get<{
         success: boolean;
@@ -77,8 +80,8 @@ export const useEvent = (id: string, options?: UseEventOptions) => {
         isLeave: apiEvent.isLeave ?? false,
       } as AnyEvent) as EventData;
 
-      // Do not show private events to players at all (IsPrivateEvent / eventApprovalReq)
-      if (forPlayer && normalized.IsPrivateEvent === true) {
+      // Do not show private events to players at all, unless explicitly allowed
+      if (forPlayer && !allowPrivate && normalized.IsPrivateEvent === true) {
         throw new Error('Event not found');
       }
 
@@ -137,8 +140,8 @@ export const useUpdateEvent = () => {
 
   return useMutation({
     mutationFn: ({ id, event }: { id: string; event: Partial<EventData> }) =>
-      eventService.updateEvent(id, event),
-    onSuccess: (data: Partial<EventData>) => {
+      eventService.updateEvent(id, event as any),
+    onSuccess: (data: any) => {
       // Invalidate specific event and events list
       queryClient.invalidateQueries({ queryKey: ['event', data.id] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
@@ -281,7 +284,6 @@ export const useOrganiserEventsByUserId = (userId: number | null, enabled: boole
       if (!userId) {
         return { events: [], pagination: null };
       }
-      const { organiserService } = await import('@services/organiser-service');
       const response = await organiserService.getOrganiserEvents(userId, 1, 20);
       return {
         events: response.data.events,

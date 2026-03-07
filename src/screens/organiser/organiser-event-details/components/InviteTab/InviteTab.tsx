@@ -121,13 +121,14 @@ export const InviteTab: React.FC<InviteTabProps> = ({ event }) => {
           [{ text: 'OK' }]
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending invite:', error);
-      Alert.alert(
-        'Error',
-        'An error occurred while sending the invite. Please try again.',
-        [{ text: 'OK' }]
-      );
+      const errorMessage =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        'An error occurred while sending the invite. Please try again.';
+        
+      Alert.alert('Notice', errorMessage, [{ text: 'OK' }]);
     } finally {
       setInvitingUserId(null);
     }
