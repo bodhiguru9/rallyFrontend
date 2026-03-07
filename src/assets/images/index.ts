@@ -27,6 +27,8 @@ export const images = {
   userOrgGray: require('./files/star-user-g.png'),
 
   // UI Icons
+  calendarHosted: require('./icons/calendar-hosted.png'),
+  multipleUser: require('./icons/multiple-users.png'),
   bell: require('./files/bell.png'),
   ballpointPen: require('./files/ballpoint-pen.png'),
   locationPin: require('./files/location-pin.png'),

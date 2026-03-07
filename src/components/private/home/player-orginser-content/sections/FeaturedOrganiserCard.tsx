@@ -92,7 +92,7 @@ export const FeaturedOrganiserCard: React.FC<FeaturedOrganiserCardProps> = ({
             {hostedCount !== undefined && (
               <IconTag
                 title={`${hostedCount} Hosted`}
-                icon={Calendar}
+                icon={'calendarHosted'}
                 variant="purple"
                 size="small"
               />
@@ -100,7 +100,7 @@ export const FeaturedOrganiserCard: React.FC<FeaturedOrganiserCardProps> = ({
             {attendeesCount !== undefined && (
               <IconTag
                 title={`${attendeesCount} Attendees`}
-                icon={Users}
+                icon={'multipleUser'}
                 variant="yellow"
                 size="small"
               />
