@@ -4,7 +4,9 @@ import {
   TouchableOpacity,
   StatusBar,
   ActivityIndicator,
-  Alert
+  Alert,
+  Platform,
+  KeyboardAvoidingView
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -48,104 +50,109 @@ export const SignInScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background.cream} />
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={80}
       >
-        {/* Back Button */}
-        <ArrowIcon onClick={() => navigation.goBack()} variant="left" />
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          style={styles.scrollView}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}>
+          {/* Back Button */}
+          <ArrowIcon onClick={() => navigation.goBack()} variant="left" />
 
-        {/* Logo Section */}
-        <FlexView
-          width={'100%'}
-          alignItems="center"
-          justifyContent="center"
-          marginTop={48}
-          marginBottom={58}
-        >
-          <ImageDs
-            image="BlackBigLogo"
-            style={{ width: 150, height: 57 }}
-            fit="contain"
-          />
-        </FlexView>
-
-        {/* Main Content */}
-        <FlexView style={styles.mainContent}>
+          {/* Logo Section */}
           <FlexView
             width={'100%'}
-            marginBottom={spacing.lg}
             alignItems="center"
             justifyContent="center"
-            gap={spacing.sm}
+            marginTop={48}
+            marginBottom={58}
           >
-            <TextDs size={16} weight="bold">Welcome Back</TextDs>
-            <TextDs size={14} weight="regular" color="secondary">
-              Sign in to continue
-            </TextDs>
-          </FlexView>
-
-          {/* WhatsApp/Email Input */}
-          {!useEmail ? (
-            <WhatsAppInput
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              onUseEmailPress={handleUseEmail}
+            <ImageDs
+              image="BlackBigLogo"
+              style={{ width: 150, height: 57 }}
+              fit="contain"
             />
-          ) : (
-            <FlexView style={styles.emailContainer}>
-              <FlexView style={styles.labelRow}>
-                <TextDs style={styles.label}>Email</TextDs>
-                <TouchableOpacity
-                  onPress={handleUseWhatsApp}
-                  style={styles.whatsappLink}
-                  activeOpacity={0.7}
-                >
-                  <ImageDs image="WhatsappIcon" size={12} />
-                  <TextDs style={styles.whatsappLinkText}>Use WhatsApp</TextDs>
-                </TouchableOpacity>
-              </FlexView>
-              <FormInput
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                containerStyle={styles.inputContainer}
-              />
-            </FlexView>
-          )}
-
-          {/* Password Input */}
-          <FormInput
-            label="Password"
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            containerStyle={styles.passwordContainer}
-          />
-
-          <FlexView height={24} />
-
-          {/* Social Login Buttons */}
-          <SocialLoginButtons
-            onGooglePress={handleGoogleSignIn}
-            onApplePress={() => Alert.alert('Coming Soon', 'Apple login will be available soon.')}
-            onFacebookPress={() => Alert.alert('Coming Soon', 'Facebook login will be available soon.')}
-          />
-
-          {/* Forgot Password Link */}
-          <FlexView style={styles.forgotPasswordContainer}>
-            <TextDs align='center' size={14} color='secondary'>Forgot your password? </TextDs>
-            <TouchableOpacity onPress={handleForgotPassword} activeOpacity={0.7}>
-              <TextDs weight='medium' color="blueGray">Reset now</TextDs>
-            </TouchableOpacity>
           </FlexView>
-        </FlexView>
-      </ScrollView>
+
+          {/* Main Content */}
+          <FlexView style={styles.mainContent}>
+            <FlexView
+              width={'100%'}
+              marginBottom={spacing.lg}
+              alignItems="center"
+              justifyContent="center"
+              gap={spacing.sm}
+            >
+              <TextDs size={16} weight="bold">Welcome Back</TextDs>
+              <TextDs size={14} weight="regular" color="secondary">
+                Sign in to continue
+              </TextDs>
+            </FlexView>
+
+            {/* WhatsApp/Email Input */}
+            {!useEmail ? (
+              <WhatsAppInput
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                onUseEmailPress={handleUseEmail}
+              />
+            ) : (
+              <FlexView style={styles.emailContainer}>
+                <FlexView style={styles.labelRow}>
+                  <TextDs style={styles.label}>Email</TextDs>
+                  <TouchableOpacity
+                    onPress={handleUseWhatsApp}
+                    style={styles.whatsappLink}
+                    activeOpacity={0.7}
+                  >
+                    <ImageDs image="WhatsappIcon" size={12} />
+                    <TextDs style={styles.whatsappLinkText}>Use WhatsApp</TextDs>
+                  </TouchableOpacity>
+                </FlexView>
+                <FormInput
+                  placeholder="Enter your email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  containerStyle={styles.inputContainer}
+                />
+              </FlexView>
+            )}
+
+            {/* Password Input */}
+            <FormInput
+              label="Password"
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              containerStyle={styles.passwordContainer}
+            />
+
+            <FlexView height={24} />
+
+            {/* Social Login Buttons */}
+            <SocialLoginButtons
+              onGooglePress={handleGoogleSignIn}
+              onApplePress={() => Alert.alert('Coming Soon', 'Apple login will be available soon.')}
+              onFacebookPress={() => Alert.alert('Coming Soon', 'Facebook login will be available soon.')}
+            />
+
+            {/* Forgot Password Link */}
+            <FlexView style={styles.forgotPasswordContainer}>
+              <TextDs align='center' size={14} color='secondary'>Forgot your password? </TextDs>
+              <TouchableOpacity onPress={handleForgotPassword} activeOpacity={0.7}>
+                <TextDs weight='medium' color="blueGray">Reset now</TextDs>
+              </TouchableOpacity>
+            </FlexView>
+          </FlexView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Confirm Button */}
       <FlexView style={[styles.footer, { paddingBottom: 10 + insets.bottom }]}>

@@ -78,6 +78,8 @@ export const images = {
   pickleballIcon: require('./icons/pickleball.png'),
   basketballIcon: require('./icons/basketball.png'),
   socialIcon: require('./files/multiple-users.png'),
+  trainingIcon: require('./files/training-white.png'),
+  
 // Icontag icons
 badmintonYellow: require('./icons/badminton-yellow.png'),
 cricketYellow: require('./icons/cricket-yellow.png'),

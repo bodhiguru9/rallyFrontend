@@ -9,7 +9,11 @@ import { spacing, colors } from '@theme';
 import { logger } from '@dev-tools';
 import { PickedOrganiserData, type CommunityData } from '../components/PickedForYouSection/PickedForYouSection';
 import type { IconType } from '../components/PickedOrganiserCard';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '@navigation';
 
+type TopOrganisersSectionNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 // Available background colors for communities
 const BACKGROUND_COLORS: (string | string[])[] = [
@@ -49,7 +53,10 @@ export const FeaturedOrganisersSection: React.FC<FeaturedOrganisersSectionProps>
   onOrganiserPress,
 }) => {
   const { width: screenWidth } = useWindowDimensions();
-
+  const navigation = useNavigation<TopOrganisersSectionNavigationProp>();
+  const handleArrowPress = () => {
+    navigation.navigate('TopOrganiserPage');
+  };
   // Transform API data to PickedOrganiserData format
   const communitiesData = useMemo(() => {
     if (!communities || communities.length === 0) {
@@ -118,7 +125,7 @@ export const FeaturedOrganisersSection: React.FC<FeaturedOrganisersSectionProps>
         px={spacing.lg}
       >
         <TextDs style={styles.featuredTitle}>Top Organisers</TextDs>
-        <ArrowIcon variant="right" />
+        <ArrowIcon onClick={handleArrowPress} variant="right" />
       </FlexView>
 
       <Carousel
