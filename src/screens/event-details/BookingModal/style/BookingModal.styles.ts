@@ -36,7 +36,7 @@ export const styles = StyleSheet.create({
   modalHeaderButtonContainer: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.sm,
-    backgroundColor: '#FFFDEF',
+    backgroundColor: '#effcffff',
   },
   // Ensure the modal container doesn't have extra padding at the top 
   // that would disconnect the button from the handle
