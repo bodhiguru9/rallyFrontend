@@ -3,7 +3,8 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  ActivityIndicator
+  ActivityIndicator,
+  KeyboardAvoidingView, Platform
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -56,89 +57,96 @@ export const SignUpScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background.cream} />
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={80}
       >
-        {/* Back Button */}
-        <ArrowIcon onClick={() => navigation.goBack()} variant="left" />
-
-        {/* Logo Section */}
-        <FlexView
-          width={'100%'}
-          alignItems="center"
-          justifyContent="center"
-          marginTop={48}
-          marginBottom={58}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.contentContainer, { flexGrow: 1 }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <ImageDs
-            image="BlackBigLogo"
-            style={{ width: 150, height: 57 }}
-            fit="contain"
-          />
-        </FlexView>
+          {/* Back Button */}
+          <ArrowIcon onClick={() => navigation.goBack()} variant="left" />
 
-        {/* Main Content */}
-        <FlexView style={styles.mainContent}>
+          {/* Logo Section */}
           <FlexView
             width={'100%'}
-            marginBottom={spacing.lg}
             alignItems="center"
             justifyContent="center"
-            gap={spacing.sm}
+            marginTop={48}
+            marginBottom={58}
           >
-            <TextDs size={20} weight="bold">Find your Sports Community</TextDs>
-            <TextDs size={16} weight="regular" color="secondary">
-              Sign in or sign up below
-            </TextDs>
+            <ImageDs
+              image="BlackBigLogo"
+              style={{ width: 150, height: 57 }}
+              fit="contain"
+            />
           </FlexView>
 
-          {/* User Type Selector */}
-          <UserTypeSelector selectedType={userType} onSelectType={setUserType} />
-
-          {/* WhatsApp Input */}
-          {!useEmail && (
-            <WhatsAppInput
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              onUseEmailPress={handleUseEmail}
-            />
-          )}
-
-          {/* email login */}
-          {useEmail && (
-            <FlexView style={styles.emailContainer}>
-              <FlexView style={styles.labelRow}>
-                <TextDs size={14} weight="medium" color="primary">Email</TextDs>
-                <TouchableOpacity
-                  onPress={handleUseWhatsApp}
-                  style={styles.whatsappLink}
-                  activeOpacity={0.7}
-                >
-                  <ImageDs image="WhatsappIcon" size={12} />
-                  <TextDs size={12} weight="medium" color="primary">Use WhatsApp</TextDs>
-                </TouchableOpacity>
-              </FlexView>
-              <FormInput
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                containerStyle={styles.inputContainer}
-              />
+          {/* Main Content */}
+          <FlexView style={styles.mainContent}>
+            <FlexView
+              width={'100%'}
+              marginBottom={spacing.lg}
+              alignItems="center"
+              justifyContent="center"
+              gap={spacing.sm}
+            >
+              <TextDs size={20} weight="bold">Find your Sports Community</TextDs>
+              <TextDs size={16} weight="regular" color="secondary">
+                Sign in or sign up below
+              </TextDs>
             </FlexView>
-          )}
 
-          {/* Social Login Buttons */}
-          <SocialLoginButtons
-            onGooglePress={() => handleSocialLogin('google')}
-            onApplePress={() => handleSocialLogin('apple')}
-            onFacebookPress={() => handleSocialLogin('facebook')}
-          />
-        </FlexView>
-      </ScrollView>
+            {/* User Type Selector */}
+            <UserTypeSelector selectedType={userType} onSelectType={setUserType} />
+
+            {/* WhatsApp Input */}
+            {!useEmail && (
+              <WhatsAppInput
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                onUseEmailPress={handleUseEmail}
+              />
+            )}
+
+            {/* email login */}
+            {useEmail && (
+              <FlexView style={styles.emailContainer}>
+                <FlexView style={styles.labelRow}>
+                  <TextDs size={14} weight="medium" color="primary">Email</TextDs>
+                  <TouchableOpacity
+                    onPress={handleUseWhatsApp}
+                    style={styles.whatsappLink}
+                    activeOpacity={0.7}
+                  >
+                    <ImageDs image="WhatsappIcon" size={12} />
+                    <TextDs size={12} weight="medium" color="primary">Use WhatsApp</TextDs>
+                  </TouchableOpacity>
+                </FlexView>
+                <FormInput
+                  placeholder="Enter your email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  containerStyle={styles.inputContainer}
+                />
+              </FlexView>
+            )}
+
+            {/* Social Login Buttons */}
+            <SocialLoginButtons
+              onGooglePress={() => handleSocialLogin('google')}
+              onApplePress={() => handleSocialLogin('apple')}
+              onFacebookPress={() => handleSocialLogin('facebook')}
+            />
+          </FlexView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Confirm Button */}
       <FlexView style={[styles.footer, { paddingBottom: 10 + insets.bottom }]}>

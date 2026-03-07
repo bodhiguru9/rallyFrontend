@@ -13,6 +13,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     paddingTop: spacing.md,
     paddingBottom: 100,
+    flexGrow: 1,
   },
   mainContent: {
     flex: 1,
