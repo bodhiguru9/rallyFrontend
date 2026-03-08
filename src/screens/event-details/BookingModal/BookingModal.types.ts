@@ -3,7 +3,7 @@ export interface IBookingModalProps {
   totalPrice: number;
   currency: string;
   guestsCount: number;
-  eventId: string;
+  eventId?: string; // Optional - if not provided, modal only collects payment details
   onClose: () => void;
   onBookEvent: (payload?: BookingModalPaymentPayload) => void;
   onApplePay?: () => void;

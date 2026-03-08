@@ -14,28 +14,34 @@ export interface PurchasePackagePayload {
 
 interface UsePurchasePackageOptions {
   showSuccessAlert?: boolean;
-  onSuccess?: () => void;
+  // onSuccess will receive the response data when purchase succeeds
+  onSuccess?: (response?: unknown) => void;
 }
 
 export const usePurchasePackage = (packageId: string, options?: UsePurchasePackageOptions) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (payload?: PurchasePackagePayload) =>
       organiserService.purchasePackage(packageId, payload ?? {}),
-    onSuccess: () => {
+    onSuccess: (data) => {
       if (options?.showSuccessAlert !== false) {
         Alert.alert('Success', 'Package purchased successfully!');
       }
       queryClient.invalidateQueries({ queryKey: ['package-details', packageId] });
       queryClient.invalidateQueries({ queryKey: ['organiser-package-details', packageId] });
-      // If/when purchased packages list is wired, it can be invalidated here too.
-      // queryClient.invalidateQueries({ queryKey: ['purchased-packages'] });
-      options?.onSuccess?.();
+      // Pass the response data to the caller's onSuccess handler
+      options?.onSuccess?.(data);
     },
     onError: (error: unknown) => {
       const { title, message } = formatErrorForAlert(error, 'Purchase Package');
       Alert.alert(title, message);
     },
   });
+
+  // Provide an `isPending` alias for compatibility with other hooks/components
+  return {
+    ...mutation,
+    isPending: (mutation as any).isLoading,
+  } as typeof mutation & { isPending: boolean };
 };
 

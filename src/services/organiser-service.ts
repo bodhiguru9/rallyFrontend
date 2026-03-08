@@ -424,6 +424,14 @@ const mapTransaction = (
 };
 
 /**
+ * Normalize package ID to backend format (e.g., "pkg-1" -> "PKG1")
+ * Converts to uppercase and removes hyphens
+ */
+const normalizePackageId = (packageId: string): string => {
+  return packageId.toUpperCase().replace(/-/g, '');
+};
+
+/**
  * Organiser service for dashboard and organiser-specific operations
  */
 export const organiserService = {
@@ -907,8 +915,9 @@ export const organiserService = {
    */
   getPackageDetails: async (packageId: string): Promise<PackageDetailsResponse> => {
     try {
+      const normalizedId = normalizePackageId(packageId);
       const { data } = await apiClient.get<PackageDetailsResponse>(
-        `/api/packages/${packageId}/details`,
+        `/api/packages/${normalizedId}/details`,
       );
       return data;
     } catch (error: any) {
@@ -939,7 +948,8 @@ export const organiserService = {
     payload: UpdatePackageRequest,
   ): Promise<{ success: boolean; message: string; data?: any }> => {
     try {
-      const { data } = await apiClient.put(`/api/packages/${packageId}`, payload);
+      const normalizedId = normalizePackageId(packageId);
+      const { data } = await apiClient.put(`/api/packages/${normalizedId}`, payload);
       return data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message;
@@ -966,7 +976,8 @@ export const organiserService = {
    */
   deletePackage: async (packageId: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const { data } = await apiClient.delete(`/api/packages/${packageId}`);
+      const normalizedId = normalizePackageId(packageId);
+      const { data } = await apiClient.delete(`/api/packages/${normalizedId}`);
       return data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message;
@@ -993,8 +1004,9 @@ export const organiserService = {
    */
   purchasePackage: async (packageId: string, payload?: any): Promise<PurchasePackageResponse> => {
     try {
+      const normalizedId = normalizePackageId(packageId);
       const { data } = await apiClient.post<PurchasePackageResponse>(
-        `/api/packages/${packageId}/purchase`,
+        `/api/packages/${normalizedId}/purchase`,
         payload ?? {},
       );
       return data;

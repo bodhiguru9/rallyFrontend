@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { TextDs, FlexView, ImageDs } from '@components';
-import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -30,12 +30,26 @@ export const PlanDetailsScreen: React.FC = () => {
   const route = useRoute();
   const packageId = (route.params as { packageId?: string })?.packageId;
 
+  // If no packageId provided, show error and navigate back
+  React.useEffect(() => {
+    if (!packageId) {
+      logger.error('PlanDetailsScreen: No packageId provided in route params');
+      Alert.alert('Error', 'Invalid package. Please try again.', [
+        { text: 'OK', onPress: () => navigation.goBack() }
+      ]);
+    }
+  }, [packageId, navigation]);
+
   const { data, isLoading, isFetching } = usePackageDetails(packageId);
   const [isPurchaseModalVisible, setIsPurchaseModalVisible] = useState(false);
   const [isPurchasedPopupVisible, setIsPurchasedPopupVisible] = useState(false);
-  const purchaseMutation = usePurchasePackage(String(packageId || ''), {
+  const [purchaseResponse, setPurchaseResponse] = useState<any>(null);
+  const purchaseMutation = usePurchasePackage(packageId || '', {
     showSuccessAlert: false,
-    onSuccess: () => setIsPurchasedPopupVisible(true),
+    onSuccess: (response: any) => {
+      setPurchaseResponse(response);
+      setIsPurchasedPopupVisible(true);
+    },
   });
 
   const details = useMemo(() => {
@@ -72,8 +86,8 @@ export const PlanDetailsScreen: React.FC = () => {
     const title = String(p.packageName ?? p.title ?? 'Package');
     const about = String(p.packageDescription ?? p.description ?? '—');
     const price = Number(p.packagePrice ?? p.price ?? 0);
-    const credits = 10; // Fixed credits value
-    const currency = String(p.currency ?? 'د.إ');
+    const credits = Number(p.maxEvents ?? p.credits ?? 0); // Use maxEvents as credits
+    const currency = String(p.currency ?? 'AED');
     const validity = typeof p.validity === 'string'
       ? p.validity
       : validityMonths
@@ -234,6 +248,8 @@ export const PlanDetailsScreen: React.FC = () => {
         visible={isPurchasedPopupVisible}
         onClose={() => setIsPurchasedPopupVisible(false)}
         onViewCredits={handleViewCredits}
+        creditsAdded={purchaseResponse?.data?.purchase?.maxEvents ?? details.credits}
+        packageName={purchaseResponse?.data?.purchase?.packageName ?? details.title}
       />
     </SafeAreaView>
   );

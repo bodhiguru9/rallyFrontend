@@ -29,7 +29,7 @@ const screenVariants = {
       'You will be notified when a slot opens up, upon payment your spot will be confirmed.',
   },
   registration: {
-    image: 'HourGlass' as const,
+    image: 'ReminderBell' as const,
     title: 'Reminder Set!',
     subTitle: 'You will be notified when the registration begins.',
   },

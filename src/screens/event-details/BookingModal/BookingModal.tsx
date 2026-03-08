@@ -192,6 +192,23 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
     setIsProcessing(true);
 
     try {
+      // If no eventId provided (e.g., package purchase), skip booking API calls
+      // and just collect payment details for the parent component to handle
+      if (!eventId) {
+        logger.info('No eventId provided - collecting payment details only');
+        const last4 = cleanedCard.slice(-4);
+        setIsProcessing(false);
+        onBookEvent({
+          promoCode: appliedPromoCode || (promoCode.trim() || null),
+          cardLast4: last4,
+          expiryMonth: expiryDate.month + 1,
+          expiryYear: expiryDate.year,
+          amount: finalTotal,
+          currency,
+        });
+        return;
+      }
+
       // Step 1: Create booking and get Stripe Payment Intent
       logger.info('Creating booking for event:', eventId);
       const bookingResponse = await paymentService.createBookingWithPayment(
