@@ -480,6 +480,12 @@ const handleApplePay = () => {
     if (!event) {
       return null;
     }
+    
+    // Hide banner completely if user has joined or is approved and waiting for payment
+    if (event.isJoined || event.userJoinStatus?.action === 'payment-pending') {
+      return null;
+    }
+
     if (event.spotsInfo?.spotsFull) {
       return 'waitlist';
     }

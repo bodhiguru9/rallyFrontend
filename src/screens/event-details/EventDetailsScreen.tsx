@@ -151,8 +151,12 @@ export const EventDetailsScreen: React.FC = () => {
         <Card style={{ padding: spacing.base, marginBottom: spacing.base }}>
           <TextDs style={styles.cardTitle}>Members & Guests</TextDs>
           <FlexView style={styles.membersSection}>
-            {/* Guest count dropdown - only show if guests are allowed and cancel booking is not shown */}
-            {event.eventOurGuestAllowed !== false && !((event?.isJoined || event?.userJoinStatus?.action === 'payment-pending') && !showPayNow) && (
+            {/* Guest count dropdown - only show if guests are allowed, user hasn't joined, and there's no pending request/payment */}
+            {event.eventOurGuestAllowed !== false &&
+              !event?.isJoined &&
+              !event?.userJoinStatus?.hasRequest &&
+              event?.userJoinStatus?.action !== 'payment-pending' &&
+              !pendingInvitation && (
               <Dropdown
                 // label="Number of Guests"
                 placeholder="Select guests"
