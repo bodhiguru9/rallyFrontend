@@ -1,11 +1,28 @@
 import React, { useMemo } from 'react';
-import { ScrollView, Image, ActivityIndicator } from 'react-native';
+import { ScrollView, Image, ActivityIndicator, View } from 'react-native';
 import { colors, typography } from '@theme';
 import type { MostBookedSectionProps } from './MostBookedSection.types';
 import type { MostBookedMember } from '../../data/organiserDashboard.data';
 import { styles } from './style/MostBookedSection.styles';
 import { TextDs, FlexView, ImageDs } from '@components';
 import { useOrganiserMembers } from '@hooks/organiser';
+
+/**
+ * Extract initials from a full name
+ * @param name - Full name of the member
+ * @returns Initials (max 2 characters)
+ */
+const getInitials = (name: string): string => {
+  if (!name) return '?';
+  
+  const parts = name.trim().split(/\s+/);
+  
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+  
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
 
 export const MostBookedSection: React.FC<MostBookedSectionProps> = ({
   members: propMembers,
@@ -80,7 +97,11 @@ export const MostBookedSection: React.FC<MostBookedSectionProps> = ({
               {member.avatar ? (
                 <Image source={{ uri: member.avatar }} style={styles.avatar} />
               ) : (
-                <ImageDs image="UserGray" style={styles.avatar} />
+                <View style={styles.avatarPlaceholder}>
+                  <TextDs size={18} weight="semibold" color="primary">
+                    {getInitials(member.name)}
+                  </TextDs>
+                </View>
               )}
             </FlexView>
             <TextDs style={styles.memberName} numberOfLines={1}>
