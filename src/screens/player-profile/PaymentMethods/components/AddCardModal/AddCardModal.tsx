@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { TextDs,  FlexView } from '@components';
 import {Modal, TouchableOpacity, Animated, Platform, KeyboardAvoidingView, ScrollView} from 'react-native';
 import { FormInput, Checkbox } from '@components/global';
-import { colors } from '@theme';
 import { ExpiryDateInput } from '../ExpiryDateInput';
 import type { AddCardModalProps } from './AddCardModal.types';
 import { styles } from './style/AddCardModal.styles';
@@ -118,7 +117,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
         onPress={handleClose}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="padding"
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
           style={{ flex: 1, justifyContent: 'flex-end' }}
         >

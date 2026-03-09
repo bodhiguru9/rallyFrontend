@@ -12,7 +12,6 @@ export const styles = StyleSheet.create({
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     maxHeight: '90%',
-    minHeight: 400,
   },
   dragHandle: {
     width: 40,
@@ -32,7 +31,7 @@ export const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   scrollView: {
-    maxHeight: 400,
+    flexGrow: 0,
   },
   scrollContent: {
     paddingHorizontal: spacing.base,
