@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
-import { Trophy } from 'lucide-react-native'; // Added a fallback icon
-import type { LucideIcon } from 'lucide-react-native';
+import { Trophy, type LucideIcon } from 'lucide-react-native'; // Added a fallback icon
 import type { ImageKey } from '@assets/images';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +19,7 @@ export const IconTag: React.FC<IconTagProps> = ({
   searchType,
   value: valueProp,
   onPress,
+  disabled = false,
 }) => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'TagSearch'>>();
 
@@ -103,6 +103,7 @@ export const IconTag: React.FC<IconTagProps> = ({
         onPress={handlePress}
         activeOpacity={0.7}
         style={styles.touchable}
+        disabled={disabled}
       >
         {content}
       </TouchableOpacity>

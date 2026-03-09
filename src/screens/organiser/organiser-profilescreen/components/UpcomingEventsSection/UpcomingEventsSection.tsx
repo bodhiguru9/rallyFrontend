@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+
 import type { UpcomingEventsSectionProps } from './UpcomingEventsSection.types';
 import { styles } from './style/UpcomingEventsSection.styles';
 import { EventCard,  TextDs,  FlexView } from '@components';
@@ -25,6 +25,8 @@ export const UpcomingEventsSection: React.FC<UpcomingEventsSectionProps> = ({
             onPress={onEventPress}
             onBookmark={onEventShare || (() => { })}
             hidePrice={true}
+            showRevenue={true}
+            disableTags={true}
           />
         ))}
       </FlexView>

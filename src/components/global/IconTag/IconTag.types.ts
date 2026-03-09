@@ -51,4 +51,9 @@ export interface IconTagProps {
    * { searchType, value: value ?? title } so the parent can navigate to TagSearch.
    */
   onPress?: (payload: IconTagSearchPayload) => void;
+
+  /**
+   * If true, disables the touchable component
+   */
+  disabled?: boolean;
 }

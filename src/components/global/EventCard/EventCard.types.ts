@@ -11,4 +11,6 @@ export interface EventCardProps {
   /** When true, shows Going (green) or Ongoing (red) badge over the event image. Default false. */
   showStatus?: boolean;
   spotsStatusLabel?: string;
+  showRevenue?: boolean;
+  disableTags?: boolean;
 }

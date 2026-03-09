@@ -40,6 +40,8 @@ export const EventCard: React.FC<EventCardProps> = ({
   hideCreator = false,
   showStatus = false,
   spotsStatusLabel,
+  showRevenue = false,
+  disableTags = false,
 }) => {
   const handlePress = () => {
     onPress(id);
@@ -147,6 +149,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                   variant="orange"
                   searchType="sport"
                   size="small"
+                  disabled={disableTags}
                 />
               )}
               {event.eventType && (
@@ -155,6 +158,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                   icon={EventTypeIcon}
                   searchType="eventType"
                   size="small"
+                  disabled={disableTags}
                 />
               )}
             </FlexView>
@@ -236,14 +240,45 @@ export const EventCard: React.FC<EventCardProps> = ({
               })()
             )}
           </FlexView>
-          {!hidePrice && (
-            <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
-              <ImageDs image="DhiramIcon" size={14} />
-              <TextDs size={18} weight="semibold" color="blueGray">
-                {event.eventPricePerGuest}
-              </TextDs>
-            </FlexView>
-          )}
+          {(() => {
+            if (showRevenue) {
+              const eventData = event as EventData;
+              const playerBooking = event as PlayerBooking;
+              const spotsFilled = eventData.spotsInfo?.spotsBooked ??
+                (eventData as any).eventTotalAttendNumber ??
+                playerBooking.eventTotalAttendNumber ??
+                0;
+              const price = event.eventPricePerGuest ?? 0;
+              const revenue = spotsFilled * price;
+
+              // Formatting e.g. 1.2k
+              const formattedRevenue = revenue >= 1000 
+                ? `${(revenue / 1000).toFixed(1).replace(/\.0$/, '')}k`
+                : revenue.toString();
+
+              return (
+                <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
+                  <TextDs size={12} weight="medium" color="blueGray">Revenue</TextDs>
+                  <TextDs size={16} weight="bold" color="success">
+                    AED {formattedRevenue}
+                  </TextDs>
+                </FlexView>
+              );
+            }
+
+            if (!hidePrice) {
+              return (
+                <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
+                  <ImageDs image="DhiramIcon" size={14} />
+                  <TextDs size={18} weight="semibold" color="blueGray">
+                    {event.eventPricePerGuest}
+                  </TextDs>
+                </FlexView>
+              );
+            }
+
+            return null;
+          })()}
         </FlexView>
       </Card>
     </TouchableOpacity>

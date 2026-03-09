@@ -25,7 +25,7 @@ const extractUsername = (input: string): string => {
   // If it's a URL, extract username
   if (trimmed.includes('instagram.com/')) {
     try {
-      // Extract the path part after instagram.com/
+      // Extract the path part after instagram.com/ until the next slash or question mark
       const match = trimmed.match(/instagram\.com\/([^/?#]+)/);
       if (match && match[1]) {
         return match[1];
