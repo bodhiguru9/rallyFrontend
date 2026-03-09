@@ -369,7 +369,7 @@ const handleApplePay = () => {
   /** Called after cancel booking API succeeds – close modal and go home. */
   const handleCancelBookingSuccess = () => {
     setIsCancelBookingModalVisible(false);
-    navigation.navigate('Home');
+    navigation.navigate('PlayerCalendar');
   };
 
   /** Cancel booking: if refund date passed show cancel-booking modal (no refund); else call leave API. */
@@ -387,7 +387,7 @@ const handleApplePay = () => {
     leaveEvent(eventId, {
       onSuccess: () => {
         logger.info('Booking cancelled');
-        navigation.navigate('Home');
+        navigation.navigate('PlayerCalendar');
       },
       onError: (err: Error) => {
         logger.error('Failed to cancel booking', err);
