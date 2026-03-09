@@ -8,13 +8,16 @@ export interface AddCardRequest {
 }
 
 export interface CardResponse {
-  id: string;
+  cardId: string;
   cardHolderName: string;
+  cardNumber?: string;
   last4: string;
-  expiryMonth: number;
-  expiryYear: number;
-  brand?: string;
+  expiry?: string;
+  expMonth: number;
+  expYear: number;
+  brand?: string | null;
   isDefault: boolean;
+  stripePaymentMethodId?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

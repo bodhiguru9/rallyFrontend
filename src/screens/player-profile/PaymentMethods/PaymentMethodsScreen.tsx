@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TextDs,  FlexView } from '@components';
-import { ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Plus } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -37,11 +37,11 @@ export const PaymentMethodsScreen: React.FC = () => {
       const fetchedCards = await cardService.getCards();
       // Map API response to PaymentCard format
       const mappedCards: PaymentCard[] = fetchedCards.map((card) => ({
-        id: card.id,
+        id: card.cardId,
         cardHolderName: card.cardHolderName,
         last4: card.last4,
-        expiryMonth: card.expiryMonth,
-        expiryYear: card.expiryYear,
+        expiryMonth: card.expMonth,
+        expiryYear: card.expYear,
         brand: card.brand,
         isDefault: card.isDefault,
         createdAt: card.createdAt,
@@ -51,7 +51,7 @@ export const PaymentMethodsScreen: React.FC = () => {
     } catch (error) {
       const parsedError = parseApiError(error, 'Failed to load cards');
       console.error('Error fetching cards:', parsedError);
-      // TODO: Show error message to user
+      Alert.alert('Error', parsedError.message || 'Failed to load cards');
     } finally {
       setIsLoading(false);
     }
@@ -81,11 +81,11 @@ export const PaymentMethodsScreen: React.FC = () => {
       
       // Map API response to PaymentCard format
       const mappedCard: PaymentCard = {
-        id: newCard.id,
+        id: newCard.cardId,
         cardHolderName: newCard.cardHolderName,
         last4: newCard.last4,
-        expiryMonth: newCard.expiryMonth,
-        expiryYear: newCard.expiryYear,
+        expiryMonth: newCard.expMonth,
+        expiryYear: newCard.expYear,
         brand: newCard.brand,
         isDefault: newCard.isDefault,
         createdAt: newCard.createdAt,
@@ -97,15 +97,34 @@ export const PaymentMethodsScreen: React.FC = () => {
     } catch (error) {
       const parsedError = parseApiError(error, 'Failed to add card');
       console.error('Error adding card:', parsedError);
-      // TODO: Show error message to user
+      Alert.alert('Error', parsedError.message || 'Failed to add card');
     } finally {
       setIsAddingCard(false);
     }
   };
 
   const handleRemoveCard = (cardId: string) => {
-    // TODO: Show confirmation dialog
-    setCards((prevCards) => prevCards.filter((card) => card.id !== cardId));
+    Alert.alert(
+      'Remove Card',
+      'Are you sure you want to remove this payment method?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await cardService.deleteCard(cardId);
+              setCards((prevCards) => prevCards.filter((card) => card.id !== cardId));
+            } catch (error) {
+              const parsedError = parseApiError(error, 'Failed to remove card');
+              console.error('Error removing card:', parsedError);
+              Alert.alert('Error', parsedError.message || 'Failed to remove card');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const formatCardNumber = (last4: string): string => {
