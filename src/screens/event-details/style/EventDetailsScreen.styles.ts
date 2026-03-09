@@ -180,6 +180,8 @@ footerTotalRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   spotsAvailable: {
     ...getFontStyle(12, 'medium'),
@@ -249,6 +251,24 @@ footerTotalRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+  },
+  paymentSectionRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  paymentMethodRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  paymentMethodText: {
+    ...getFontStyle(12, 'regular'),
+    color: colors.text.secondary,
+  },
+  bookingIdText: {
+    ...getFontStyle(10, 'regular'),
+    color: colors.text.tertiary,
   },
   statText: {
     ...getFontStyle(8, 'regular'),

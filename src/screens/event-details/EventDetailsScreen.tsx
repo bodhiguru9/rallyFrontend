@@ -17,6 +17,7 @@ import { YellowBanner, EventDetailsMap } from './components';
 import { Card } from '@components/global/Card';
 import { Seperator, TextDs, ImageDs, Avatar } from '@components';
 import { ArrowIcon } from '@components/global/ArrowIcon';
+import { ParticipantProfiles } from '@designSystem/materials/ParticipantProfiles';
 import { useEventDetails } from './use-event-details';
 import { FlexView } from '@designSystem/atoms/FlexView';
 import { BackdropBlur } from '@components/global/BackdropBlur';
@@ -175,40 +176,17 @@ export const EventDetailsScreen: React.FC = () => {
               />
             )}
             <FlexView style={styles.spotsAndParticipants}>
-              <TouchableOpacity onPress={handleOpenMembersModal} activeOpacity={0.7}>
+              <TouchableOpacity onPress={handleOpenMembersModal} activeOpacity={0.7} style={{ marginRight: spacing.sm }}>
                 <TextDs style={styles.spotsAvailable}>
                   {event.availableSpots !== undefined && event.availableSpots > 0
                     ? 'Spots Available'
                     : 'Waiting List'}
                 </TextDs>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleOpenMembersModal}
-                activeOpacity={0.7}
-                style={styles.participantsContainer}
-              >
-                {event.participants?.slice(0, 3).map((participant, index) => (
-                  <FlexView
-                    key={participant.userId}
-                    style={[styles.participantAvatarWrap, { marginLeft: index > 0 ? -8 : 0 }]}
-                  >
-                    <Avatar
-                      imageUri={participant.profilePic}
-                      fullName={participant.fullName}
-                      size="sm"
-                    />
-                  </FlexView>
-                ))}
-                {event.participants && event.participants.length > 3 && (
-                  <FlexView
-                    style={[styles.participantAvatar, styles.moreParticipants, { marginLeft: -8 }]}
-                  >
-                    <TextDs style={styles.moreParticipantsText}>
-                      +{event.participants.length - 3}
-                    </TextDs>
-                  </FlexView>
-                )}
-              </TouchableOpacity>
+              <ParticipantProfiles
+                participants={event.participants ?? []}
+                onViewAllPress={handleOpenMembersModal}
+              />
             </FlexView>
           </FlexView>
           <TextDs style={styles.refundText}>Refundable until {getRefundDate()}</TextDs>
@@ -226,6 +204,27 @@ export const EventDetailsScreen: React.FC = () => {
           <TextDs style={styles.cardTitle}>Restrictions</TextDs>
           <TextDs style={styles.restrictionsText}>Male Only, 12-24 yrs, Intermediate Level</TextDs>
         </Card>
+
+        {/* Payment Details Card */}
+        {event.isJoined && (
+          <Card style={{ marginBottom: spacing.base }}>
+            <TextDs style={styles.cardTitle}>Payment Details</TextDs>
+            <FlexView style={styles.paymentSectionRow}>
+              <FlexView style={styles.paymentMethodRow}>
+                <TextDs size={16} weight="semibold" color="primary">
+                  <ImageDs image="DhiramIcon" size={14} style={{ marginRight: 2 }} />
+                  {totalPrice || event.eventPricePerGuest || 0}
+                </TextDs>
+                <TextDs style={styles.paymentMethodText}>
+                  Paid via Apple pay
+                </TextDs>
+              </FlexView>
+              <TextDs style={styles.bookingIdText}>
+                Booking ID: {cancelBookingId ? `#RLY-${cancelBookingId.substring(0, 8).toUpperCase()}` : '#RLY-UNKNOWN'}
+              </TextDs>
+            </FlexView>
+          </Card>
+        )}
 
         {/* Organiser Profile Card */}
         <TouchableOpacity
