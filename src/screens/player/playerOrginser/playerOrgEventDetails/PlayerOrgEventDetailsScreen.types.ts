@@ -26,6 +26,7 @@ export interface CommunityDetailsResponse {
       eventId: string;
       eventName: string;
       eventSports: string[];
+      eventType: string; // ADD THIS LINE
       eventDateTime: string;
       eventLocation: string;
       eventImages: string[];

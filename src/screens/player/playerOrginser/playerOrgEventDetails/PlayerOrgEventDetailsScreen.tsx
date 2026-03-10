@@ -184,7 +184,10 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
   }, [communityDetailsResponse]);
 
   const allEvents = useMemo(() => {
-    return (communityDetailsResponse?.data?.events || []) as unknown as EventData[];
+    return (communityDetailsResponse?.data?.events || []).map(event => ({
+      ...event,
+      eventType: event.eventType, // Ensure eventType is explicitly mapped
+    })) as unknown as EventData[];
   }, [communityDetailsResponse]);
 
   const selectedSportsValues = useMemo(

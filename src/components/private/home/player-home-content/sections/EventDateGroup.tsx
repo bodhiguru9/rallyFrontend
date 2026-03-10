@@ -24,6 +24,7 @@ export const EventDateGroup: React.FC<EventDateGroupProps> = ({
   onEventPress,
   onBookmark,
 }) => {
+  console.log("EVENTS at datgroup", events)
   const eventsContainerStyle = isLast
     ? styles.eventsContainerLast
     : styleVariant === 'alt'

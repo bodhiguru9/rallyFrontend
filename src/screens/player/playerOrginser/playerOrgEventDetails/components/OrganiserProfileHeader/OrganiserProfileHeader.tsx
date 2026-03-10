@@ -283,12 +283,12 @@ export const OrganiserProfileHeader: React.FC<OrganiserProfileHeaderProps> = ({
         <Image source={{ uri: profileImage }} style={styles.profileImage} resizeMode="cover" />
         <FlexView flex={1} justifyContent="center">
           <FlexView flexDirection="row" alignItems="center" mb={spacing.xs} gap={spacing.base}>
-            <TextDs size={14} weight="regular">{name}</TextDs>
+            <TextDs size={16} weight="bold">{name}</TextDs>
             {isVerified && <ImageDs image="VerifiedIcon" size={20} />}
           </FlexView>
           <FlexView flexDirection='row' alignItems='center' gap={spacing.sm}>
             {!hideCreatorName && (
-              <TextDs size={14} weight="regular" color="secondary">
+              <TextDs size={12} weight="regular" color="secondary">
                 by {creatorName}
               </TextDs>
 
@@ -297,7 +297,7 @@ export const OrganiserProfileHeader: React.FC<OrganiserProfileHeaderProps> = ({
               <FlexView
                 flexDirection='row'
                 px={spacing.sm}
-                height={22} // Increased height slightly for better text fit
+                height={20} // Increased height slightly for better text fit
                 alignItems='center'
                 gap={spacing.xs}
                 borderRadius={borderRadius.full}
@@ -321,15 +321,15 @@ export const OrganiserProfileHeader: React.FC<OrganiserProfileHeaderProps> = ({
             pr={spacing.base}
           >
             <FlexView alignItems="center" gap={spacing.xs / 2}>
-              <TextDs size={14} weight="regular">{hostedCount}</TextDs>
+              <TextDs size={14} weight="bold">{hostedCount}</TextDs>
               <TextDs size={14} weight="regular">Hosted</TextDs>
             </FlexView>
             <FlexView alignItems="center" gap={spacing.xs / 2}>
-              <TextDs size={14} weight="regular">{formatCount(followersCount)}</TextDs>
+              <TextDs size={14} weight="bold">{formatCount(followersCount)}</TextDs>
               <TextDs size={14} weight="regular">Attendees</TextDs>
             </FlexView>
             <FlexView alignItems="center" gap={spacing.xs / 2}>
-              <TextDs size={14} weight="regular">{formatCount(subscribersCount)}</TextDs>
+              <TextDs size={14} weight="bold">{formatCount(subscribersCount)}</TextDs>
               <TextDs size={14} weight="regular">Subscribers</TextDs>
             </FlexView>
           </FlexView>
@@ -365,7 +365,7 @@ export const OrganiserProfileHeader: React.FC<OrganiserProfileHeaderProps> = ({
           borderless: false,
         }}
       >
-        <TextDs size={14} weight="regular" color="white">
+        <TextDs size={14} weight="bold" color="white">
           {getButtonText()}
         </TextDs>
       </Pressable>
