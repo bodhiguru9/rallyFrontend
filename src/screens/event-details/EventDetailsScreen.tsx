@@ -107,7 +107,7 @@ export const EventDetailsScreen: React.FC = () => {
           <FlexView style={styles.eventOverview}>
             <Image
               source={{
-                uri: event.eventImages?.[0],
+                uri: event.eventImages?.[0] || event.gameImages?.[0] || 'https://via.placeholder.com/150',
               }}
               style={styles.eventImage}
             />
@@ -162,8 +162,8 @@ export const EventDetailsScreen: React.FC = () => {
                 // label="Number of Guests"
                 placeholder="Select guests"
                 options={
-                  event.eventMaxGuest && event.eventMaxGuest > 0
-                    ? Array.from({ length: event.eventMaxGuest }, (_, i) => ({
+                  event.spotsInfo?.spotsLeft && event.spotsInfo.spotsLeft > 0
+                    ? Array.from({ length: Math.min(event.spotsInfo.spotsLeft, event.eventMaxGuest || 1) }, (_, i) => ({
                       label: `${i + 1} ${i + 1 === 1 ? 'Guest' : 'Guests'}`,
                       value: String(i + 1),
                     }))
@@ -171,7 +171,7 @@ export const EventDetailsScreen: React.FC = () => {
                 }
                 value={String(guestsCount)}
                 onSelect={(value) => setGuestsCount(Number(value))}
-                disabled={!event.spotsInfo?.totalSpots || event.spotsInfo.totalSpots === 0}
+                disabled={!event.spotsInfo?.spotsLeft || event.spotsInfo.spotsLeft === 0}
                 containerStyle={{ marginBottom: spacing.sm, width: 140 }}
               />
             )}
@@ -189,7 +189,9 @@ export const EventDetailsScreen: React.FC = () => {
               />
             </FlexView>
           </FlexView>
-          <TextDs style={styles.refundText}>Refundable until {getRefundDate()}</TextDs>
+          {event.eventPricePerGuest && event.eventPricePerGuest > 0 ? (
+            <TextDs style={styles.refundText}>Refundable until {getRefundDate()}</TextDs>
+          ) : null}
         </Card>
 
         {/* About Event Card */}
