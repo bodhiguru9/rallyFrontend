@@ -26,7 +26,7 @@ const variantStyles: Record<
   },
 };
 
-export const EventStatusBadge: React.FC<EventStatusBadgeProps> = ({ variant }) => {
+export const EventStatusBadge: React.FC<EventStatusBadgeProps> = ({ variant, style }) => {
   const { background, label, width = 50 } = variantStyles[variant];
 
   return (
@@ -42,7 +42,7 @@ export const EventStatusBadge: React.FC<EventStatusBadgeProps> = ({ variant }) =
       position="absolute"
       bottom={-7}
       left={25}
-      style={styles.container}
+      style={[styles.container, style]}
     >
       <TextDs size={10} weight="regular" color="white">
         {label}
