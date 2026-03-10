@@ -63,6 +63,9 @@ export const useGroupedEvents = ({
       // Sort events within each date group by time
       Object.keys(grouped).forEach((key) => {
         grouped[key].sort((a, b) => {
+          if (activeTab === 'past') {
+            return b.eventDateTime.localeCompare(a.eventDateTime);
+          }
           return new Date(a.eventDateTime).getTime() - new Date(b.eventDateTime).getTime();
         });
       });

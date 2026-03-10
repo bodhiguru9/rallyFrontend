@@ -38,6 +38,9 @@ export const EventList: React.FC<EventListProps> = ({
   }
 
   const sortedDateKeys = Object.keys(groupedEvents).sort((a, b) => {
+    if (activeTab === 'past') {
+      return new Date(b).getTime() - new Date(a).getTime();
+    }
     return new Date(a).getTime() - new Date(b).getTime();
   });
 
