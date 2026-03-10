@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { TextDs, FlexView, ImageDs } from '@components';
 import {
   Modal,
@@ -9,15 +9,19 @@ import {
   PanResponder,
   Animated,
   Alert,
+  Keyboard,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
-import { ArrowRight, Calendar, ChevronUp, ChevronDown, X } from 'lucide-react-native';
-import { colors, spacing } from '@theme';
+import { ArrowRight, ChevronUp, ChevronDown, X, Check, Plus } from 'lucide-react-native';
+import { colors, spacing, borderRadius } from '@theme';
 import type { IBookingModalProps } from './BookingModal.types';
 import { styles } from './style/BookingModal.styles';
-import { MonthYearPicker } from '@components/private/booking/MonthYearPicker';
 import { useStripe } from '@stripe/stripe-react-native';
-import { paymentService } from '@services';
+import { paymentService, cardService } from '@services';
 import { logger } from '@dev-tools/logger';
+import type { CardResponse } from '../../../types/api/card.types';
+import { AddCardModal } from '../../player-profile/PaymentMethods/components/AddCardModal';
 
 export const BookingModal: React.FC<IBookingModalProps> = ({
   visible,
@@ -33,14 +37,83 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
   const [promoDiscount, setPromoDiscount] = useState(0);
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState<{ month: number; year: number } | null>(null);
-  const [cvv, setCvv] = useState('');
-  const [showExpiryPicker, setShowExpiryPicker] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaymentDetailsExpanded, setIsPaymentDetailsExpanded] = useState(false);
+  const [keyboardPadding, setKeyboardPadding] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  // Saved cards state
+  const [savedCards, setSavedCards] = useState<CardResponse[]>([]);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [isLoadingCards, setIsLoadingCards] = useState(false);
+  const [showAddCardModal, setShowAddCardModal] = useState(false);
 
   const { confirmPayment, initPaymentSheet, presentPaymentSheet } = useStripe();
+
+  // Listen for keyboard events to adjust bottom padding inside the modal
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onKeyboardShow = (e: { endCoordinates: { height: number } }) => {
+      setKeyboardPadding(e.endCoordinates.height);
+      // Scroll to bottom so card inputs are visible
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    };
+    const onKeyboardHide = () => {
+      setKeyboardPadding(0);
+    };
+
+    const sub1 = Keyboard.addListener(showEvent, onKeyboardShow);
+    const sub2 = Keyboard.addListener(hideEvent, onKeyboardHide);
+    return () => {
+      sub1.remove();
+      sub2.remove();
+    };
+  }, []);
+
+  // Fetch saved cards when modal becomes visible
+  useEffect(() => {
+    if (visible) {
+      fetchSavedCards();
+    }
+  }, [visible]);
+
+  const fetchSavedCards = async () => {
+    try {
+      setIsLoadingCards(true);
+      const cards = await cardService.getCards();
+      setSavedCards(cards);
+      // Auto-select the default card or first card
+      const defaultCard = cards.find(c => c.isDefault) || cards[0];
+      if (defaultCard) {
+        setSelectedCardId(defaultCard.cardId);
+      }
+    } catch (error) {
+      logger.error('Failed to fetch cards:', error);
+    } finally {
+      setIsLoadingCards(false);
+    }
+  };
+
+  const handleAddCardSubmit = async (cardData: {
+    cardNumber: string;
+    cardHolderName: string;
+    isDefault: boolean;
+    expiry: string;
+  }) => {
+    try {
+      const newCard = await cardService.addCard(cardData);
+      setSavedCards(prev => [...prev, newCard]);
+      setSelectedCardId(newCard.cardId);
+      setShowAddCardModal(false);
+    } catch (error) {
+      logger.error('Failed to add card:', error);
+      Alert.alert('Error', 'Failed to add card. Please try again.');
+    }
+  };
 
   const renderAmount = (value: string, textStyle: object) =>
     currency === 'AED' ? (
@@ -134,37 +207,10 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   const vat = Math.round(subtotalBeforeVAT * vatRate * 100) / 100; // Calculate VAT
   const finalTotal = subtotalBeforeVAT + vat;
 
-  const formatCardNumber = (text: string) => {
-    // Remove all non-digits
-    const cleaned = text.replace(/\D/g, '');
-    // Add spaces every 4 digits
-    const formatted = cleaned.match(/.{1,4}/g)?.join(' ') || cleaned;
-    return formatted.substring(0, 19); // Max 16 digits + 3 spaces
-  };
-
-  const handleCardNumberChange = (text: string) => {
-    const formatted = formatCardNumber(text);
-    setCardNumber(formatted);
-  };
-
-  const handleExpirySelect = (month: number, year: number) => {
-    setExpiryDate({ month, year });
-    setShowExpiryPicker(false);
-  };
-
-  const formatExpiryDisplay = () => {
-    if (!expiryDate) {
-      return '';
-    }
-    const month = String(expiryDate.month + 1).padStart(2, '0');
-    const year = String(expiryDate.year).slice(-2);
-    return `${month}/${year}`;
-  };
-
-  const handleCvvChange = (text: string) => {
-    // Only allow digits, max 4 characters
-    const cleaned = text.replace(/\D/g, '').substring(0, 4);
-    setCvv(cleaned);
+  const formatCardExpiry = (month: number, year: number): string => {
+    const m = String(month).padStart(2, '0');
+    const y = String(year).slice(-2);
+    return `${m}/${y}`;
   };
 
   const handlePrimaryAction = async () => {
@@ -172,20 +218,10 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       return;
     }
 
-    // Validate card details
-    const cleanedCard = cardNumber.replace(/\D/g, '');
-    if (cleanedCard.length < 13 || cleanedCard.length > 19) {
-      Alert.alert('Invalid Card', 'Please enter a valid card number');
-      return;
-    }
-
-    if (!expiryDate) {
-      Alert.alert('Invalid Expiry', 'Please select card expiry date');
-      return;
-    }
-
-    if (cvv.length < 3) {
-      Alert.alert('Invalid CVV', 'Please enter a valid CVV');
+    // Validate selected card
+    const selectedCard = savedCards.find(c => c.cardId === selectedCardId);
+    if (!selectedCard) {
+      Alert.alert('No Card Selected', 'Please select a payment card or add a new one.');
       return;
     }
 
@@ -196,13 +232,12 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       // and just collect payment details for the parent component to handle
       if (!eventId) {
         logger.info('No eventId provided - collecting payment details only');
-        const last4 = cleanedCard.slice(-4);
         setIsProcessing(false);
         onBookEvent({
           promoCode: appliedPromoCode || (promoCode.trim() || null),
-          cardLast4: last4,
-          expiryMonth: expiryDate.month + 1,
-          expiryYear: expiryDate.year,
+          cardLast4: selectedCard.last4,
+          expiryMonth: selectedCard.expMonth,
+          expiryYear: selectedCard.expYear,
           amount: finalTotal,
           currency,
         });
@@ -279,12 +314,11 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       setIsProcessing(false);
 
       // Call onBookEvent with payment details
-      const last4 = cleanedCard.slice(-4);
       onBookEvent({
         promoCode: appliedPromoCode || (promoCode.trim() || null),
-        cardLast4: last4,
-        expiryMonth: expiryDate.month + 1,
-        expiryYear: expiryDate.year,
+        cardLast4: selectedCard.last4,
+        expiryMonth: selectedCard.expMonth,
+        expiryYear: selectedCard.expYear,
         amount: data.payment.finalAmount,
         currency: data.payment.currency,
         paymentIntentId: paymentIntent.id,
@@ -303,8 +337,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
-
-        <Animated.View
+          <Animated.View
           style={[
             styles.modalContainer,
             {
@@ -326,7 +359,12 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
 
 
           {/* 3. Scrollable Content */}
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+            ref={scrollViewRef}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: keyboardPadding > 0 ? keyboardPadding : undefined }]}
+            keyboardShouldPersistTaps="handled"
+          >
             {/* ... All your Promo and Card sections ... */}
             {/* Promo Code Section */}
             <FlexView style={styles.section}>
@@ -447,47 +485,72 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
             {/* Credit/Debit Card Section */}
             <FlexView style={styles.section}>
               <TextDs style={styles.sectionTitle}>Credit/Debit Card</TextDs>
-              {/* Card Number */}
-              <FlexView style={styles.cardInputFullWidth}>
-                <TextInput
-                  style={styles.cardInput}
-                  placeholder="1234 5678 9012 3456"
-                  placeholderTextColor={colors.text.tertiary}
-                  value={cardNumber}
-                  onChangeText={handleCardNumberChange}
-                  keyboardType="numeric"
-                  maxLength={19}
-                />
-              </FlexView>
-              {/* Expiry Date and CVV */}
-              <FlexView style={styles.cardInputsRow}>
-                <FlexView style={styles.cardInputContainer}>
+              {isLoadingCards ? (
+                <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: spacing.md }} />
+              ) : savedCards.length > 0 ? (
+                savedCards.map((card) => (
                   <TouchableOpacity
-                    style={[styles.cardInput, styles.cardInputTouchable]}
-                    onPress={() => setShowExpiryPicker(true)}
+                    key={card.cardId}
                     activeOpacity={0.7}
+                    onPress={() => setSelectedCardId(card.cardId)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: spacing.sm,
+                      gap: spacing.sm,
+                    }}
                   >
-                    <TextDs
-                      style={[styles.cardInputText, !expiryDate && styles.cardInputPlaceholder]}
+                    {/* Checkbox */}
+                    <FlexView
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 4,
+                        borderWidth: 2,
+                        borderColor: selectedCardId === card.cardId ? colors.primary : colors.border.medium,
+                        backgroundColor: selectedCardId === card.cardId ? colors.primary : 'transparent',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
                     >
-                      {expiryDate ? formatExpiryDisplay() : 'MM/YY'}
-                    </TextDs>
-                    <Calendar size={18} color={colors.text.secondary} />
+                      {selectedCardId === card.cardId && (
+                        <Check size={14} color={colors.text.white} />
+                      )}
+                    </FlexView>
+                    {/* Card Info */}
+                    <FlexView style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <TextDs style={{ color: colors.text.primary, fontSize: 14 }}>
+                        {card.last4 ? `${card.last4.slice(0,2)}** **** **** **${card.last4.slice(-2)}` : '•••• •••• •••• ••••'}
+                      </TextDs>
+                      <TextDs style={{ color: colors.text.secondary, fontSize: 13 }}>
+                        {formatCardExpiry(card.expMonth, card.expYear)}
+                      </TextDs>
+                    </FlexView>
                   </TouchableOpacity>
-                </FlexView>
-                <FlexView style={styles.cardInputContainer}>
-                  <TextInput
-                    style={styles.cardInput}
-                    placeholder="CVV"
-                    placeholderTextColor={colors.text.tertiary}
-                    value={cvv}
-                    onChangeText={handleCvvChange}
-                    keyboardType="numeric"
-                    maxLength={4}
-                    secureTextEntry
-                  />
-                </FlexView>
-              </FlexView>
+                ))
+              ) : (
+                <TextDs style={{ color: colors.text.tertiary, fontSize: 13, marginVertical: spacing.sm }}>No saved cards</TextDs>
+              )}
+
+              {/* Add New Card Button */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setShowAddCardModal(true)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing.xs,
+                  marginTop: spacing.sm,
+                  backgroundColor: colors.primary,
+                  paddingHorizontal: spacing.md,
+                  paddingVertical: spacing.sm,
+                  borderRadius: borderRadius.full,
+                  alignSelf: 'flex-start',
+                }}
+              >
+                <Plus size={16} color={colors.text.white} />
+                <TextDs style={{ color: colors.text.white, fontSize: 13, fontWeight: '600' }}>Add New Card</TextDs>
+              </TouchableOpacity>
             </FlexView>
 
             {/* Disclaimer */}
@@ -518,14 +581,12 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         </Animated.View>
       </Pressable>
 
-      {/* Month/Year Picker Modal */}
-      {showExpiryPicker && (
-        <MonthYearPicker
-          visible={showExpiryPicker}
-          onSelect={handleExpirySelect}
-          onClose={() => setShowExpiryPicker(false)}
-        />
-      )}
+      {/* Add Card Modal */}
+      <AddCardModal
+        visible={showAddCardModal}
+        onClose={() => setShowAddCardModal(false)}
+        onAddCard={handleAddCardSubmit}
+      />
     </Modal>
   );
 };
