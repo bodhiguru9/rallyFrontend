@@ -268,7 +268,7 @@ export const getDateFilters = (): DateFilter[] => {
       date: date.getDate(),
       day: date.toLocaleDateString('en-US', { weekday: 'short' }),
       month: date.toLocaleDateString('en-US', { month: 'short' }),
-      isSelected: i === 4,
+      isSelected: false,
       fullDate: date.toISOString(),
     });
   }

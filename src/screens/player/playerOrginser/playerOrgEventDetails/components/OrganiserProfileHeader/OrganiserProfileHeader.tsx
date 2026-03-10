@@ -50,6 +50,18 @@ export const OrganiserProfileHeader: React.FC<OrganiserProfileHeaderProps> = ({
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuthStore();
 
+  console.log('[OrganiserProfileHeader] Props received:', {
+    name,
+    instagramLink,
+    creatorName,
+    isVerified,
+    profileImage,
+    hostedCount,
+    followersCount,
+    subscribersCount,
+    organiserId,
+  });
+
   // Fetch follow status from API
   const { data: followStatusData } = useQuery({
     queryKey: ['follow-status', organiserId],

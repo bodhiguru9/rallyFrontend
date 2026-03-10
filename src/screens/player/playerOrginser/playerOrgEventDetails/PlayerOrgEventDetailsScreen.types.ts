@@ -21,6 +21,7 @@ export interface CommunityDetailsResponse {
       sports: string[];
       profileVisibility?: 'public' | 'private';
       instagramLink?: string; // ADD THIS LINE
+      isVerified?: boolean;
     };
     events: Array<{
       eventId: string;
@@ -52,6 +53,7 @@ export interface CommunityDetailsResponse {
     communityName: string;
     profileVisibility?: 'public' | 'private';
     instagramLink?: string; // ADD THIS LINE
+    isVerified?: boolean;
   };
 }
 

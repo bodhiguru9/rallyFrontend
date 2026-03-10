@@ -168,10 +168,15 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
   const organiserData = useMemo(() => {
     const org = communityDetailsResponse?.data?.organiser;
     if (!org) return null;
+
+    console.log('[PlayerOrgEventDetailsScreen] Organiser API Response:', {
+      org
+    });
+
     return {
       name: org.communityName,
       creatorName: org.fullName,
-      isVerified: false,
+      isVerified: org.isVerified || false,
       profileImage: org.profilePic,
       hostedCount: org.totalEventsHosted || 0,
       followersCount: org.totalAttendees || 0,
