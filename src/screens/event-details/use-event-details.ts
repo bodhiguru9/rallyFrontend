@@ -158,6 +158,12 @@ const handleBookEvent = (paymentData?: BookingModalPaymentPayload) => {
   }
 
   // Payment already processed and verified in BookingModal
+  // Invalidate queries so calendar and event details reflect the new booking
+  queryClient.invalidateQueries({ queryKey: ['player-bookings'] });
+  queryClient.invalidateQueries({ queryKey: ['event-details', eventId] });
+  queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+  queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+
   // Just close modal and navigate to success screen
   setIsBookingModalVisible(false);
   

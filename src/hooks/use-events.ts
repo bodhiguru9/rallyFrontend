@@ -241,6 +241,7 @@ export const useBookEvent = () => {
       queryClient.invalidateQueries({ queryKey: ['event-details', eventId] });
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       queryClient.invalidateQueries({ queryKey: ['player-events'] });
+      queryClient.invalidateQueries({ queryKey: ['player-bookings'] });
     },
   });
 };
