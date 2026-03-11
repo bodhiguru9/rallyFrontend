@@ -29,12 +29,29 @@ type TNav = NativeStackNavigationProp<RootStackParamList, 'OrganiserBankDetails'
 type BankDetailsRoute = RouteProp<RootStackParamList, 'OrganiserBankDetails'>;
 
 const BANK_OPTIONS = [
+  { label: 'First Abu Dhabi Bank', value: 'First Abu Dhabi Bank' },
   { label: 'Emirates NBD', value: 'Emirates NBD' },
-  { label: 'ADCB', value: 'ADCB' },
-  { label: 'FAB', value: 'FAB' },
-  { label: 'Mashreq', value: 'Mashreq' },
-  { label: 'Dubai Islamic Bank', value: 'Dubai Islamic Bank' },
-  { label: 'HSBC', value: 'HSBC' },
+  { label: 'Abu Dhabi Commercial Bank (ADCB)', value: 'Abu Dhabi Commercial Bank (ADCB)' },
+  { label: 'Abu Dhabi Islamic Bank (ADIB)', value: 'Abu Dhabi Islamic Bank (ADIB)' },
+  { label: 'Ajman Bank', value: 'Ajman Bank' },
+  { label: 'Al Hilal Bank', value: 'Al Hilal Bank' },
+  { label: 'Al Maryah Community Bank', value: 'Al Maryah Community Bank' },
+  { label: 'Bank of Sharjah', value: 'Bank of Sharjah' },
+  { label: 'Commercial Bank International', value: 'Commercial Bank International' },
+  { label: 'Commercial Bank of Dubai (CBD)', value: 'Commercial Bank of Dubai (CBD)' },
+  { label: 'Dubai Islamic Bank (DIB)', value: 'Dubai Islamic Bank (DIB)' },
+  { label: 'Emirates Islamic Bank', value: 'Emirates Islamic Bank' },
+  { label: 'Emirates Investment Bank', value: 'Emirates Investment Bank' },
+  { label: 'Invest Bank', value: 'Invest Bank' },
+  { label: 'Mashreq Bank', value: 'Mashreq Bank' },
+  { label: 'National Bank of Fujairah', value: 'National Bank of Fujairah' },
+  { label: 'National Bank of Ras Al Khaimah', value: 'National Bank of Ras Al Khaimah' },
+  { label: 'National Bank of Umm Al Quwain', value: 'National Bank of Umm Al Quwain' },
+  { label: 'Sharjah Islamic Bank', value: 'Sharjah Islamic Bank' },
+  { label: 'United Arab Bank', value: 'United Arab Bank' },
+  { label: 'Wio Bank', value: 'Wio Bank' },
+  { label: 'Zand Bank', value: 'Zand Bank' },
+  { label: 'Other', value: 'Other' },
 ];
 
 function BankAccountCard({
@@ -150,6 +167,8 @@ function BankAccountForm({
         onValueChange={setBankName}
         options={BANK_OPTIONS}
         placeholder={selectedBankLabel || 'Select Bank'}
+        searchable
+        searchPlaceholder="Search Bank Name"
       />
       <TouchableOpacity
         style={[styles.saveButton, { marginTop: 16, alignSelf: 'flex-start' }]}

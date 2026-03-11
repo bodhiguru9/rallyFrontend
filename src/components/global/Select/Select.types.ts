@@ -18,4 +18,6 @@ export interface SelectProps {
   disabled?: boolean;
   inputStyle?: object;
   textStyle?: object;
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }

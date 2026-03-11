@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, Modal, FlatList } from 'react-native';
+import { TouchableOpacity, Modal, FlatList, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { Check, ChevronDown, X } from 'lucide-react-native';
 import { colors, spacing } from '@theme';
 import type { SelectProps } from './Select.types';
 import { styles } from './style/Select.styles';
 import { TextDs } from '@designSystem/atoms/TextDs';
 import { FlexView } from '@designSystem/atoms/FlexView';
+import { SearchInput } from '../SearchInput/SearchInput';
 
 export const Select: React.FC<SelectProps> = ({
   label,
@@ -22,8 +23,15 @@ export const Select: React.FC<SelectProps> = ({
   disabled = false,
   inputStyle,
   textStyle,
+  searchable = false,
+  searchPlaceholder = 'Search...',
 }) => {
   const [showPicker, setShowPicker] = useState(autoOpen && !disabled);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredOptions = searchable
+    ? options.filter((opt) => opt.label.toLowerCase().includes(searchQuery.toLowerCase()))
+    : options;
 
   const selectedOption = options.find(opt => opt.value === value);
 
@@ -38,6 +46,7 @@ export const Select: React.FC<SelectProps> = ({
 
   const handleClose = () => {
     setShowPicker(false);
+    setSearchQuery('');
     if (onModalClose) {
       onModalClose();
     }
@@ -85,49 +94,66 @@ export const Select: React.FC<SelectProps> = ({
         animationType="fade"
         onRequestClose={handleClose}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={handleClose}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+          style={{ flex: 1 }}
         >
-          <FlexView style={styles.modalContent}>
-            <FlexView style={styles.modalHeader}>
-              <TextDs style={styles.modalTitle}>{label || 'Select'}</TextDs>
-              <TouchableOpacity
-                onPress={handleClose}
-                style={styles.closeButton}
-              >
-                <X size={24} color={colors.text.primary} />
-              </TouchableOpacity>
-            </FlexView>
-            <FlatList
-              data={options}
-              keyExtractor={item => item.value}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.optionItem,
-                    value === item.value && styles.optionItemSelected,
-                  ]}
-                  onPress={() => handleSelect(item.value)}
-                  activeOpacity={0.7}
-                >
-                  <TextDs
-                    style={[
-                      styles.optionText,
-                      value === item.value && styles.optionTextSelected,
-                    ]}
-                  >
-                    {item.label}
-                  </TextDs>
-                  {value === item.value && (
-                    <Check size={20} color={colors.primary} />
-                  )}
-                </TouchableOpacity>
-              )}
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity
+              style={{ ...StyleSheet.absoluteFillObject }}
+              activeOpacity={1}
+              onPress={handleClose}
             />
-          </FlexView>
-        </TouchableOpacity>
+            <FlexView style={[styles.modalContent, { flexShrink: 1 }]}>
+              <FlexView style={styles.modalHeader}>
+                <TextDs style={styles.modalTitle}>{label || 'Select'}</TextDs>
+                <TouchableOpacity
+                  onPress={handleClose}
+                  style={styles.closeButton}
+                >
+                  <X size={24} color={colors.text.primary} />
+                </TouchableOpacity>
+              </FlexView>
+              {searchable && (
+                <FlexView style={{ padding: spacing.base, paddingBottom: 0 }}>
+                  <SearchInput
+                    placeholder={searchPlaceholder}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+                </FlexView>
+              )}
+              <FlatList
+                style={{ flexShrink: 1, marginTop: spacing.sm }}
+                data={filteredOptions}
+                keyExtractor={item => item.value}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.optionItem,
+                      value === item.value && styles.optionItemSelected,
+                    ]}
+                    onPress={() => handleSelect(item.value)}
+                    activeOpacity={0.7}
+                  >
+                    <TextDs
+                      style={[
+                        styles.optionText,
+                        value === item.value && styles.optionTextSelected,
+                      ]}
+                    >
+                      {item.label}
+                    </TextDs>
+                    {value === item.value && (
+                      <Check size={20} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                )}
+                keyboardShouldPersistTaps="handled"
+              />
+            </FlexView>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </FlexView>
   );
