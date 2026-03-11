@@ -64,7 +64,7 @@ export const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   generalSection: {
-    backgroundColor: '#D8EBE4',
+    backgroundColor: '#ffffff',
     borderRadius: borderRadius.lg,
     padding: spacing.base,
     paddingVertical: spacing.md,
@@ -92,15 +92,18 @@ export const styles = StyleSheet.create({
   selectContainer: {
     marginTop: 0,
     marginBottom: 0,
+    backgroundColor: 'white'
   },
   selectInput: {
+    backgroundColor: 'white',
     height: 44,
     borderRadius: 12,
     paddingVertical: 4,
-    paddingHorizontal: 13,
+    paddingHorizontal: 0,
   },
   selectText: {
-    fontSize: 14,
+    textAlign: 'right',
+    fontSize: 12,
   },
   toggleContainer: {
     paddingVertical: spacing.md,

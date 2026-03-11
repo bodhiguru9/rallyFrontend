@@ -314,6 +314,7 @@ const styles = StyleSheet.create({
         marginBottom: spacing.sm,
     },
     trigger: {
+        boxShadow: colors.glass.boxShadow.light,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -390,6 +391,7 @@ const styles = StyleSheet.create({
     },
     selectedOption: {
         backgroundColor: colors.interactive.hover,
+        boxShadow: colors.glass.boxShadow.light,
     },
     disabledOption: {
         opacity: 0.5,

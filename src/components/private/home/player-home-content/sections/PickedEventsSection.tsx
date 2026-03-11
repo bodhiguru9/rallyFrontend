@@ -179,15 +179,14 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
       grouped[dateKey].push(event);
     });
 
+    // Sort events within each date group chronologically (oldest to newest)
+    Object.keys(grouped).forEach(key => {
+      grouped[key].sort((a, b) => new Date(a.eventDateTime).getTime() - new Date(b.eventDateTime).getTime());
+    });
+
+    // Sort the date groups chronologically (oldest to newest)
     return Object.entries(grouped).sort((a, b) => {
-      const dateA = a[0];
-      const dateB = b[0];
-      const dayA = parseInt(dateA.split(' ')[0]) || 0;
-      const dayB = parseInt(dateB.split(' ')[0]) || 0;
-      if (dateA.includes(dateB.split(' ')[1]) || dateB.includes(dateA.split(' ')[1])) {
-        return dayA - dayB;
-      }
-      return dateA.localeCompare(dateB);
+      return new Date(a[1][0].eventDateTime).getTime() - new Date(b[1][0].eventDateTime).getTime();
     });
   }, [filteredEvents]);
 

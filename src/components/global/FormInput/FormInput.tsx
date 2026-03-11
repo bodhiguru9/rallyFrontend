@@ -54,7 +54,7 @@ export const FormInput: React.FC<FormInputProps> = ({
   };
 
   // For multiline inputs (like event descriptions), use system font to ensure emoji support
-  const inputStyle = textInputProps.multiline 
+  const inputStyle = textInputProps.multiline
     ? [styles.input, { fontFamily: 'System' }, style]
     : [styles.input, style];
 
@@ -83,6 +83,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
+    boxShadow: colors.glass.boxShadow.light,
     gap: spacing.sm,
     minHeight: 44,
   },

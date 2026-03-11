@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TextDs,  FlexView } from '@components';
+import { TextDs, FlexView } from '@components';
 import { ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Plus } from 'lucide-react-native';
@@ -78,7 +78,7 @@ export const PaymentMethodsScreen: React.FC = () => {
     try {
       setIsAddingCard(true);
       const newCard = await cardService.addCard(cardData);
-      
+
       // Map API response to PaymentCard format
       const mappedCard: PaymentCard = {
         id: newCard.cardId,
@@ -91,7 +91,7 @@ export const PaymentMethodsScreen: React.FC = () => {
         createdAt: newCard.createdAt,
         updatedAt: newCard.updatedAt,
       };
-      
+
       setCards((prevCards) => [...prevCards, mappedCard]);
       setShowAddCardModal(false);
     } catch (error) {
@@ -207,7 +207,7 @@ export const PaymentMethodsScreen: React.FC = () => {
                 activeOpacity={0.7}
                 disabled={isAddingCard}
               >
-                <Plus size={20} color={colors.primary} />
+                <Plus size={15} color={colors.primary} />
                 <TextDs style={styles.addCardText}>Add Card</TextDs>
               </TouchableOpacity>
             </>

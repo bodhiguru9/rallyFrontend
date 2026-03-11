@@ -33,8 +33,8 @@ export const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   removeButtonText: {
-    ...getFontStyle(8, 'semibold'),
-    color: colors.text.white,
+    ...getFontStyle(10, 'semibold'),
+    color: 'red',
   },
 });
 

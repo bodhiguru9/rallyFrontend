@@ -4,7 +4,7 @@ import { colors, spacing, borderRadius, getFontStyle } from '@theme';
 export const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: colors.surface.overlay,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
@@ -37,6 +37,7 @@ export const styles = StyleSheet.create({
     marginBottom: spacing.base,
     backgroundColor: '#FFFFFF', // White background for better visibility
     borderRadius: borderRadius.lg,
+    boxShadow: colors.glass.boxShadow.light,
     paddingHorizontal: spacing.md,
     minHeight: 48, // Ensure proper height
   },
@@ -49,7 +50,7 @@ export const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   forgotPasswordText: {
-    ...getFontStyle(12, 'regular'),
+    ...getFontStyle(14, 'bold'),
     color: colors.primary,
   },
   confirmButton: {

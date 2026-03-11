@@ -19,7 +19,7 @@ interface DateGroupProps {
 export const DateGroup: React.FC<DateGroupProps> = ({ events, onEventPress, onBookmark, showTimeline = true, showStatus = true }) => {
   const hasOngoing = events.some(e => e.booking?.bookingStatus === 'ongoing');
   const firstEventDate = events[0]?.eventDateTime ? new Date(events[0].eventDateTime) : new Date();
-  const dateFormatted = moment(firstEventDate).format('ddd D MMM');
+  const dateFormatted = moment(firstEventDate).format('D MMM, dddd');
 
   return (
     <FlexView flexDirection="row" alignItems="stretch" width={'100%'} overflow="hidden">

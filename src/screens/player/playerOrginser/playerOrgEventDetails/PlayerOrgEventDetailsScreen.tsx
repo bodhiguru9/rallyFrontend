@@ -122,7 +122,6 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
   const handleEventPress = (eventId: string) => navigation.navigate('EventDetails', { eventId });
   const handlePackagePress = (packageId: string) => navigation.navigate('PlanDetails', { packageId });
   const handleBookmark = (eventId: string) => logger.info('Bookmark event:', eventId);
-
   // --- Data Fetching & Resolution Logic ---
   const [resolvedCommunityName, setResolvedCommunityName] = useState<string | undefined>(communityName);
   const organiserIdNum = useMemo(() => organiserId ? parseInt(organiserId.toString(), 10) : null, [organiserId]);
@@ -267,11 +266,15 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(event);
     });
+
+    // Sort events within each date group chronologically (oldest to newest)
+    Object.keys(grouped).forEach(key => {
+      grouped[key].sort((a, b) => new Date(a.eventDateTime).getTime() - new Date(b.eventDateTime).getTime());
+    });
+
+    // Sort the date groups chronologically (oldest to newest)
     return Object.entries(grouped).sort((a, b) => {
-      const [dayA, monthA] = a[0].split(' ');
-      const [dayB, monthB] = b[0].split(' ');
-      if (monthA === monthB) return parseInt(dayA) - parseInt(dayB);
-      return a[0].localeCompare(b[0]);
+      return new Date(a[1][0].eventDateTime).getTime() - new Date(b[1][0].eventDateTime).getTime();
     });
   }, [filteredEvents]);
 

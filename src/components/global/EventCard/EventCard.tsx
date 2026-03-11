@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TouchableOpacity, Image, StyleSheet, View } from 'react-native';
+import { Users } from 'lucide-react-native';
 import { colors, spacing, borderRadius, avatarSize } from '@theme';
 import { shareEvent } from '@utils/share-utils';
 import { FlexView } from '@designSystem/atoms/FlexView';
@@ -13,6 +14,7 @@ import { Card } from '../Card';
 import { Title } from '../Title';
 import { Subtitle } from '../Subtitle';
 import { ParticipantProfiles } from '@designSystem/materials';
+import { MembersModal } from '@screens/event-details/MembersModal';
 import type { EventStatusBadgeVariant } from '@components/global/event-status-badge/EventStatusBadge.types';
 import type { EventData } from '@app-types';
 import type { PlayerBooking } from '@services/booking-service';
@@ -40,11 +42,19 @@ export const EventCard: React.FC<EventCardProps> = ({
   hideCreator = false,
   showStatus = false,
   spotsStatusLabel,
-  showRevenue = false,
-  disableTags = false,
 }) => {
+  const [isMembersModalVisible, setIsMembersModalVisible] = useState(false);
+
   const handlePress = () => {
     onPress(id);
+  };
+
+  const handleOpenMembersModal = () => {
+    setIsMembersModalVisible(true);
+  };
+
+  const handleCloseMembersModal = () => {
+    setIsMembersModalVisible(false);
   };
 
   // Format date for display: "Sat 24 Oct, 1:00 - 2:00 PM"
@@ -99,6 +109,7 @@ export const EventCard: React.FC<EventCardProps> = ({
     group: 'socialIcon',
   };
 
+  const sportKey = event.eventSports?.[0]?.toLowerCase() ?? '';
   const eventTypeKey = String(event.eventType ?? '').toLowerCase();
 
   // const SportIcon = (sportIconMap[sportKey] ?? 'footballIcon') as any;
@@ -149,7 +160,6 @@ export const EventCard: React.FC<EventCardProps> = ({
                   variant="orange"
                   searchType="sport"
                   size="small"
-                  disabled={disableTags}
                 />
               )}
               {event.eventType && (
@@ -158,7 +168,6 @@ export const EventCard: React.FC<EventCardProps> = ({
                   icon={EventTypeIcon}
                   searchType="eventType"
                   size="small"
-                  disabled={disableTags}
                 />
               )}
             </FlexView>
@@ -207,7 +216,7 @@ export const EventCard: React.FC<EventCardProps> = ({
           <FlexView flexDirection="row" mt={spacing.sm} gap={spacing.base} alignItems="center">
             <ParticipantProfiles
               participants={(event as EventData).participants ?? []}
-              onViewAllPress={handlePress}
+              onViewAllPress={handleOpenMembersModal}
             />
             {/* spots info */}
             {spotsStatusLabel ? (
@@ -240,47 +249,54 @@ export const EventCard: React.FC<EventCardProps> = ({
               })()
             )}
           </FlexView>
-          {(() => {
-            if (showRevenue) {
-              const eventData = event as EventData;
-              const playerBooking = event as PlayerBooking;
-              const spotsFilled = eventData.spotsInfo?.spotsBooked ??
-                (eventData as any).eventTotalAttendNumber ??
-                playerBooking.eventTotalAttendNumber ??
-                0;
-              const price = event.eventPricePerGuest ?? 0;
-              const revenue = spotsFilled * price;
-
-              // Formatting e.g. 1.2k
-              const formattedRevenue = revenue >= 1000 
-                ? `${(revenue / 1000).toFixed(1).replace(/\.0$/, '')}k`
-                : revenue.toString();
-
-              return (
-                <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
-                  <TextDs size={12} weight="medium" color="blueGray">Revenue</TextDs>
-                  <TextDs size={16} weight="bold" color="success">
-                    AED {formattedRevenue}
-                  </TextDs>
-                </FlexView>
-              );
-            }
-
-            if (!hidePrice) {
-              return (
-                <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
-                  <ImageDs image="DhiramIcon" size={14} />
-                  <TextDs size={18} weight="semibold" color="blueGray">
-                    {event.eventPricePerGuest}
-                  </TextDs>
-                </FlexView>
-              );
-            }
-
-            return null;
-          })()}
+          {!hidePrice && (
+            <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
+              <ImageDs image="DhiramIcon" size={14} />
+              <TextDs size={18} weight="semibold" color="blueGray">
+                {event.eventPricePerGuest}
+              </TextDs>
+            </FlexView>
+          )}
         </FlexView>
       </Card>
+
+      {/* Members Modal – shown when user taps "View All" on participant avatars */}
+      <MembersModal
+        visible={isMembersModalVisible}
+        eventTitle={event.eventName ?? 'Event'}
+        organizerName={
+          (event as EventData).creator?.fullName ||
+          (event as EventData).eventCreatorName ||
+          (event as PlayerBooking).creator?.fullName ||
+          'Unknown Organizer'
+        }
+        participants={
+          (event as EventData).participants?.map((p) => ({
+            userId: p.userId,
+            userType: p.userType || 'player',
+            email: p.email || '',
+            mobileNumber: p.mobileNumber || '',
+            profilePic: p.profilePic,
+            fullName: p.fullName,
+            dob: p.dob,
+            gender: p.gender,
+            sport1: p.sport1,
+            sport2: p.sport2,
+            joinedAt: p.joinedAt,
+          })) ?? []
+        }
+        spotsFilled={
+          (event as EventData).spotsInfo?.spotsBooked ??
+          (event as PlayerBooking).eventTotalAttendNumber ??
+          0
+        }
+        totalSpots={
+          (event as EventData).spotsInfo?.totalSpots ??
+          (event as PlayerBooking).eventMaxGuest ??
+          0
+        }
+        onClose={handleCloseMembersModal}
+      />
     </TouchableOpacity>
   );
 };

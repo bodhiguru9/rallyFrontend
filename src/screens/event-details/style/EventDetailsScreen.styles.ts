@@ -7,26 +7,26 @@ export const styles = StyleSheet.create({
     experimental_backgroundImage: colors.gradient.mainBackground,
   },
   persistentFooter: {
-  // Remove position: 'absolute', bottom: 0, etc.
-  backgroundColor: '#FFFDEF80', // Matches the modal background
-  borderTopLeftRadius: 24,
-  borderTopRightRadius: 24,
-  // Shadow to give it that "elevated" look from the image
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: -4 },
-  shadowOpacity: 0.1,
-  shadowRadius: 10,
-  elevation: 20,
-},
-footerTotalRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  paddingBottom: spacing.sm,
-  marginBottom: spacing.sm,
-  borderBottomWidth: 1,
-  borderBottomColor: '#F0F0F0', // Very light divider
-},
+    // Remove position: 'absolute', bottom: 0, etc.
+    backgroundColor: '#FFFDEF80', // Matches the modal background
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    // Shadow to give it that "elevated" look from the image
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 20,
+  },
+  footerTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: spacing.sm,
+    marginBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0', // Very light divider
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -380,28 +380,28 @@ footerTotalRow: {
   cancelButtonTextDisabled: {
     color: colors.text.secondary,
   },
-//   persistentFooter: {
-//   position: 'absolute',
-//   bottom: 0,
-//   left: 0,
-//   right: 0,
-//   backgroundColor: 'white',
-//   borderTopLeftRadius: 24, // Matches the rounded look in your image
-//   borderTopRightRadius: 24,
-//   // Shadow to separate it from the ScrollView content
-//   shadowColor: '#000',
-//   shadowOffset: { width: 0, height: -4 },
-//   shadowOpacity: 0.1,
-//   shadowRadius: 8,
-//   elevation: 10,
-// },
-// footerTotalRow: {
-//   flexDirection: 'row',
-//   justifyContent: 'space-between',
-//   alignItems: 'center',
-//   paddingBottom: spacing.sm,
-//   marginBottom: spacing.sm,
-//   borderBottomWidth: 1,
-//   borderBottomColor: '#F0F0F0', // Light divider
-// }
+  //   persistentFooter: {
+  //   position: 'absolute',
+  //   bottom: 0,
+  //   left: 0,
+  //   right: 0,
+  //   backgroundColor: 'white',
+  //   borderTopLeftRadius: 24, // Matches the rounded look in your image
+  //   borderTopRightRadius: 24,
+  //   // Shadow to separate it from the ScrollView content
+  //   shadowColor: '#000',
+  //   shadowOffset: { width: 0, height: -4 },
+  //   shadowOpacity: 0.1,
+  //   shadowRadius: 8,
+  //   elevation: 10,
+  // },
+  // footerTotalRow: {
+  //   flexDirection: 'row',
+  //   justifyContent: 'space-between',
+  //   alignItems: 'center',
+  //   paddingBottom: spacing.sm,
+  //   marginBottom: spacing.sm,
+  //   borderBottomWidth: 1,
+  //   borderBottomColor: '#F0F0F0', // Light divider
+  // }
 });

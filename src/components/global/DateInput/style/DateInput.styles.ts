@@ -3,6 +3,7 @@ import { colors, spacing, borderRadius, getFontStyle } from '@theme';
 
 export const styles = StyleSheet.create({
   inputContainer: {
+    boxShadow: colors.glass.boxShadow.light,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.glass.background.white,
