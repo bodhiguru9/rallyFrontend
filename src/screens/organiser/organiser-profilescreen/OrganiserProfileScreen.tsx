@@ -155,7 +155,7 @@ export const OrganiserProfileScreen: React.FC = () => {
         />
 
         <UpcomingEventsSection
-          events={(createdEventsData?.data?.events || []).filter(e => e.eventStatus === 'upcoming')}
+          events={(createdEventsData?.data?.events || []).filter(e => e.eventStatus === 'upcoming' || (e.eventFrequency && e.eventFrequency.length > 0))}
           onEventPress={handleEventPress}
           onEventShare={handleEventShare}
         />

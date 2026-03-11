@@ -56,7 +56,7 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
 
   // --- Filter Memos ---
   const sportsFilters = useMemo(() => {
-    if (!filterOptionsData?.sports) return [];
+    if (!filterOptionsData?.sports) { return []; }
 
     const getSportIcon = (sportName: string): string | undefined => {
       const sportLower = sportName.toLowerCase().replace(/\s+/g, '');
@@ -81,7 +81,7 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
   }, [filterOptionsData, sportsFilterStates]);
 
   const eventTypeFilters = useMemo(() => {
-    if (!filterOptionsData?.eventTypes) return [];
+    if (!filterOptionsData?.eventTypes) { return []; }
     return filterOptionsData.eventTypes.map((type, index) => ({
       id: `event-type-${index}`,
       label: type,
@@ -91,7 +91,7 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
   }, [filterOptionsData, eventTypeFilterStates]);
 
   const locationFilters = useMemo(() => {
-    if (!filterOptionsData?.locations) return [];
+    if (!filterOptionsData?.locations) { return []; }
     return filterOptionsData.locations.map((loc, index) => ({
       id: `location-${index}`,
       label: loc,
@@ -101,7 +101,7 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
   }, [filterOptionsData, locationFilterStates]);
 
   const priceFilters = useMemo(() => {
-    if (!filterOptionsData?.prices) return [];
+    if (!filterOptionsData?.prices) { return []; }
     return filterOptionsData.prices.map((p, index) => ({
       id: `price-${index}`,
       label: `${p} AED`,
@@ -129,7 +129,7 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
   // First fetch user data by organiserId to get communityName if not provided
   const { data: userData, isLoading: isLoadingUser } = useQuery({
     queryKey: ['organiser-user', organiserId],
-    queryFn: () => userService.getUserById(organiserId!),
+    queryFn: () => userService.getUserById(organiserId as string),
     enabled: !!organiserId && !communityName,
     staleTime: 0, // Always fetch fresh data
   });
@@ -144,7 +144,7 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
 
   const { data: communityDetailsResponse, isLoading: isLoadingCommunity, error } = useQuery<CommunityDetailsResponse>({
     queryKey: ['community-details', resolvedCommunityName],
-    queryFn: () => userService.getCommunityDetails(resolvedCommunityName!, 1),
+    queryFn: () => userService.getCommunityDetails(resolvedCommunityName as string, 1),
     enabled: !!resolvedCommunityName,
     staleTime: 0, // Always fetch fresh data to get latest profileVisibility
   });
@@ -153,7 +153,7 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
   React.useEffect(() => {
     if (!communityName && !resolvedCommunityName && organiserIdNum) {
       const found = topOrganisers.find(org => org.userId === organiserIdNum);
-      if (found?.communityName) setResolvedCommunityName(found.communityName);
+      if (found?.communityName) { setResolvedCommunityName(found.communityName); }
     }
   }, [communityName, resolvedCommunityName, organiserIdNum, topOrganisers]);
 
@@ -166,7 +166,7 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
 
   const organiserData = useMemo(() => {
     const org = communityDetailsResponse?.data?.organiser;
-    if (!org) return null;
+    if (!org) { return null; }
 
     console.log('[PlayerOrgEventDetailsScreen] Organiser API Response:', {
       org
@@ -263,7 +263,7 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
     filteredEvents.forEach(event => {
       const d = new Date(event.eventDateTime);
       const key = `${d.getDate()} ${d.toLocaleString('en', { month: 'short' })}`;
-      if (!grouped[key]) grouped[key] = [];
+      if (!grouped[key]) { grouped[key] = []; }
       grouped[key].push(event);
     });
 
