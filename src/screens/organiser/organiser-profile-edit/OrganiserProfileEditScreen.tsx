@@ -11,8 +11,11 @@ import { useAuthStore } from '@store';
 import { colors } from '@theme';
 import { sportOptions } from '@data';
 import { useUpdateProfile } from '@hooks/use-update-profile';
-import { FormInput, Select, UpdateableField } from '@components/global';
+import { useUpdateProfileImage } from '@hooks/use-update-profile-image';
+import { Avatar, FormInput, Select, UpdateableField } from '@components/global';
 import { DocumentUpload } from '../create-event/components/DocumentUpload/DocumentUpload';
+import { showImagePickerOptions } from '@utils/image-picker';
+import { getUserInitials } from '@utils';
 import { styles } from './style/OrganiserProfileEditScreen.styles';
 import { userService } from '@services/user-service';
 
@@ -34,6 +37,7 @@ export const OrganiserProfileEditScreen: React.FC = () => {
   const { user } = useAuthStore();
   const userId = useAuthStore((s) => s.user?.userId || 0);
   const { updateProfile, isLoading } = useUpdateProfile();
+  const { updateProfileImage, isLoading: isUpdatingImage } = useUpdateProfileImage();
 
   const { data: userResponse, isLoading: isLoadingUser } = useQuery({
     queryKey: ['organiser-profile-edit', userId],
@@ -42,8 +46,6 @@ export const OrganiserProfileEditScreen: React.FC = () => {
   });
 
   const fetchedUser = userResponse?.data?.user;
-
-  const [initSource, setInitSource] = useState<'store' | 'api' | null>(null);
 
   const [fullName, setFullName] = useState('');
   const [communityName, setCommunityName] = useState('');
@@ -65,41 +67,40 @@ export const OrganiserProfileEditScreen: React.FC = () => {
   }, [sport1, sport2]);
 
   useEffect(() => {
-    // If API data is available, it should always be the source of truth for prefilling.
-    if (fetchedUser) {
-      setFullName(fetchedUser.fullName || '');
-      setCommunityName(fetchedUser.communityName || '');
-      setBio(fetchedUser.bio || '');
-      setInstagramLink(fetchedUser.instagramLink || '');
-      setWhatsappNumber(fetchedUser.mobileNumber || '');
-      setEmail(fetchedUser.email || '');
+    // We defer the updates using queueMicrotask to avoid React's cascading render warning
+    queueMicrotask(() => {
+      // If API data is available, it should always be the source of truth for prefilling.
+      if (fetchedUser) {
+        setFullName(fetchedUser.fullName || '');
+        setCommunityName(fetchedUser.communityName || '');
+        setBio(fetchedUser.bio || '');
+        setInstagramLink(fetchedUser.instagramLink || '');
+        setWhatsappNumber(fetchedUser.mobileNumber || '');
+        setEmail(fetchedUser.email || '');
 
-      const s1 = fetchedUser.sport1 || fetchedUser.sports?.[0] || '';
-      const s2 = fetchedUser.sport2 || fetchedUser.sports?.[1] || '';
-      setSport1(normalizeSportValue(s1));
-      setSport2(normalizeSportValue(s2));
+        const s1 = fetchedUser.sport1 || fetchedUser.sports?.[0] || '';
+        const s2 = fetchedUser.sport2 || fetchedUser.sports?.[1] || '';
+        setSport1(normalizeSportValue(s1));
+        setSport2(normalizeSportValue(s2));
+        return;
+      }
 
-      setInitSource('api');
-      return;
-    }
+      // Fallback to auth-store only if API hasn't returned yet.
+      if (!fetchedUser && user) {
+        setFullName(user.fullName || '');
+        setCommunityName(user.communityName || '');
+        setBio(user.bio || '');
+        setInstagramLink((user as any).instagramLink || '');
+        setWhatsappNumber(user.mobileNumber || '');
+        setEmail(user.email || '');
 
-    // Fallback to auth-store only if API hasn't returned yet.
-    if (!fetchedUser && user && initSource === null) {
-      setFullName(user.fullName || '');
-      setCommunityName(user.communityName || '');
-      setBio(user.bio || '');
-      setInstagramLink((user as any).instagramLink || '');
-      setWhatsappNumber(user.mobileNumber || '');
-      setEmail(user.email || '');
-
-      const s1 = user.sport1 || user.sports?.[0] || '';
-      const s2 = user.sport2 || user.sports?.[1] || '';
-      setSport1(normalizeSportValue(s1));
-      setSport2(normalizeSportValue(s2));
-
-      setInitSource('store');
-    }
-  }, [fetchedUser, initSource, user]);
+        const s1 = user.sport1 || user.sports?.[0] || '';
+        const s2 = user.sport2 || user.sports?.[1] || '';
+        setSport1(normalizeSportValue(s1));
+        setSport2(normalizeSportValue(s2));
+      }
+    });
+  }, [fetchedUser, user]);
 
   if (!user) {return null;}
 
@@ -137,6 +138,13 @@ export const OrganiserProfileEditScreen: React.FC = () => {
     const success = await updateProfile(updateData);
     if (success) {
       navigation.goBack();
+    }
+  };
+
+  const handleEditProfileImage = async () => {
+    const imageResult = await showImagePickerOptions();
+    if (imageResult && imageResult.uri) {
+      await updateProfileImage(imageResult.uri);
     }
   };
 
@@ -181,6 +189,31 @@ export const OrganiserProfileEditScreen: React.FC = () => {
       ) : (
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <FlexView style={styles.section}>
+          <FlexView style={{ alignItems: 'center', marginBottom: 24, paddingVertical: 16 }}>
+             <TouchableOpacity activeOpacity={0.8} onPress={handleEditProfileImage} disabled={isUpdatingImage}>
+                <Avatar 
+                  imageUri={user.profilePic as string} 
+                  initials={getUserInitials(user.fullName)} 
+                  size="xxl" 
+                />
+                <FlexView style={{
+                  position: 'absolute',
+                  bottom: -2,
+                  right: -2,
+                  backgroundColor: colors.background.light,
+                  padding: 6,
+                  borderRadius: 16,
+                  borderWidth: 2,
+                  borderColor: colors.background.primary,
+                }}>
+                  <TextDs size={10} color='blueGray' weight='medium'>Edit</TextDs>
+                </FlexView>
+             </TouchableOpacity>
+             {isUpdatingImage && (
+                <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 8 }} />
+              )}
+          </FlexView>
+
           <FormInput
             label="Full Name"
             placeholder="What should people remember you as?"

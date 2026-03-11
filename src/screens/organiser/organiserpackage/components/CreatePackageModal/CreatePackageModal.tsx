@@ -1,17 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TextDs, FlexView, ImageDs } from '@components';
-import { ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { BottomSheetModal } from '@components/global/bottom-sheet-modal/BottomSheetModal';
+import { ScrollView, TouchableOpacity, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { FormInput } from '@components/global';
 import { Dropdown } from '@designSystem/molecules/dropdown';
 import { sportOptions } from '@data';
-import { spacing } from '@theme';
 import { styles } from './style/CreatePackageModal.styles';
 import { useCreatePackage } from '@hooks/organiser';
-
-const HANDLE_AREA_HEIGHT = 28;
-const CONFIRM_BUTTON_AREA_HEIGHT = 56;
-const MAX_SHEET_RATIO = 0.9;
 
 type EventType = 'social' | 'class' | 'tournament';
 
@@ -45,25 +39,6 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ visible,
   const [price, setPrice] = useState('');
 
   const [eventType, setEventType] = useState<EventType>('social');
-  const [headerHeight, setHeaderHeight] = useState(0);
-  const [scrollContentHeight, setScrollContentHeight] = useState(0);
-
-  const maxSheetHeight = useMemo(
-    () => Dimensions.get('window').height * MAX_SHEET_RATIO,
-    [],
-  );
-  const sheetHeight = useMemo(() => {
-    const total =
-      HANDLE_AREA_HEIGHT +
-      headerHeight +
-      scrollContentHeight +
-      CONFIRM_BUTTON_AREA_HEIGHT +
-      (headerHeight > 0 && scrollContentHeight > 0 ? spacing.base : 0);
-    if (total <= HANDLE_AREA_HEIGHT) {
-      return maxSheetHeight;
-    }
-    return Math.min(total, maxSheetHeight);
-  }, [headerHeight, scrollContentHeight, maxSheetHeight]);
 
   // Reset form each time the modal opens so the next open doesn't get "stuck"
   useEffect(() => {
@@ -106,23 +81,22 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ visible,
   };
 
   return (
-    <>
-      <BottomSheetModal
-        visible={visible}
-        onClose={handleClose}
-        snapPoints={[sheetHeight + 40]}
-        enablePanDownToClose
-        backgroundStyle={styles.sheetBackground}
-        contentContainerStyle={styles.sheetContent}
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={handleClose}
+    >
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+        style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}
       >
+        <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={handleClose} />
         <FlexView
           column
-          style={styles.contentWrap}
+          style={[styles.sheetBackground, styles.sheetContent, { maxHeight: '90%', minHeight: '60%' }]}
         >
-          <FlexView
-            style={styles.header}
-            onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-          >
+          <FlexView style={styles.header}>
             <TextDs style={styles.title}>Create Package</TextDs>
           </FlexView>
 
@@ -130,7 +104,6 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ visible,
             style={styles.scrollView}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.form}
-            onContentSizeChange={(_, h) => setScrollContentHeight(h)}
           >
             <FlexView glassBg borderWhite width={"100%"} borderRadius={22} py={10} px={16}>
               <TextDs size={14} weight='semibold'>
@@ -239,9 +212,8 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ visible,
             </TextDs>
           </TouchableOpacity>
         </FlexView>
-      </BottomSheetModal>
-
-    </>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 };
 

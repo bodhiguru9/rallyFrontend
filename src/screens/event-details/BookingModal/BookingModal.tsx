@@ -48,7 +48,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   const [isLoadingCards, setIsLoadingCards] = useState(false);
   const [showAddCardModal, setShowAddCardModal] = useState(false);
 
-  const { confirmPayment, initPaymentSheet, presentPaymentSheet } = useStripe();
+  const { confirmPayment } = useStripe();
 
   // Listen for keyboard events to adjust bottom padding inside the modal
   useEffect(() => {

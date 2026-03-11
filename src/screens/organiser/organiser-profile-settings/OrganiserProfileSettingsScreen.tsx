@@ -10,6 +10,7 @@ import { ProfileHeader, ProfileSection, ProfileMenuItem, Toggle } from '@compone
 import { images } from '@assets/images';
 import { getUserInitials } from '@utils';
 import { DeleteAccountModal } from './components/DeleteAccountModal';
+import { ChangePasswordModal } from '../organiser-settings/components/ChangePasswordModal';
 import { useUpdateProfile } from '@hooks/use-update-profile';
 import { styles } from './style/OrganiserProfileSettingsScreen.styles';
 
@@ -23,14 +24,18 @@ export const OrganiserProfileSettingsScreen: React.FC = () => {
   const { user, logout } = useAuthStore();
   const [isPrivateAccount, setIsPrivateAccount] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
-  const { updateProfile, isLoading } = useUpdateProfile();
+  const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
+  const { updateProfile } = useUpdateProfile();
 
-  // Initialize toggle state from user profile
+  // Initialize toggle state from user profile only once
   useEffect(() => {
-    if (user?.profileVisibility) {
-      setIsPrivateAccount(user.profileVisibility === 'private');
+    if (user?.profileVisibility && isPrivateAccount !== (user.profileVisibility === 'private')) {
+      // Use queueMicrotask to defer state update outside of current render cycle
+      queueMicrotask(() => {
+        setIsPrivateAccount(user.profileVisibility === 'private');
+      });
     }
-  }, [user?.profileVisibility]);
+  }, [user?.profileVisibility, isPrivateAccount]);
 
   const handlePrivateAccountToggle = async (value: boolean) => {
     setIsPrivateAccount(value);
@@ -71,7 +76,7 @@ export const OrganiserProfileSettingsScreen: React.FC = () => {
           onEditProfile={() => navigation.navigate('OrganiserProfileEdit')}
         />
 
-        <Pressable style={styles.upgradeCard} onPress={() => { }}>
+        <Pressable style={styles.upgradeCard} onPress={() => navigation.navigate('OrganiserSubscription')}>
           <FlexView style={styles.upgradeIcon}>
             <TextDs style={styles.upgradeIconText}>★</TextDs>
           </FlexView>
@@ -106,7 +111,7 @@ export const OrganiserProfileSettingsScreen: React.FC = () => {
           <ProfileMenuItem
             iconImage={images.key}
             title="Password"
-            onPress={() => navigation.navigate('ForgotPassword')}
+            onPress={() => setChangePasswordModalVisible(true)}
           />
           <ProfileMenuItem
             iconImage={images.creditCard}
@@ -163,6 +168,15 @@ export const OrganiserProfileSettingsScreen: React.FC = () => {
             index: 0,
             routes: [{ name: 'SignIn' }],
           });
+        }}
+      />
+
+      <ChangePasswordModal
+        visible={changePasswordModalVisible}
+        onClose={() => setChangePasswordModalVisible(false)}
+        onForgotPassword={() => {
+          setChangePasswordModalVisible(false);
+          navigation.navigate('ForgotPassword');
         }}
       />
     </SafeAreaView>

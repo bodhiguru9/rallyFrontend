@@ -49,7 +49,7 @@ export const useUpdateProfile = () => {
           sport2: responseUser.sport2,
           sports: responseUser.sports ?? [],
           followingCount: responseUser.followingCount ?? 0,
-          profileVisibility: responseUser.profileVisibility ?? 'private',
+          profileVisibility: responseUser.profileVisibility ?? user?.profileVisibility ?? 'public',
         };
         
         console.log('💾 [useUpdateProfile] Updating auth store with new user data');
@@ -59,7 +59,7 @@ export const useUpdateProfile = () => {
       }
 
       // Invalidate any related queries if needed
-      queryClient.invalidateQueries({ queryKey: ['user', user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['user', user?.id] });
       console.log('🔄 [useUpdateProfile] Invalidated queries for user:', user?.id);
     },
     onError: (error: unknown) => {
