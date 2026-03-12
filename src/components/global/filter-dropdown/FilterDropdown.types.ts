@@ -14,4 +14,6 @@ export interface FilterDropdownProps {
   onToggle: (id: string) => void;
   /** When dropdown opens/closes. Parent should set ScrollView scrollEnabled={!open} so the list scrolls on Android. */
   onOpenChange?: (open: boolean) => void;
+  /** Optional Lucide icon component to render before the label */
+  buttonIcon?: React.ComponentType<{ size?: number; color?: string }>;
 }

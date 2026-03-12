@@ -150,13 +150,13 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <FlexView style={styles.header}>
+      {/* <FlexView style={styles.header}>
         <ArrowIcon variant="left" onClick={() => navigation.goBack()} />
         <TextDs size={14} weight="regular" color="primary">
           Analytics
         </TextDs>
         <FlexView style={styles.headerSpacer} />
-      </FlexView>
+      </FlexView> */}
 
       {isLoading ? (
         <FlexView style={styles.loadingContainer}>

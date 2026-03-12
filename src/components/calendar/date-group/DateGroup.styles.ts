@@ -12,7 +12,7 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     bottom: spacing.base,
     left: '50%',
-    marginLeft: 8,
+    marginLeft: 4,
     alignItems: 'center',
     justifyContent: 'center',
     height: 80,
@@ -26,7 +26,7 @@ export const styles = StyleSheet.create({
   },
   verticalDateText: {
     transform: [{ rotate: '-90deg' }],
-    width: 80,
+    width: 100,
     textAlign: 'center',
   },
 });

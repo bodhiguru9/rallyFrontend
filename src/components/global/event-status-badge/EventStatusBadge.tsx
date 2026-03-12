@@ -24,6 +24,31 @@ const variantStyles: Record<
     label: 'Payment Pending',
     width: 95,
   },
+  'pending-approval': {
+    background: colors.status.warning,
+    label: 'Pending Approval',
+    width: 100,
+  },
+  cancelled: {
+    background: colors.status.error,
+    label: 'Cancelled',
+    width: 65,
+  },
+  'registration-soon': {
+    background: colors.status.info,
+    label: 'Registration Soon',
+    width: 105,
+  },
+  'registration-ended': {
+    background: colors.text.secondary,
+    label: 'Registration Ended',
+    width: 110,
+  },
+  'request-rejected': {
+    background: colors.status.error,
+    label: 'Request Rejected',
+    width: 105,
+  },
 };
 
 export const EventStatusBadge: React.FC<EventStatusBadgeProps> = ({ variant, style }) => {

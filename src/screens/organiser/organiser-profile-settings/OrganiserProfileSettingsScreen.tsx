@@ -125,7 +125,7 @@ export const OrganiserProfileSettingsScreen: React.FC = () => {
           />
           <Toggle
             label="Private Account"
-            description="Toggle off for public"
+            description="(Toggle-off for public)"
             value={isPrivateAccount}
             onValueChange={handlePrivateAccountToggle}
             containerStyle={styles.toggleRow}

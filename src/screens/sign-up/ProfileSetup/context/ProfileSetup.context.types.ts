@@ -27,6 +27,8 @@ export interface IProfileSetupContextValue {
   setFullName: (value: string) => void;
   password: string;
   setPassword: (value: string) => void;
+  confirmPassword: string;
+  setConfirmPassword: (value: string) => void;
   primarySport: string;
   setPrimarySport: (value: string) => void;
   secondarySport: string;

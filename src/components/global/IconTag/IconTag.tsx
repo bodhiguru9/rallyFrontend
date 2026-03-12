@@ -121,6 +121,7 @@ const valueToVariantMap: Record<string, IconTagVariant> = {
   class: 'indigo',
   training: 'green',
   group: 'orange',
+  private: 'gray',
 };
 
 // Add your specific sport mapping here. 
@@ -145,6 +146,7 @@ const valueToIconMap: Record<string, string | LucideIcon> = {
   tournament: 'tournamentIcon',
   training: 'trainingIcon',
   group: 'groupIcon',
+  private: 'privateIcon',
   // You can also map directly to Lucide icons if you prefer:
   // generic_sport: Activity
 };
@@ -179,6 +181,11 @@ const variantStyles: Record<IconTagVariant, { background: string; text: string; 
     background: withOpaqueForAndroid('rgba(206, 237, 195, 0.26)'),
     text: '#639059',
     icon: '#639059',
+  },
+  gray: {
+    background: withOpaqueForAndroid('rgba(200, 200, 200, 0.40)'),
+    text: 'black',
+    icon: 'black',
   },
 };
 

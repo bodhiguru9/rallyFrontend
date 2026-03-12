@@ -69,7 +69,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
         {/* Name and Info */}
         <FlexView style={styles.nameSection}>
-          <FlexView row alignItems='center' mb={spacing.base}>
+          <FlexView row alignItems='center' mb={spacing.sm}>
             <TextDs style={styles.name}>{communityName}</TextDs>
             {isVerified && (
               <FlexView style={styles.verifiedBadge}>
@@ -77,7 +77,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </FlexView>
             )}
           </FlexView>
-          <TextDs style={styles.communityName}>By {name}</TextDs>
+          {/* <TextDs style={styles.communityName}>By {name}</TextDs> */}
 
           {instagramHandle && (
             <FlexView row mb={spacing.base}>
@@ -94,7 +94,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               activeOpacity={0.7}
               disabled={!onHostedPress}
             >
-              <TextDs size={14} weight="semibold" color='blueGray'>{stats.hosted}</TextDs>
+              <TextDs size={16} weight="semibold" color='blueGray'>{stats.hosted}</TextDs>
               <TextDs size={10} weight="regular" color='blueGray'>Hosted</TextDs>
             </TouchableOpacity>
             <TouchableOpacity
@@ -103,7 +103,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               activeOpacity={0.7}
               disabled={!onAttendeesPress}
             >
-              <TextDs size={14} weight="semibold" color='blueGray'>{stats.attendees}</TextDs>
+              <TextDs size={16} weight="semibold" color='blueGray'>{stats.attendees}</TextDs>
               <TextDs size={10} weight="regular" color='blueGray'>Attendees</TextDs>
             </TouchableOpacity>
             <TouchableOpacity
@@ -112,7 +112,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               activeOpacity={0.7}
               disabled={!onSubscribersPress}
             >
-              <TextDs size={14} weight="semibold" color='blueGray'>{stats.subscribers}</TextDs>
+              <TextDs size={16} weight="semibold" color='blueGray'>{stats.subscribers}</TextDs>
               <TextDs size={10} weight="regular" color='blueGray'>Subscribers</TextDs>
             </TouchableOpacity>
           </FlexView>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Animated } from 'react-native';
+import { TouchableOpacity, Animated, Image } from 'react-native';
 import { colors, spacing } from '@theme';
 import type { ToggleProps } from './Toggle.types';
 import { styles } from './style/Toggle.styles';
@@ -13,6 +13,7 @@ export const Toggle: React.FC<ToggleProps> = ({
   containerStyle,
   activeColor,
   inactiveColor,
+  iconImage,
 }) => {
   const [animatedValue] = React.useState(new Animated.Value(value ? 1 : 0));
 
@@ -36,13 +37,18 @@ export const Toggle: React.FC<ToggleProps> = ({
 
   return (
     <FlexView style={[styles.container, containerStyle]}>
-      <FlexView gap={spacing.sm} flex={1}>
-        <TextDs size={14} weight="medium">{label}</TextDs>
-        {description && (
-          <TextDs size={10} weight="regular" color="secondary">
-            {description}
-          </TextDs>
+      <FlexView row alignItems="center" gap={spacing.sm} flex={1}>
+        {iconImage && (
+          <Image source={iconImage} style={{ width: 20, height: 20 }} resizeMode="contain" />
         )}
+        <FlexView gap={2} flex={1}>
+          <TextDs size={14} weight="medium">{label}</TextDs>
+          {description && (
+            <TextDs size={10} weight="regular" color="secondary">
+              {description}
+            </TextDs>
+          )}
+        </FlexView>
       </FlexView>
       <TouchableOpacity
         onPress={() => onValueChange(!value)}

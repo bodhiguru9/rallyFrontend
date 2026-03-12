@@ -20,7 +20,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
 
   return (
     <FlexView gap={spacing.sm} style={containerStyle}>
-      {label && <TextDs size={14} weight="regular">{label}</TextDs>}
+      {label && <TextDs size={14} weight="semibold">{label}</TextDs>}
       <TextInput
         style={[styles.input, { minHeight }, error && styles.inputError, style]}
         placeholderTextColor={colors.text.tertiary}
@@ -47,13 +47,14 @@ export const TextArea: React.FC<TextAreaProps> = ({
 const styles = StyleSheet.create({
   input: {
     backgroundColor: colors.glass.background.white,
+    boxShadow: colors.glass.boxShadow.light,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     ...getFontStyle(12, 'regular'),
     color: colors.text.primary,
     borderWidth: 1,
-    borderColor: colors.border.white,
+    borderColor: colors.glass.background.white,
   },
   inputError: {
     borderColor: colors.status.error,

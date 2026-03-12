@@ -5,7 +5,8 @@ import {
   StatusBar,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Info } from 'lucide-react-native';
@@ -38,6 +39,7 @@ type ProfileSetupScreenNavigationProp = NativeStackNavigationProp<
 const ProfileSetupScreenContent: React.FC = () => {
   const navigation = useNavigation<ProfileSetupScreenNavigationProp>();
   const insets = useSafeAreaInsets();
+  const [organiserStep, setOrganiserStep] = React.useState<1 | 2>(1);
   const {
     email,
     setEmail,
@@ -49,6 +51,8 @@ const ProfileSetupScreenContent: React.FC = () => {
     setFullName,
     password,
     setPassword,
+    confirmPassword,
+    setConfirmPassword,
     // Player-specific
     dateOfBirth,
     gender,
@@ -82,6 +86,21 @@ const ProfileSetupScreenContent: React.FC = () => {
 
   const { data: filterOptions } = useFilterOptions();
 
+  // Sport value → ImageKey string lookup for dropdown icons
+  // Using "yellow" variants since the dropdown has a light background
+  const sportIconLookup: Record<string, string> = {
+    tennis: 'tennisYellow',
+    badminton: 'badmintonYellow',
+    basketball: 'basketballYellow',
+    padel: 'padelYellow',
+    football: 'basketballYellow',
+    cricket: 'cricketYellow',
+    pilates: 'pilatesIcon',
+    running: 'runningIcon',
+    'table-tennis': 'tableTennisYellow',
+    pickleball: 'pickleballIcon',
+  };
+
   // Transform API sports data to Dropdown option format
   const dynamicSportOptions = React.useMemo(() => {
     if (!filterOptions?.sports) {
@@ -89,18 +108,40 @@ const ProfileSetupScreenContent: React.FC = () => {
     }
 
     // Transform and deduplicate to prevent duplicate keys
-    const transformedOptions = filterOptions.sports.map((sport: string) => ({
-      label: sport,
-      value: sport.toLowerCase().replace(/\s+/g, '-'), // Convert "Table-tennis" to "table-tennis"
-    }));
+    const transformedOptions = filterOptions.sports.map((sport: string) => {
+      const value = sport.toLowerCase().replace(/\s+/g, '-');
+      return {
+        label: sport,
+        value,
+        icon: sportIconLookup[value] ?? sportIconLookup[sport.toLowerCase()],
+      };
+    });
 
     // Remove duplicates by value
     const uniqueOptions = transformedOptions.filter(
-      (option: { label: string; value: string }, index: number, self: { label: string; value: string }[]) =>
-        index === self.findIndex((t: { label: string; value: string }) => t.value === option.value)
+      (option, index, self) =>
+        index === self.findIndex((t) => t.value === option.value)
     );
 
     return uniqueOptions;
+  }, [filterOptions]);
+
+  // Transform API locations data to Dropdown option format for City
+  const cityOptions = React.useMemo(() => {
+    if (!filterOptions?.locations?.length) {
+      return [];
+    }
+
+    const transformedOptions = filterOptions.locations.map((location: string) => ({
+      label: location,
+      value: location,
+    }));
+
+    // Remove duplicates by value
+    return transformedOptions.filter(
+      (option: { label: string; value: string }, index: number, self: { label: string; value: string }[]) =>
+        index === self.findIndex((t: { label: string; value: string }) => t.value === option.value)
+    );
   }, [filterOptions]);
 
   // Primary sport options: exclude secondary sport so it does not appear in primary dropdown
@@ -179,6 +220,36 @@ const ProfileSetupScreenContent: React.FC = () => {
     return new Date(year, month - 1, day);
   })() : undefined;
 
+  // Step-1 validation for the organiser "Continue" button
+  const handleOrganiserContinue = () => {
+    if (!fullName.trim()) {
+      Alert.alert('Error', 'Please enter your full name');
+      return;
+    }
+    if (!yourBest) {
+      Alert.alert('Error', 'Please select your role');
+      return;
+    }
+    if (!communityName.trim()) {
+      Alert.alert('Error', 'Please enter your community name');
+      return;
+    }
+    if (!yourCity.trim()) {
+      Alert.alert('Error', 'Please select your city');
+      return;
+    }
+    setOrganiserStep(2);
+  };
+
+  // Back arrow handler — go to step 1 for organisers on step 2, otherwise navigate back
+  const handleBackPress = () => {
+    if (userType === 'organiser' && organiserStep === 2) {
+      setOrganiserStep(1);
+    } else {
+      navigation.goBack();
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background.cream} />
@@ -195,50 +266,56 @@ const ProfileSetupScreenContent: React.FC = () => {
           keyboardShouldPersistTaps="handled"
         >
           {/* Back Button */}
-          <ArrowIcon variant="left" onClick={() => navigation.goBack()} />
+          <ArrowIcon variant="left" onClick={handleBackPress} />
 
           {/* Avatar Upload */}
-          <AvatarUpload
-            initials={getInitials(fullName)}
-            imageUri={avatar || undefined}
-            onPress={handleAvatarPress}
-            size="xxxl"
-          />
-          {userType === 'organiser' && (
-            <TextDs size={12} weight="regular" color="blueGray" style={styles.avatarRequiredHint}>
-              Profile photo is required for organisers
-            </TextDs>
-          )}
+          <FlexView style={{ marginBottom: spacing.xxl }}>
+            <AvatarUpload
+              initials={getInitials(fullName)}
+              imageUri={avatar || undefined}
+              onPress={handleAvatarPress}
+              size="xxxl"
+            />
+            {userType === 'organiser' && (
+              <TextDs size={12} weight="regular" color="blueGray" style={styles.avatarRequiredHint}>
+                Profile photo is required for organisers
+              </TextDs>
+            )}
+          </FlexView>
 
           {/* Form Fields */}
           <FlexView style={styles.formContainer}>
-            {/* Full Name */}
-            <FormInput
-              label="Full Name"
-              placeholder="Amalya Rogers"
-              value={fullName}
-              onChangeText={setFullName}
-              autoCapitalize="words"
-            />
+            {/* Full Name - shown on step 1 for organisers, always for players */}
+            {(userType === 'player' || organiserStep === 1) && (
+              <FormInput
+                label="Full Name"
+                placeholder="Amalya Rogers"
+                value={fullName}
+                onChangeText={setFullName}
+                autoCapitalize="words"
+              />
+            )}
 
-            {/* Email or Phone Number - show the opposite of what was used for signup */}
-            {initialPhoneNumber ? (
-              <FormInput
-                label="Email"
-                placeholder="your.email@example.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            ) : (
-              <FormInput
-                label="Whatsapp Number"
-                placeholder="+91 98765 43210"
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                keyboardType="phone-pad"
-              />
+            {/* Email or Phone Number - show the opposite of what was used for signup (player only; organiser has it in step 1) */}
+            {userType === 'player' && (
+              initialPhoneNumber ? (
+                <FormInput
+                  label="Email"
+                  placeholder="your.email@example.com"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              ) : (
+                <FormInput
+                  label="Whatsapp Number"
+                  placeholder="+91 98765 43210"
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  keyboardType="phone-pad"
+                />
+              )
             )}
 
             {/* Conditional Fields Based on User Type */}
@@ -318,119 +395,187 @@ const ProfileSetupScreenContent: React.FC = () => {
               </>
             ) : (
               <>
-                {/* Organiser-Specific Fields */}
-                <Dropdown
-                  label="You are best described as"
-                  placeholder="Select Role"
-                  options={yourBestOptions}
-                  value={yourBest}
-                  onSelect={(value) => setYourBest(value as 'Organiser' | 'coach' | 'club')}
-                />
+                {/* ─── ORGANISER STEP 1 ─── */}
+                {organiserStep === 1 && (
+                  <>
+                    {/* Role - pill toggles */}
+                    <FlexView gap={spacing.sm}>
+                      <TextDs size={14} weight="semibold">What Describes you best</TextDs>
+                      <FlexView row gap={spacing.sm}>
+                        {(['Organiser', 'Coach', 'Club'] as const).map((role) => (
+                          <TouchableOpacity
+                            key={role}
+                            onPress={() => setYourBest(role === 'Coach' ? 'coach' : role === 'Club' ? 'club' : 'Organiser')}
+                            style={[
+                              styles.rolePill,
+                              yourBest === (role === 'Coach' ? 'coach' : role === 'Club' ? 'club' : 'Organiser') && styles.rolePillActive,
+                            ]}
+                            activeOpacity={0.7}
+                          >
+                            <TextDs
+                              size={14}
+                              weight="medium"
+                              color={yourBest === (role === 'Coach' ? 'coach' : role === 'Club' ? 'club' : 'Organiser') ? 'white' : 'tertiary'}
+                            >
+                              {role}
+                            </TextDs>
+                          </TouchableOpacity>
+                        ))}
+                      </FlexView>
+                    </FlexView>
 
-                {/* Community Name */}
-                <FormInput
-                  label="Community Name"
-                  placeholder="Enter your community or organization name"
-                  value={communityName}
-                  onChangeText={setCommunityName}
-                />
-
-                {/* City */}
-                <FormInput
-                  label="City"
-                  placeholder="Enter your city"
-                  value={yourCity}
-                  onChangeText={setYourCity}
-                />
-
-                {/* Password */}
-                <FormInput
-                  label="Password"
-                  placeholder="Set an 8 digit password"
-                  value={password}
-                  onChangeText={setPassword}
-                  isPassword
-                />
-
-                {/* Primary Sport and Secondary Sport Row */}
-                <FlexView style={styles.row}>
-                  <FlexView style={styles.halfWidth}>
-                    <Dropdown
-                      label="Primary Sport"
-                      placeholder="Select Sport"
-                      options={primarySportOptions}
-                      value={primarySport}
-                      onSelect={setPrimarySport}
+                    {/* Community Name */}
+                    <FormInput
+                      label="Community Name"
+                      placeholder="Enter your community or organization name"
+                      value={communityName}
+                      onChangeText={setCommunityName}
                     />
-                  </FlexView>
-                  <FlexView style={styles.halfWidth}>
+
+                    {/* Email or Phone Number - show the opposite of what was used for signup */}
+                    {initialPhoneNumber ? (
+                      <FormInput
+                        label="Email"
+                        placeholder="For your invoices/reminders"
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                      />
+                    ) : (
+                      <FormInput
+                        label="Whatsapp Number"
+                        placeholder="+91 98765 43210"
+                        value={phoneNumber}
+                        onChangeText={setPhoneNumber}
+                        keyboardType="phone-pad"
+                      />
+                    )}
+
+                    {/* City */}
                     <Dropdown
-                      label="Secondary Sport"
-                      placeholder="Select Sport"
-                      options={secondarySportOptions}
-                      value={secondarySport}
-                      onSelect={setSecondarySport}
+                      label="Your City"
+                      placeholder="Select where you will be hosting events"
+                      options={cityOptions}
+                      value={yourCity}
+                      onSelect={setYourCity}
                     />
-                  </FlexView>
-                </FlexView>
+                  </>
+                )}
 
-                {/* Additional Sports (Optional) */}
-                <Dropdown
-                  label="Additional Sports (Optional)"
-                  placeholder="Select additional sports"
-                  options={additionalSportOptions}
-                  value={additionalSports}
-                  onSelect={setAdditionalSports}
-                  multiSelect
-                  maxSelections={5}
-                />
+                {/* ─── ORGANISER STEP 2 ─── */}
+                {organiserStep === 2 && (
+                  <>
+                    {/* Primary Sport and Secondary Sport */}
+                    <FlexView style={styles.row}>
+                      <FlexView style={styles.halfWidth}>
+                        <Dropdown
+                          label="Sport 1"
+                          placeholder="Select Sport"
+                          options={primarySportOptions}
+                          value={primarySport}
+                          onSelect={setPrimarySport}
+                        />
+                      </FlexView>
+                      <FlexView style={styles.halfWidth}>
+                        <Dropdown
+                          label="Sport 2"
+                          placeholder="Select Sport"
+                          options={secondarySportOptions}
+                          value={secondarySport}
+                          onSelect={setSecondarySport}
+                        />
+                      </FlexView>
+                    </FlexView>
 
-                {/* Bio */}
-                <TextArea
-                  label="Bio"
-                  placeholder="Describe your community"
-                  value={bio}
-                  onChangeText={setBio}
-                  minHeight={120}
-                  maxLength={500}
-                  showCharCount
-                />
+                    {/* Additional Sports (Optional) */}
+                    <Dropdown
+                      label="Additional Sports (Optional)"
+                      placeholder="Select additional sports"
+                      options={additionalSportOptions}
+                      value={additionalSports}
+                      onSelect={setAdditionalSports}
+                      multiSelect
+                      maxSelections={5}
+                    />
 
-                {/* Instagram Link (Optional) */}
-                <FormInput
-                  label="Instagram Link (Optional)"
-                  placeholder="https://instagram.com/yourprofile"
-                  value={instagramLink}
-                  onChangeText={setInstagramLink}
-                  keyboardType="url"
-                  autoCapitalize="none"
-                />
+                    {/* Bio */}
+                    <TextArea
+                      label="Bio"
+                      placeholder="Describe your community"
+                      value={bio}
+                      onChangeText={setBio}
+                      minHeight={120}
+                      maxLength={500}
+                      showCharCount
+                    />
 
-                {/* Profile Visibility */}
-                <Dropdown
-                  label="Profile Visibility"
-                  placeholder="Select Visibility"
-                  options={profileVisibilityOptions}
-                  value={profileVisibility}
-                  onSelect={(value) => setProfileVisibility(value as 'public' | 'private')}
-                />
+                    {/* Password */}
+                    <FormInput
+                      label="Password"
+                      placeholder="Set an 8 digit password"
+                      value={password}
+                      onChangeText={setPassword}
+                      isPassword
+                    />
 
-                {/* Info Text */}
-                <FlexView row alignItems='center'>
-                  <FlexView style={styles.infoIcon}>
-                    <Info size={16} color={colors.text.secondary} />
-                  </FlexView>
-                  <TextDs size={10}>
-                    The more we know, the better we connect you with players looking for events.
-                  </TextDs>
-                </FlexView>
+                    {/* Confirm Password */}
+                    <FormInput
+                      label="Re Enter"
+                      placeholder="Re enter the above set password"
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      isPassword
+                    />
+
+                    {/* Instagram Link (Optional) */}
+                    <FormInput
+                      label="Instagram Link (Optional)"
+                      placeholder="https://instagram.com/yourprofile"
+                      value={instagramLink}
+                      onChangeText={setInstagramLink}
+                      keyboardType="url"
+                      autoCapitalize="none"
+                    />
+
+                    {/* Profile Visibility */}
+                    <Dropdown
+                      label="Profile Visibility"
+                      placeholder="Select Visibility"
+                      options={profileVisibilityOptions}
+                      value={profileVisibility}
+                      onSelect={(value) => setProfileVisibility(value as 'public' | 'private')}
+                    />
+
+                    {/* Info Text */}
+                    <FlexView row alignItems='center'>
+                      <FlexView style={styles.infoIcon}>
+                        <Info size={16} color={colors.text.secondary} />
+                      </FlexView>
+                      <TextDs size={10}>
+                        The more we know, the better we connect you with players looking for events.
+                      </TextDs>
+                    </FlexView>
+                  </>
+                )}
               </>
             )}
           </FlexView>
         </ScrollView>
 
-        {/* Confirm Button */}
-        <FlexView style={[styles.footer, { paddingBottom: spacing.xl + insets.bottom }]}>
+      </KeyboardAvoidingView>
+
+      {/* Footer Button - outside KeyboardAvoidingView so it stays fixed */}
+      <FlexView style={[styles.footer, { paddingBottom: spacing.xl + insets.bottom }]}>
+        {userType === 'organiser' && organiserStep === 1 ? (
+          <TouchableOpacity
+            onPress={handleOrganiserContinue}
+            style={styles.confirmButton}
+            activeOpacity={0.8}
+          >
+            <TextDs style={styles.confirmButtonText}>Continue</TextDs>
+          </TouchableOpacity>
+        ) : (
           <TouchableOpacity
             onPress={handleCompleteSignUp}
             style={[
@@ -446,8 +591,8 @@ const ProfileSetupScreenContent: React.FC = () => {
               <TextDs style={styles.confirmButtonText}>Confirm</TextDs>
             )}
           </TouchableOpacity>
-        </FlexView>
-      </KeyboardAvoidingView>
+        )}
+      </FlexView>
     </SafeAreaView>
   );
 };

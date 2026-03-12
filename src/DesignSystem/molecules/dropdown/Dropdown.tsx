@@ -15,6 +15,7 @@ import { BlurView } from 'expo-blur';
 import { Check, ChevronDown, ChevronUp, Search } from 'lucide-react-native';
 import { colors, borderRadius, spacing, getFontStyle } from '@theme';
 import type { DropdownProps, DropdownOption } from './Dropdown.types';
+import { ImageDs } from '@designSystem/atoms/image/ImageDs';
 
 export const Dropdown: React.FC<DropdownProps> = (props) => {
     const {
@@ -144,6 +145,9 @@ export const Dropdown: React.FC<DropdownProps> = (props) => {
                 }}
                 disabled={optionDisabled}
             >
+                {item.icon && (
+                    <ImageDs image={item.icon as any} size={20} style={styles.optionIcon} />
+                )}
                 <TextDs
                     style={[
                         styles.optionText,
@@ -205,100 +209,98 @@ export const Dropdown: React.FC<DropdownProps> = (props) => {
                 animationType="none"
                 onRequestClose={handleClose}
             >
-                <Pressable style={styles.modalOverlay} onPress={handleClose}>
-                    <View style={styles.dropdownMenuWrapper} pointerEvents="box-none">
-                        <Animated.View
-                            pointerEvents="auto"
-                            style={[
-                                styles.dropdownMenu,
-                                dropdownStyle,
-                                {
-                                    top: dropdownPosition.top,
-                                    left: dropdownPosition.left,
-                                    width: dropdownPosition.width,
-                                    maxHeight,
-                                    opacity: fadeAnim,
-                                    transform: [
-                                        {
-                                            translateY: fadeAnim.interpolate({
-                                                inputRange: [0, 1],
-                                                outputRange: position === 'bottom' ? [-10, 0] : [10, 0],
-                                            }),
-                                        },
-                                    ],
-                                },
-                            ]}
-                        >
-                            {Platform.OS === 'android' ? (
-                                <View style={styles.blurContainer}>
-                                    {searchable && (
-                                        <FlexView style={styles.searchContainer}>
-                                            <Search
-                                                size={16}
-                                                color={colors.text.tertiary}
-                                                style={styles.searchIcon}
-                                            />
-                                            <TextInput
-                                                style={styles.searchInput}
-                                                placeholder={searchPlaceholder}
-                                                placeholderTextColor={colors.text.tertiary}
-                                                value={searchQuery}
-                                                onChangeText={setSearchQuery}
-                                                autoFocus
-                                            />
-                                        </FlexView>
-                                    )}
+                <View style={styles.modalOverlay} pointerEvents="box-none">
+                    <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
+                    <Animated.View
+                        style={[
+                            styles.dropdownMenu,
+                            dropdownStyle,
+                            {
+                                top: dropdownPosition.top,
+                                left: dropdownPosition.left,
+                                width: dropdownPosition.width,
+                                maxHeight,
+                                opacity: fadeAnim,
+                                transform: [
+                                    {
+                                        translateY: fadeAnim.interpolate({
+                                            inputRange: [0, 1],
+                                            outputRange: position === 'bottom' ? [-10, 0] : [10, 0],
+                                        }),
+                                    },
+                                ],
+                            },
+                        ]}
+                    >
+                        {Platform.OS === 'android' ? (
+                            <View style={styles.blurContainer}>
+                                {searchable && (
+                                    <FlexView style={styles.searchContainer}>
+                                        <Search
+                                            size={16}
+                                            color={colors.text.tertiary}
+                                            style={styles.searchIcon}
+                                        />
+                                        <TextInput
+                                            style={styles.searchInput}
+                                            placeholder={searchPlaceholder}
+                                            placeholderTextColor={colors.text.tertiary}
+                                            value={searchQuery}
+                                            onChangeText={setSearchQuery}
+                                            autoFocus
+                                        />
+                                    </FlexView>
+                                )}
 
-                                    <FlatList
-                                        data={filteredOptions}
-                                        renderItem={renderOption}
-                                        keyExtractor={(item) => item.value}
-                                        showsVerticalScrollIndicator={true}
-                                        nestedScrollEnabled
-                                        ListEmptyComponent={
-                                            <FlexView style={styles.emptyContainer}>
-                                                <TextDs style={styles.emptyText}>No options found</TextDs>
-                                            </FlexView>
-                                        }
-                                    />
-                                </View>
-                            ) : (
-                                <BlurView intensity={80} tint="light" style={styles.blurContainer}>
-                                    {searchable && (
-                                        <FlexView style={styles.searchContainer}>
-                                            <Search
-                                                size={16}
-                                                color={colors.text.tertiary}
-                                                style={styles.searchIcon}
-                                            />
-                                            <TextInput
-                                                style={styles.searchInput}
-                                                placeholder={searchPlaceholder}
-                                                placeholderTextColor={colors.text.tertiary}
-                                                value={searchQuery}
-                                                onChangeText={setSearchQuery}
-                                                autoFocus
-                                            />
+                                <FlatList
+                                    data={filteredOptions}
+                                    renderItem={renderOption}
+                                    keyExtractor={(item) => item.value}
+                                    showsVerticalScrollIndicator={true}
+                                    nestedScrollEnabled
+                                    ListEmptyComponent={
+                                        <FlexView style={styles.emptyContainer}>
+                                            <TextDs style={styles.emptyText}>No options found</TextDs>
                                         </FlexView>
-                                    )}
+                                    }
+                                />
+                            </View>
+                        ) : (
+                            <BlurView intensity={80} tint="light" style={styles.blurContainer}>
+                                {searchable && (
+                                    <FlexView style={styles.searchContainer}>
+                                        <Search
+                                            size={16}
+                                            color={colors.text.tertiary}
+                                            style={styles.searchIcon}
+                                        />
+                                        <TextInput
+                                            style={styles.searchInput}
+                                            placeholder={searchPlaceholder}
+                                            placeholderTextColor={colors.text.tertiary}
+                                            value={searchQuery}
+                                            onChangeText={setSearchQuery}
+                                            autoFocus
+                                        />
+                                    </FlexView>
+                                )}
 
-                                    <FlatList
-                                        data={filteredOptions}
-                                        renderItem={renderOption}
-                                        keyExtractor={(item) => item.value}
-                                        showsVerticalScrollIndicator={true}
-                                        nestedScrollEnabled
-                                        ListEmptyComponent={
-                                            <FlexView style={styles.emptyContainer}>
-                                                <TextDs style={styles.emptyText}>No options found</TextDs>
-                                            </FlexView>
-                                        }
-                                    />
-                                </BlurView>
-                            )}
-                        </Animated.View>
-                    </View>
-                </Pressable>
+                                <FlatList
+                                    data={filteredOptions}
+                                    renderItem={renderOption}
+                                    keyExtractor={(item) => item.value}
+                                    showsVerticalScrollIndicator={true}
+                                    nestedScrollEnabled
+                                    ListEmptyComponent={
+                                        <FlexView style={styles.emptyContainer}>
+                                            <TextDs style={styles.emptyText}>No options found</TextDs>
+                                        </FlexView>
+                                    }
+                                />
+                            </BlurView>
+                        )}
+                    </Animated.View>
+                </View>
             </Modal>
         </FlexView>
     );
@@ -356,6 +358,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     blurContainer: {
+        flex: 1,
         borderRadius: borderRadius.lg,
         overflow: 'hidden',
         borderWidth: 1,
@@ -417,6 +420,9 @@ const styles = StyleSheet.create({
         color: colors.text.tertiary,
     },
     leftIconContainer: {
+        marginRight: spacing.sm,
+    },
+    optionIcon: {
         marginRight: spacing.sm,
     },
 });

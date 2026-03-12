@@ -114,11 +114,11 @@ export const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginBottom: spacing.base,
+    // marginBottom: spacing.sm,
   },
   statBox: {
     flex: 1,
-    backgroundColor: colors.glass.background.white,
+    backgroundColor: "#FFFDEF80",
     paddingHorizontal: 4,
     paddingVertical: 6,
     borderRadius: borderRadius.md,

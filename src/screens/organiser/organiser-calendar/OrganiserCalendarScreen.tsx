@@ -1,21 +1,21 @@
 import React, { useState, useMemo } from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useOrganiserEvents } from '@hooks/use-organiser-events';
 import { useAuthStore } from '@store/auth-store';
 import type { RootStackParamList } from '@navigation';
 import type { CalendarTab } from './OrganiserCalendarScreen.types';
-import {
-  DatePicker,
-  TabSelector,
-  EventList,
-} from '@components/calendar';
+import { TabSelector, EventList } from '@components/calendar';
+import { DateFilter } from '@components';
 import { useGroupedEvents } from './hooks/useGroupedEvents';
 import { styles } from './style/OrganiserCalendarScreen.styles';
 import { HomeContainer } from '@components/global';
 import { adaptEventDataToPlayerBooking } from './utils/eventAdapter';
 import type { PlayerBooking } from '@services/booking-service';
+import { getDateFilters } from '@screens/home/context/Home.data';
+import type { DateFilter as DateFilterType } from '@screens/home/Home.types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ORGANISER_CALENDAR_TABS = [
   { value: 'upcoming' as CalendarTab, label: 'Upcoming' },
@@ -25,9 +25,10 @@ const ORGANISER_CALENDAR_TABS = [
 type OrganiserCalendarScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'OrganiserCalendar'>;
 
 export const OrganiserCalendarScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<OrganiserCalendarScreenNavigationProp>();
   const [activeTab, setActiveTab] = useState<CalendarTab>('upcoming');
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [dateFilters, setDateFilters] = useState<DateFilterType[]>(getDateFilters());
 
   const userId = useAuthStore((state) => state.user?.userId ?? state.user?.id ?? 0);
   const { data: organiserEventsData, isLoading, error } = useOrganiserEvents(userId, 1, 20, {
@@ -39,24 +40,36 @@ export const OrganiserCalendarScreen: React.FC = () => {
     return organiserEvents.map(adaptEventDataToPlayerBooking);
   }, [organiserEventsData]);
 
-  // Filter and group events by tab (now using PlayerBooking format)
-  const { groupedEvents } = useGroupedEvents({ events, activeTab });
+  // Derive selectedDate from active dateFilter to pass into useGroupedEvents
+  const selectedDate = useMemo<Date | null>(() => {
+    const active = dateFilters.find(d => d.isSelected);
+    return active?.fullDate ? new Date(active.fullDate) : null;
+  }, [dateFilters]);
+
+  const { groupedEvents } = useGroupedEvents({ events, activeTab, selectedDate });
+
+  const selectDate = (fullDate: string | null) => {
+    setDateFilters(prev =>
+      prev.map(f => ({ ...f, isSelected: f.fullDate === fullDate })),
+    );
+  };
 
   const handleEventPress = (id: string) => {
     navigation.navigate('OrganiserEventDetails', { eventId: id });
   };
 
   const handleBookmark = (id: string) => {
-    // TODO: Implement bookmark functionality
     void id;
   };
 
   return (
     <HomeContainer activeTab="calendar" userType="organiser">
-      <DatePicker selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+      <View style={{ paddingTop: insets.top }}>
+        <DateFilter dates={dateFilters} onSelectDate={selectDate} />
+      </View>
 
       <TabSelector
-        title="Events"
+        title="Your Calendar"
         tabs={ORGANISER_CALENDAR_TABS}
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as CalendarTab)}
@@ -75,7 +88,6 @@ export const OrganiserCalendarScreen: React.FC = () => {
           activeTab={activeTab}
           onEventPress={handleEventPress}
           onBookmark={handleBookmark}
-          showTimeline={false}
           showStatus={false}
         />
       </ScrollView>

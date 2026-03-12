@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { ImageKey } from '@assets/images';
-export type IconTagVariant = 'orange' | 'teal' | 'purple' | 'yellow' | 'indigo' | 'green';
+export type IconTagVariant = 'orange' | 'teal' | 'purple' | 'yellow' | 'indigo' | 'green' | 'gray';
 
 export type IconTagSize = 'xxSmall' | 'extraSmall' | 'small' | 'medium' | 'large';
 
@@ -20,7 +20,7 @@ export interface IconTagProps {
   /**
    * The Lucide icon component to display
    */
-  icon?: LucideIcon| ImageKey;
+  icon?: LucideIcon | ImageKey;
 
   /**
    * The color variant for the tag

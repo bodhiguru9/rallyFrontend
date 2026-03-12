@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation';
@@ -8,16 +9,21 @@ import { TextDs } from '@designSystem/atoms/TextDs';
 import { FlexView } from '@designSystem/atoms/FlexView';
 import { Card } from '@components/global/Card';
 import { FilterDropdown } from '@components/global/filter-dropdown';
+import { DateFilter } from '@components';
 import { EventCard } from '@components/global/EventCard';
 import { useOrganiserEvents } from '@hooks/use-organiser-events';
 import { useAuthStore } from '@store/auth-store';
 import { colors, spacing } from '@theme';
 import { styles } from './style/OrganiserEventsHostedScreen.styles';
+import { getDateFilters } from '@screens/home/context/Home.data';
+import type { DateFilter as DateFilterType } from '@screens/home/Home.types';
+import { ChevronDown } from 'lucide-react-native';
 
 type TNavigation = NativeStackNavigationProp<RootStackParamList, 'OrganiserEventsHosted'>;
 
 export const OrganiserEventsHostedScreen: React.FC = () => {
   const navigation = useNavigation<TNavigation>();
+  const insets = useSafeAreaInsets();
   const userId = useAuthStore((state) => state.user?.userId || 0);
   const { data, isLoading } = useOrganiserEvents(userId, 1, 20, { enabled: userId > 0 });
 
@@ -26,6 +32,7 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
   const [selectedSports, setSelectedSports] = useState<string[]>([]);
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
   const [selectedSortBy, setSelectedSortBy] = useState<string[]>(['most-recent']);
+  const [dateFilters, setDateFilters] = useState<DateFilterType[]>(getDateFilters());
 
   const periodOptions = [
     { label: 'All Time', value: 'all-time' },
@@ -36,14 +43,16 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
   ];
 
   const sportsOptions = [
-    { id: 'football', label: 'Football', value: 'football' },
-    { id: 'basketball', label: 'Basketball', value: 'basketball' },
-    { id: 'cricket', label: 'Cricket', value: 'cricket' },
-    { id: 'tennis', label: 'Tennis', value: 'tennis' },
-    { id: 'badminton', label: 'Badminton', value: 'badminton' },
-    { id: 'volleyball', label: 'Volleyball', value: 'volleyball' },
-    { id: 'swimming', label: 'Swimming', value: 'swimming' },
-    { id: 'running', label: 'Running', value: 'running' },
+    { id: 'football', label: 'Football', value: 'football', icon: 'basketballYellow' },
+    { id: 'basketball', label: 'Basketball', value: 'basketball', icon: 'basketballYellow' },
+    { id: 'cricket', label: 'Cricket', value: 'cricket', icon: 'cricketYellow' },
+    { id: 'tennis', label: 'Tennis', value: 'tennis', icon: 'tennisYellow' },
+    { id: 'badminton', label: 'Badminton', value: 'badminton', icon: 'badmintonYellow' },
+    { id: 'volleyball', label: 'Volleyball', value: 'volleyball', icon: 'basketballYellow' },
+    { id: 'swimming', label: 'Swimming', value: 'swimming', icon: 'runningIcon' },
+    { id: 'running', label: 'Running', value: 'running', icon: 'runningIcon' },
+    { id: 'padel', label: 'Padel', value: 'padel', icon: 'padelYellow' },
+    { id: 'pickleball', label: 'Pickleball', value: 'pickleball', icon: 'pickleballIcon' },
   ];
 
   const eventTypeOptions = [
@@ -74,6 +83,12 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
 
   const handleSortToggle = (sortId: string) => {
     setSelectedSortBy([sortId]);
+  };
+
+  const selectDate = (fullDate: string | null) => {
+    setDateFilters(prev =>
+      prev.map(f => ({ ...f, isSelected: f.fullDate === fullDate })),
+    );
   };
 
   const events = useMemo(() => data?.data?.events || [], [data?.data?.events]);
@@ -130,75 +145,90 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
           <ActivityIndicator size="large" color={colors.primary} />
         </FlexView>
       ) : (
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <Card style={styles.headerCard}>
-            <FlexView flexDirection="row" alignItems="center" justifyContent="space-between">
-              <TextDs size={14} weight="regular" color="black">
-                Events Hosted
-              </TextDs>
-              <TouchableOpacity
-                style={styles.periodButton}
-                onPress={() => setIsPeriodPickerVisible(true)}
-                activeOpacity={0.8}
-              >
+        <>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <Card style={styles.headerCard}>
+              <FlexView flexDirection="row" alignItems="center" justifyContent="space-between">
                 <TextDs size={14} weight="regular" color="black">
-                  {periodOptions.find((opt) => opt.value === selectedPeriod)?.label || 'All Time'}
+                  Events Hosted
                 </TextDs>
-              </TouchableOpacity>
-            </FlexView>
-            <TextDs size={14} weight="regular" color="blueGray">
-              {totalCount}
-            </TextDs>
-          </Card>
-
-          <FlexView flexDirection="row" gap={spacing.sm} style={styles.filtersRow}>
-            <FilterDropdown
-              label="Sports"
-              options={sportsOptions}
-              selectedIds={selectedSports}
-              onToggle={handleSportToggle}
-              align="left"
-            />
-            <FilterDropdown
-              label="Event Type"
-              options={eventTypeOptions}
-              selectedIds={selectedEventTypes}
-              onToggle={handleEventTypeToggle}
-              align="left"
-            />
-            <FilterDropdown
-              label="Sort By"
-              options={sortOptions}
-              selectedIds={selectedSortBy}
-              onToggle={handleSortToggle}
-              align="left"
-            />
-          </FlexView>
-
-          <FlexView style={styles.cardsList}>
-            {filteredEvents.length > 0 ? (
-              filteredEvents.map((event) => (
-                <EventCard
-                  key={event.eventId}
-                  id={event.eventId}
-                  event={event as any}
-                  onPress={handleEventPress}
-                  onBookmark={() => { }}
-                />
-              ))
-            ) : (
-              <TextDs size={14} weight="regular" color="tertiary" align="center">
-                No events found yet.
+                <TouchableOpacity
+                  style={styles.periodButton}
+                  onPress={() => setIsPeriodPickerVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <TextDs size={12} weight="regular" color="blueGray">
+                    {periodOptions.find((opt) => opt.value === selectedPeriod)?.label || 'All Time'}
+                  </TextDs>
+                  <ChevronDown size={14} color={colors.text.blueGray} />
+                </TouchableOpacity>
+              </FlexView>
+              <TextDs size={14} weight="regular" color="blueGray">
+                {totalCount}
               </TextDs>
-            )}
-          </FlexView>
-        </ScrollView>
+            </Card>
+
+            {/* Horizontally scrollable filters row */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.filtersRow}
+              contentContainerStyle={styles.filtersRowInner}
+            >
+              <FilterDropdown
+                label="Sports"
+                options={sportsOptions}
+                selectedIds={selectedSports}
+                onToggle={handleSportToggle}
+                align="left"
+              />
+              <FilterDropdown
+                label="Event Type"
+                options={eventTypeOptions}
+                selectedIds={selectedEventTypes}
+                onToggle={handleEventTypeToggle}
+                align="left"
+              />
+              <FilterDropdown
+                label="Sort By"
+                options={sortOptions}
+                selectedIds={selectedSortBy}
+                onToggle={handleSortToggle}
+                align="right"
+              />
+            </ScrollView>
+
+            {/* Date Filter below filters - extend to full width */}
+            <View style={styles.dateFilterWrapper}>
+              <DateFilter dates={dateFilters} onSelectDate={selectDate} />
+            </View>
+
+            <FlexView style={styles.cardsList}>
+              {filteredEvents.length > 0 ? (
+                filteredEvents.map((event) => (
+                  <EventCard
+                    key={event.eventId}
+                    id={event.eventId}
+                    event={event as any}
+                    onPress={handleEventPress}
+                    onBookmark={() => { }}
+                  />
+                ))
+              ) : (
+                <TextDs size={14} weight="regular" color="tertiary" align="center">
+                  No events found yet.
+                </TextDs>
+              )}
+            </FlexView>
+          </ScrollView>
+        </>
       )}
 
+      {/* All Time period picker modal */}
       <Modal
         visible={isPeriodPickerVisible}
         transparent

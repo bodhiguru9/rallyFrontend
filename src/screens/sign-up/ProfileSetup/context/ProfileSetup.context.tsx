@@ -29,6 +29,7 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
   const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber || '');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [primarySport, setPrimarySport] = useState('');
   const [secondarySport, setSecondarySport] = useState('');
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -66,6 +67,9 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
     }
     if (password.length < 8) {
       return 'Password must be at least 8 characters';
+    }
+    if (password !== confirmPassword) {
+      return 'Passwords do not match';
     }
     if (!primarySport) {
       return 'Please select your primary sport';
@@ -146,7 +150,7 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
     }
 
     formData.append('password', password);
-    formData.append('confirmPassword', password);
+    formData.append('confirmPassword', confirmPassword);
     formData.append('fullName', fullName.trim());
     formData.append('sport1', primarySport);
 
@@ -344,6 +348,8 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
     setFullName,
     password,
     setPassword,
+    confirmPassword,
+    setConfirmPassword,
     primarySport,
     setPrimarySport,
     secondarySport,

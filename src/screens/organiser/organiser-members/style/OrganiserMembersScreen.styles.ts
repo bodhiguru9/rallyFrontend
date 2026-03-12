@@ -17,6 +17,7 @@ export const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.xxxl,
+    paddingTop: spacing.xl,
   },
   headerCard: {
     borderRadius: borderRadius.xxl,
@@ -62,7 +63,7 @@ export const styles = StyleSheet.create({
     backgroundColor: withOpaqueForAndroid('rgba(61, 111, 146, 0.12)'),
   },
   memberCard: {
-    backgroundColor: withOpaqueForAndroid('rgba(255, 255, 255, 0.7)'),
+    backgroundColor: "#fffdefbc",
     borderRadius: borderRadius.lg,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.base,

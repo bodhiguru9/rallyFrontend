@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.xs,
     gap: spacing.xs,
-    backgroundColor: colors.glass.background.white,
+    backgroundColor: "#FFFDEF80",
     borderWidth: 1,
     borderColor: colors.border.white
   },

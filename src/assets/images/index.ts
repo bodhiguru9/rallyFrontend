@@ -66,7 +66,8 @@ export const images = {
   paddleIcon: require('./files/paddle-icon.png'),
   genderIcon: require('./files/ph_gender-intersex-bold.png'),
   userGroupIcon: require('./files/hugeicons_user-group-03.png'),
-  
+
+
   // Individual Sport Icons
   pilatesIcon: require('./icons/pilates.png'),
   runningIcon: require('./icons/run.png'),
@@ -82,15 +83,16 @@ export const images = {
   socialIcon: require('./files/multiple-users.png'),
   trainingIcon: require('./icons/training-white.png'),
 
-// Icontag icons
-badmintonYellow: require('./icons/badminton-yellow.png'),
-cricketYellow: require('./icons/cricket-yellow.png'),
-tableTennisYellow: require('./icons/table-tennis-yellow.png'),
-tennisYellow: require('./icons/tennis-yellow.png'),
-padelYellow: require('./icons/padel-yellow.png'),
-basketballYellow: require('./icons/basketball-yellow.png'),
-  
-// Illustrations and Empty States
+  // Icontag icons
+  badmintonYellow: require('./icons/badminton-yellow.png'),
+  cricketYellow: require('./icons/cricket-yellow.png'),
+  tableTennisYellow: require('./icons/table-tennis-yellow.png'),
+  tennisYellow: require('./icons/tennis-yellow.png'),
+  padelYellow: require('./icons/padel-yellow.png'),
+  basketballYellow: require('./icons/basketball-yellow.png'),
+  privateIcon: require('./icons/private.png'),
+
+  // Illustrations and Empty States
   createEventEmptyScreen: require('./files/create-event-empty-screen.png'),
   imageImport: require('./files/image-import.png'),
   unionIcon: require('./files/Union.png'),

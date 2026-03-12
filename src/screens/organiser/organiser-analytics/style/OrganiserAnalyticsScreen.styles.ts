@@ -28,6 +28,7 @@ export const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.xxxl,
+    paddingTop: spacing.xl
   },
   revenueCard: {
     borderRadius: borderRadius.xxl,

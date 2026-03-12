@@ -20,6 +20,14 @@ import type { EventData } from '@app-types';
 import type { PlayerBooking } from '@services/booking-service';
 
 function getStatusBadgeVariant(event: EventData | PlayerBooking): EventStatusBadgeVariant {
+  const booking = 'booking' in event ? event.booking : undefined;
+
+  // 1. Cancelled (booking-level or event-level)
+  if (booking?.bookingStatus === 'cancelled' || event.eventStatus === 'cancelled') {
+    return 'cancelled';
+  }
+
+  // 2. Payment pending
   const paymentStatus =
     'payment' in event && event.payment && 'paymentStatus' in event.payment
       ? String((event.payment as { paymentStatus: string }).paymentStatus).toLowerCase()
@@ -27,9 +35,39 @@ function getStatusBadgeVariant(event: EventData | PlayerBooking): EventStatusBad
   if (paymentStatus.includes('pending')) {
     return 'payment-pending';
   }
+
+  // 3. Pending approval (private-event join request awaiting host)
+  if ('isPending' in event && event.isPending) {
+    return 'pending-approval';
+  }
+
+  // 4. Registration window checks
+  const regEnd = event.eventRegistrationEndTime;
+  const regStart = event.eventRegistrationStartTime;
+  const now = new Date();
+
+  if (regEnd) {
+    try {
+      if (now > new Date(regEnd)) {
+        return 'registration-ended';
+      }
+    } catch { /* ignore parse errors */ }
+  }
+
+  if (regStart) {
+    try {
+      if (now < new Date(regStart)) {
+        return 'registration-soon';
+      }
+    } catch { /* ignore parse errors */ }
+  }
+
+  // 5. Ongoing
   if (event.eventStatus === 'ongoing') {
     return 'ongoing';
   }
+
+  // 6. Default
   return 'going';
 }
 
@@ -107,6 +145,7 @@ export const EventCard: React.FC<EventCardProps> = ({
     training: 'trainingIcon',
     class: 'classIcon',
     group: 'socialIcon',
+    private: 'privateIcon',
   };
 
   const sportKey = event.eventSports?.[0]?.toLowerCase() ?? '';
@@ -156,7 +195,6 @@ export const EventCard: React.FC<EventCardProps> = ({
               {event.eventSports?.[0] && (
                 <IconTag
                   title={event.eventSports[0]}
-                  // Notice we completely removed the icon={SportIcon} line
                   variant="orange"
                   searchType="sport"
                   size="small"

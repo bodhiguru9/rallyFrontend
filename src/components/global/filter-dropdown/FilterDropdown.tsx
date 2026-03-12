@@ -14,7 +14,8 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
   selectedIds,
   onToggle,
   align = "left",
-  isMultiSelect = true
+  isMultiSelect = true,
+  buttonIcon: ButtonIcon,
 }) => {
   const buttonRef = useRef<View>(null);
   const [dropdownTop, setDropdownTop] = useState(0);
@@ -201,8 +202,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.primaryDark,
     borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
     marginRight: spacing.xs,
     gap: spacing.xs,
   },

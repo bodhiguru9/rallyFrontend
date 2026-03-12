@@ -5,6 +5,7 @@ import type { CalendarTab } from '../OrganiserCalendarScreen.types';
 interface UseGroupedEventsProps {
   events: PlayerBooking[];
   activeTab: CalendarTab;
+  selectedDate?: Date | null;
 }
 
 interface GroupedEventsResult {
@@ -15,27 +16,40 @@ interface GroupedEventsResult {
 
 /**
  * Hook to filter and group organiser events by date and tab.
- * Upcoming tab: events with eventStatus === 'upcoming'.
- * Past tab: events with eventStatus === 'past' or 'ongoing' (past + ongoing together).
+ * Mirrors the player calendar's useGroupedEvents logic.
  */
 export const useGroupedEvents = ({
   events,
   activeTab,
+  selectedDate,
 }: UseGroupedEventsProps): GroupedEventsResult => {
   return useMemo(() => {
+    // Filter events by selected date if provided
+    let filteredEvents = events;
+    if (selectedDate) {
+      filteredEvents = events.filter((event) => {
+        const eventDate = new Date(event.eventDateTime);
+        return (
+          eventDate.getFullYear() === selectedDate.getFullYear() &&
+          eventDate.getMonth() === selectedDate.getMonth() &&
+          eventDate.getDate() === selectedDate.getDate()
+        );
+      });
+    }
+
     const upcoming: PlayerBooking[] = [];
     const past: PlayerBooking[] = [];
 
-    events.forEach((event) => {
-      const status = event.eventStatus?.toLowerCase() ?? (new Date(event.eventDateTime) >= new Date() ? 'upcoming' : 'past');
-      if (status === 'upcoming') {
-        upcoming.push(event);
-      } else {
-        // Past tab shows both past and ongoing events
+    // Use booking.isPast flag (set by the adapter)
+    filteredEvents.forEach((event) => {
+      if (event.booking.isPast) {
         past.push(event);
+      } else {
+        upcoming.push(event);
       }
     });
 
+    // Group events by date
     const groupByDate = (eventList: PlayerBooking[]) => {
       const grouped: { [key: string]: PlayerBooking[] } = {};
       eventList.forEach((event) => {
@@ -49,8 +63,12 @@ export const useGroupedEvents = ({
         }
         grouped[dateKey].push(event);
       });
+      // Sort events within each date group by time
       Object.keys(grouped).forEach((key) => {
         grouped[key].sort((a, b) => {
+          if (activeTab === 'past') {
+            return b.eventDateTime.localeCompare(a.eventDateTime);
+          }
           return new Date(a.eventDateTime).getTime() - new Date(b.eventDateTime).getTime();
         });
       });
@@ -65,5 +83,5 @@ export const useGroupedEvents = ({
       pastEvents: past,
       groupedEvents: grouped,
     };
-  }, [events, activeTab]);
+  }, [events, activeTab, selectedDate]);
 };

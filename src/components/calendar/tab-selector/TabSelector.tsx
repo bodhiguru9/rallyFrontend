@@ -47,7 +47,7 @@ export const TabSelector: React.FC<TabSelectorProps> = ({
       flexDirection="row"
       alignItems="center"
     >
-      <TextDs size={14} weight="regular">
+      <TextDs size={14} weight="semibold">
         {title}
       </TextDs>
       <FlexView

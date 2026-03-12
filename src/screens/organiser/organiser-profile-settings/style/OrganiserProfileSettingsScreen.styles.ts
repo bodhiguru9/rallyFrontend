@@ -54,6 +54,12 @@ export const styles = StyleSheet.create({
   },
   toggleRow: {
     paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.border.light,
+    borderRadius: borderRadius.lg,
+    marginTop: spacing.xs,
   },
   signOutButton: {
     backgroundColor: withOpaqueForAndroid('rgba(245, 204, 196, 0.6)'),

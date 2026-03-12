@@ -15,7 +15,7 @@ export const styles = StyleSheet.create({
   },
   toggleContainer: {
     marginLeft: spacing.md,
-    width: 40,
+    width: 46,
   },
   track: {
     width: 44,

@@ -24,7 +24,7 @@ export const DateGroup: React.FC<DateGroupProps> = ({ events, onEventPress, onBo
   return (
     <FlexView flexDirection="row" alignItems="stretch" width={'100%'} overflow="hidden">
       {showTimeline && (
-        <FlexView width={55} alignItems="center" pb={hasOngoing ? 30 : 20} ml={-15} mr={2}>
+        <FlexView width={55} alignItems="center" pb={hasOngoing ? 30 : 20} ml={-15} mr={-3}>
           <FlexView style={styles.timelineDot} mt={6} />
 
           <FlexView

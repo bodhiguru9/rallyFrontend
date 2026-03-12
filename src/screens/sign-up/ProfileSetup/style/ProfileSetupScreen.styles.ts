@@ -62,6 +62,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.xl,
     paddingTop: spacing.md,
+    // backgroundColor: colors.background.cream || '#FEFDFB',
   },
   confirmButton: {
     backgroundColor: colors.primary,
@@ -71,7 +72,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   confirmButtonDisabled: {
-    opacity: 0.6,
+    backgroundColor: "#bdcbd8ff",
   },
   confirmButtonText: {
     ...getFontStyle(14, 'semibold'),
@@ -80,5 +81,19 @@ export const styles = StyleSheet.create({
   avatarRequiredHint: {
     marginTop: spacing.xs,
     alignSelf: 'center',
+  },
+  rolePill: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.glass.background.white,
+    borderWidth: 1,
+    borderColor: colors.border.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rolePillActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
 });
