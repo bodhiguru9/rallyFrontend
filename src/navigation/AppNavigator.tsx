@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { TopOrganiserPage } from "src/components/private/home/player-home-content/sections/TopOrganiserPage.tsx"; // Adjust path as needed
+import { TopOrganiserPage } from "src/components/private/home/player-home-content/sections/TopOrganiserPage"; // Adjust path as needed
 
 import {
   HomeScreen,

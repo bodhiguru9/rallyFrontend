@@ -25,8 +25,8 @@ export const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   priceIcon: {
-    width: 16,
-    height: 16,
+    width: 14,
+    height: 14,
     resizeMode: 'contain',
   },
   membersList: {
@@ -46,12 +46,15 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.lg,
+    color: 'blueGray',
     backgroundColor: withOpaqueForAndroid('rgba(255, 255, 255, 0.7)'),
+    boxShadow: colors.glass.boxShadow.light,
     borderWidth: 1,
     borderColor: colors.border.white,
   },
   statCardActive: {
     backgroundColor: colors.primaryDark,
+    color: 'white',
   },
   progressRow: {
     flexDirection: 'row',
@@ -76,6 +79,7 @@ export const styles = StyleSheet.create({
   },
   memberCard: {
     backgroundColor: withOpaqueForAndroid('rgba(255, 255, 255, 0.7)'),
+    boxShadow: colors.glass.boxShadow.light,
     borderRadius: borderRadius.lg,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.base,

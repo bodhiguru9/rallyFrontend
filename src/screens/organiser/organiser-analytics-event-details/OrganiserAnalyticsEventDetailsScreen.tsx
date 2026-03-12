@@ -132,13 +132,13 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
 
             <FlexView style={eventStyles.card}>
               <FlexView style={eventStyles.infoRow}>
-                <ImageDs image="PeachClock" size={16} />
+                <ImageDs image="time" size={16} />
                 <TextDs style={eventStyles.infoText}>
                   {formatDate(event.eventDateTime ?? '', 'display-range')}
                 </TextDs>
               </FlexView>
               <FlexView style={eventStyles.infoRow}>
-                <ImageDs image="GreenPin" size={16} />
+                <ImageDs image="locationPin" size={16} />
                 <TextDs style={eventStyles.infoText}>{event.eventLocation ?? ''}</TextDs>
               </FlexView>
               <FlexView style={eventStyles.mapContainer}>
@@ -169,10 +169,10 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
               <TextDs style={eventStyles.cardTitle}>Guest Allowance</TextDs>
               <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
                 <ImageDs image="DhiramIcon" style={styles.priceIcon} />
-                <TextDs size={14} weight="regular" color="primary">
+                <TextDs size={16} weight="semibold" color='blueGray'>
                   {event.eventPricePerGuest}
                 </TextDs>
-                <TextDs size={14} weight="regular" color="secondary">{guestAllowanceText}</TextDs>
+                <TextDs size={12} weight="regular" color="secondary">{guestAllowanceText}</TextDs>
               </FlexView>
 
             </Card>
@@ -191,18 +191,18 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
           <FlexView style={styles.membersSection}>
             <FlexView style={styles.statsRow}>
               <FlexView style={[styles.statCard, styles.statCardActive]}>
-                <TextDs size={14} weight="regular" color="white">
+                <TextDs size={14} weight="regular">
                   {event.participantsCount ?? (event.participants?.length ?? 0)}
                 </TextDs>
-                <TextDs size={14} weight="regular" color="white">
+                <TextDs size={14} weight="regular">
                   Joined
                 </TextDs>
               </FlexView>
               <FlexView style={styles.statCard}>
-                <TextDs size={14} weight="regular" color="secondary">
+                <TextDs size={14} weight="regular">
                   {event.waitlistCount ?? 0}
                 </TextDs>
-                <TextDs size={14} weight="regular" color="secondary">
+                <TextDs size={14} weight="regular">
                   Waitlisted
                 </TextDs>
               </FlexView>
@@ -257,7 +257,7 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
                   </FlexView>
                   <FlexView style={styles.memberPrice}>
                     <ImageDs image="DhiramIcon" style={styles.priceIcon} />
-                    <TextDs size={14} weight="regular" color="primary">
+                    <TextDs size={14} weight="regular" color="blueGray">
                       {event.eventPricePerGuest}
                     </TextDs>
                   </FlexView>
@@ -267,6 +267,6 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
           </FlexView>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 };

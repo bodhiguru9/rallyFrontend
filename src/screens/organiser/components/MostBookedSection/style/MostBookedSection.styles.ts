@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   memberName: {
-    ...getFontStyle(8, 'regular'),
+    ...getFontStyle(12, 'semibold'),
     color: colors.text.primary,
     textAlign: 'center',
   },

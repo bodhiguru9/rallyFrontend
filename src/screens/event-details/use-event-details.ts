@@ -167,20 +167,12 @@ const handleBookEvent = (paymentData?: BookingModalPaymentPayload) => {
   // Just close modal and navigate to success screen
   setIsBookingModalVisible(false);
   
-  navigation.navigate('RequestSent', {
-    variant: 'registration',
+  navigation.navigate('BookingConfirmation', {
     eventId: event.eventId ?? eventId,
-    eventTitle: event.eventName ?? 'Event',
-    organizerName: event.creator?.fullName || event.eventCreatorName || 'Unknown Organizer',
-    eventImage:
-      event.eventImages?.[0] || event.gameImages?.[0] || 'https://via.placeholder.com/150',
-    eventDate: formatDate(event.eventDateTime ?? '', 'display-range'),
-    eventLocation: event.eventLocation ?? '',
-    amountDue: paymentData.amount ?? totalPrice,
-    currency: paymentData.currency || 'AED',
     bookingId: paymentData.bookingId || generateBookingId() || '',
-    categories: event.eventSports ?? [],
-    eventType: event.eventType ?? 'Event',
+    amountPaid: paymentData.amount ?? totalPrice,
+    currency: paymentData.currency || 'AED',
+    guestsCount: guestsCount,
   });
 };
 
@@ -206,8 +198,13 @@ const handleApplePay = () => {
 
     // Check if request is pending
     if (event.isPending) {
-      logger.info('Join request is pending approval');
-      return;
+      // Exception: User is in waitlist and a spot just opened up!
+      if (event.userJoinStatus?.inWaitlist && !event.spotsInfo?.spotsFull) {
+        // Allow them to proceed to booking modal!
+      } else {
+        logger.info('Join request is pending approval');
+        return;
+      }
     }
 
     // Check if user has already sent a join request (hasRequest from API)
@@ -439,6 +436,13 @@ const handleApplePay = () => {
 
     // Priority 2: Check if request is pending (organiser reviewing)
     if (event.isPending) {
+      if (event.userJoinStatus?.inWaitlist && !event.spotsInfo?.spotsFull) {
+        return 'Pay Now';
+      }
+      // If it's a waitlist request but spots are still full
+      if (event.userJoinStatus?.inWaitlist) {
+        return 'In Waitlist';
+      }
       return 'Request Pending';
     }
 
