@@ -117,8 +117,8 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
         onPress={handleClose}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          behavior="padding"
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
           style={{ flex: 1, justifyContent: 'flex-end' }}
         >
           <Animated.View
