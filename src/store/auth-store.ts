@@ -4,6 +4,7 @@ import type { User } from '@app-types';
 import { logger } from '@dev-tools/logger';
 import { secureStorage } from '@utils/secure-storage';
 import { storageHelper } from '@utils/storage-helper';
+import { useSignupFormStore } from './signup-form-store';
 
 interface AuthState {
   user: User | null;
@@ -125,6 +126,8 @@ export const useAuthStore = create<AuthState>()(
           signupToken: null,
           verificationToken: null,
         });
+        // Clear any in-progress signup form data
+        useSignupFormStore.getState().clearSignupForm();
         logger.store('logout', { action: 'Auth state cleared in memory' });
 
         // Step 3: Force AsyncStorage to persist the cleared state immediately
