@@ -8,6 +8,7 @@ import { IconTag } from '@components/global/IconTag';
 import { userService } from '@services/user-service';
 import { logger } from '@dev-tools/logger';
 import { useAuthStore } from '@store/auth-store';
+import { InstagramTag } from '@designSystem/molecules/instagram-tag';
 import axios from 'axios';
 
 interface OrganiserProfileHeaderProps {
@@ -306,22 +307,7 @@ export const OrganiserProfileHeader: React.FC<OrganiserProfileHeaderProps> = ({
 
             )}
             {instagramLink && (
-              <FlexView
-                flexDirection='row'
-                px={spacing.sm}
-                height={20} // Increased height slightly for better text fit
-                alignItems='center'
-                gap={spacing.xs}
-                borderRadius={borderRadius.full}
-                borderWidth={1}
-                borderColor={colors.border.white}
-                backgroundColor={colors.glass.background.white}
-              >
-                <ImageDs image="InstaIcon" size={12} />
-                <TextDs size={12} weight="regular">
-                  {instagramLink}
-                </TextDs>
-              </FlexView>
+              <InstagramTag instagramLink={instagramLink} />
             )}
           </FlexView>
 

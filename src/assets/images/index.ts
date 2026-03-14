@@ -69,21 +69,25 @@ export const images = {
 
 
   // Individual Sport Icons
-  pilatesIcon: require('./icons/pilates.png'),
-  runningIcon: require('./icons/run.png'),
-  indoorCricketIcon: require('./icons/indoor-cricket.png'),
-  badmintonIcon: require('./icons/badminton-white.png'),
-  cricketIcon: require('./icons/cricket-white.png'),
-  footballIcon: require('./icons/football.png'),
-  tableTennisIcon: require('./icons/table-tennis.png'),
-  tennisIcon: require('./icons/tennis.png'),
-  padelIcon: require('./icons/padel.png'),
-  pickleballIcon: require('./icons/pickleball.png'),
-  basketballIcon: require('./icons/basketball.png'),
-  socialIcon: require('./files/multiple-users.png'),
-  trainingIcon: require('./icons/training-white.png'),
+  pilatesIcon: require('./icons/whiteIcons/pilates.png'),
+  runningIcon: require('./icons/whiteIcons/run.png'),
+  indoorCricketIcon: require('./icons/whiteIcons/indoor-cricket.png'),
+  badmintonIcon: require('./icons/whiteIcons/badminton-white.png'),
+  cricketIcon: require('./icons/whiteIcons/cricket-white.png'),
+  footballIcon: require('./icons/whiteIcons/football.png'),
+  tableTennisIcon: require('./icons/whiteIcons/table-tennis.png'),
+  tennisIcon: require('./icons/whiteIcons/tennis.png'),
+  padelIcon: require('./icons/whiteIcons/padel.png'),
+  pickleballIcon: require('./icons/whiteIcons/pickleball.png'),
+  basketballIcon: require('./icons/whiteIcons/basketball.png'),
 
-  // Icontag icons
+  // events white icons
+  socialIcon: require('./icons/whiteIcons/socialWhite.png'),
+  tournamentIcon: require('./icons/whiteIcons/tournamentWhite.png'),
+  classIcon: require('./icons/whiteIcons/classWhite.png'),
+  trainingIcon: require('./icons/whiteIcons/training-white.png'),
+
+  // Icontag-yellow icons
   badmintonYellow: require('./icons/badminton-yellow.png'),
   cricketYellow: require('./icons/cricket-yellow.png'),
   tableTennisYellow: require('./icons/table-tennis-yellow.png'),
@@ -91,6 +95,12 @@ export const images = {
   padelYellow: require('./icons/padel-yellow.png'),
   basketballYellow: require('./icons/basketball-yellow.png'),
   privateIcon: require('./icons/private.png'),
+  pickleballYellow: require('./icons/pickleball-yellow.png'),
+  indoorCricketYellow: require('./icons/indoorCricketYellow.png'),
+  runningYellow: require('./icons/runningYellow.png'),
+  pilatesYellow: require('./icons/pilates-yellow.png'),
+  footballYellow: require('./icons/footballYellow.png'),
+
 
   // Illustrations and Empty States
   createEventEmptyScreen: require('./files/create-event-empty-screen.png'),
@@ -109,8 +119,6 @@ export const images = {
   warningShield: require('./files/warning-shield.png'),
 
   // Icons from icons directory
-  tournamentIcon: require('./icons/tournament.png'),
-  classIcon: require('./icons/class.png'),
   barcodeReceipt: require('./icons/barcode-receipt.png'),
   colorPalette: require('./icons/color-palette.png'),
   creditCard: require('./icons/credit-card.png'),

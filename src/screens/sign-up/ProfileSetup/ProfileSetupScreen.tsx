@@ -30,6 +30,7 @@ import { ArrowIcon } from '@components/global/ArrowIcon';
 import { showImagePickerOptions } from '@utils';
 import { FlexView } from '@designSystem/atoms/FlexView';
 import { useFilterOptions } from '@hooks';
+import { images } from '@assets/images';
 
 type ProfileSetupScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -89,41 +90,58 @@ const ProfileSetupScreenContent: React.FC = () => {
   // Sport value → ImageKey string lookup for dropdown icons
   // Using "yellow" variants since the dropdown has a light background
   const sportIconLookup: Record<string, string> = {
-    tennis: 'tennisYellow',
-    badminton: 'badmintonYellow',
-    basketball: 'basketballYellow',
-    padel: 'padelYellow',
-    football: 'basketballYellow',
-    cricket: 'cricketYellow',
-    pilates: 'pilatesIcon',
-    running: 'runningIcon',
-    'table-tennis': 'tableTennisYellow',
-    pickleball: 'pickleballIcon',
+    'tennis': 'tennisIcon',
+    'badminton': 'badmintonIcon',
+    'basketball': 'basketballIcon',
+    'padel': 'padelIcon',
+    'football': 'footballIcon',
+    'cricket': 'cricketIcon',
+    'indoor-cricket': 'indoorCricketIcon',
+    'pilates': 'pilatesIcon',
+    'running': 'runningIcon',
+    'table-tennis': 'tableTennisIcon',
+    'pickleball': 'pickleballIcon',
+    'volleyball': 'basketballIcon',
   };
 
   // Transform API sports data to Dropdown option format
+  // We merge with a local PRIMARY_SPORTS list to ensure all 11+ sports 
+  // are always available even if the backend is selective.
   const dynamicSportOptions = React.useMemo(() => {
-    if (!filterOptions?.sports) {
-      return sportOptions; // Fallback to hardcoded options
-    }
+    const PRIMARY_SPORTS = [
+      'Padel', 'Badminton', 'Cricket', 'Indoor Cricket', 'Pickleball',
+      'Tennis', 'Football', 'Table-tennis', 'Pilates', 'Basketball',
+      'Running', 'Volleyball'
+    ];
 
-    // Transform and deduplicate to prevent duplicate keys
-    const transformedOptions = filterOptions.sports.map((sport: string) => {
-      const value = sport.toLowerCase().replace(/\s+/g, '-');
-      return {
-        label: sport,
-        value,
-        icon: sportIconLookup[value] ?? sportIconLookup[sport.toLowerCase()],
-      };
+    const backendSports = filterOptions?.sports || [];
+    const combinedSports = [...PRIMARY_SPORTS];
+    
+    backendSports.forEach(bs => {
+      if (!combinedSports.some(cs => cs.toLowerCase() === bs.toLowerCase())) {
+        combinedSports.push(bs);
+      }
     });
 
-    // Remove duplicates by value
-    const uniqueOptions = transformedOptions.filter(
-      (option, index, self) =>
-        index === self.findIndex((t) => t.value === option.value)
-    );
-
-    return uniqueOptions;
+    return combinedSports.map(sport => {
+      const sportValue = sport.toLowerCase().replace(/\s+/g, '-');
+      // Normalize value for icon lookup
+      const lookupKey = sportValue === 'table-tennis' ? 'table-tennis' : sportValue;
+      const iconKey = sportIconLookup[lookupKey] || sportIconLookup[sport.toLowerCase()];
+      
+      return {
+        label: sport,
+        value: sportValue,
+        icon: iconKey ? (images[iconKey as keyof typeof images] || images.basketballIcon) : images.basketballIcon,
+      };
+    }).sort((a, b) => {
+      const indexA = PRIMARY_SPORTS.indexOf(a.label);
+      const indexB = PRIMARY_SPORTS.indexOf(b.label);
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return a.label.localeCompare(b.label);
+    });
   }, [filterOptions]);
 
   // Transform API locations data to Dropdown option format for City

@@ -10,6 +10,7 @@ import { FilterDropdown } from '@components/global/filter-dropdown';
 import { EventCard } from '@components/global/EventCard';
 import { DateFilter } from '@components';
 import { useOrganiserBookingsAnalytics } from '@hooks/organiser';
+import { useFilterOptions } from '@hooks';
 import type { OrganiserBookingsAnalyticsEvent } from '@services';
 import { colors, spacing } from '@theme';
 import { styles } from './style/OrganiserAnalyticsScreen.styles';
@@ -79,8 +80,8 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
   const { data, isLoading } = useOrganiserBookingsAnalytics();
   const [isPeriodPickerVisible, setIsPeriodPickerVisible] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('all-time');
-  const [selectedSports, setSelectedSports] = useState<string[]>([]);
-  const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
+  const [selectedSports, setSelectedSports] = useState<string[]>(['all-sports']);
+  const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>(['all-event-types']);
   const [dateFilters, setDateFilters] = useState<DateFilterType[]>(getDateFilters());
 
   const periodOptions = [
@@ -91,36 +92,116 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
     { label: 'Last 6 Months', value: 'last-6-months' },
   ];
 
-  const sportsOptions = [
-    { id: 'football', label: 'Football', value: 'football', icon: 'footballIcon' },
-    { id: 'basketball', label: 'Basketball', value: 'basketball', icon: 'basketballYellow' },
-    { id: 'cricket', label: 'Cricket', value: 'cricket', icon: 'cricketYellow' },
-    { id: 'tennis', label: 'Tennis', value: 'tennis', icon: 'tennisYellow' },
-    { id: 'badminton', label: 'Badminton', value: 'badminton', icon: 'badmintonYellow' },
-    { id: 'volleyball', label: 'Volleyball', value: 'volleyball', icon: 'basketballYellow' },
-    { id: 'swimming', label: 'Swimming', value: 'swimming', icon: 'runningIcon' },
-    { id: 'running', label: 'Running', value: 'running', icon: 'runningIcon' },
-    { id: 'padel', label: 'Padel', value: 'padel', icon: 'padelYellow' },
-    { id: 'pickleball', label: 'Pickleball', value: 'pickleball', icon: 'pickleballIcon' },
-  ];
+  const { data: filterOptionsData } = useFilterOptions();
 
-  const eventTypeOptions = [
-    { id: 'social', label: 'Social', value: 'social', icon: 'socialIcon' },
-    { id: 'competitive', label: 'Competitive', value: 'competitive', icon: 'tournamentIcon' },
-    { id: 'training', label: 'Training', value: 'training', icon: 'trainingIcon' },
-    { id: 'tournament', label: 'Tournament', value: 'tournament', icon: 'tournamentIcon' },
-  ];
+  const sportsOptions = useMemo(() => {
+    const PRIMARY_SPORTS = [
+      'Padel',
+      'Badminton',
+      'Cricket',
+      'Indoor Cricket',
+      'Pickleball',
+      'Tennis',
+      'Football',
+      'Table-tennis',
+      'Pilates',
+      'Basketball',
+      'Running',
+      'Volleyball',
+    ];
 
-  const handleSportToggle = (sportId: string) => {
-    setSelectedSports((prev) =>
-      prev.includes(sportId) ? prev.filter((id) => id !== sportId) : [...prev, sportId],
-    );
+    const iconMap: Record<string, string> = {
+      'Padel': 'padelIcon',
+      'Badminton': 'badmintonIcon',
+      'Cricket': 'cricketIcon',
+      'Indoor Cricket': 'indoorCricketIcon',
+      'Pickleball': 'pickleballIcon',
+      'Tennis': 'tennisIcon',
+      'Football': 'footballIcon',
+      'Table-tennis': 'tableTennisIcon',
+      'Table Tennis': 'tableTennisIcon',
+      'Pilates': 'pilatesIcon',
+      'Basketball': 'basketballIcon',
+      'Running': 'runningIcon',
+      'Volleyball': 'basketballIcon',
+    };
+
+    const backendSports = filterOptionsData?.sports || [];
+    const combinedSports = [...PRIMARY_SPORTS];
+    backendSports.forEach(bs => {
+      if (!combinedSports.some(cs => cs.toLowerCase() === bs.toLowerCase())) {
+        combinedSports.push(bs);
+      }
+    });
+
+    const mappedSports = combinedSports
+      .sort((a, b) => {
+        const indexA = PRIMARY_SPORTS.indexOf(a);
+        const indexB = PRIMARY_SPORTS.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+      })
+      .map((sportLabel) => ({
+        id: sportLabel.toLowerCase().replace(/\s+/g, '-'),
+        label: sportLabel,
+        value: sportLabel.toLowerCase(),
+        icon: iconMap[sportLabel],
+      }));
+
+    return [
+      { id: 'all-sports', label: 'All Sports', value: 'all' },
+      ...mappedSports
+    ];
+  }, [filterOptionsData]);
+
+  const eventTypeOptions = useMemo(() => {
+    const defaultTypes = ['Social', 'Competitive', 'Training', 'Tournament'];
+    const backendTypes = filterOptionsData?.eventTypes || [];
+    const combinedTypes = [...defaultTypes];
+    backendTypes.forEach(bt => {
+      if (!combinedTypes.some(ct => ct.toLowerCase() === bt.toLowerCase())) {
+        combinedTypes.push(bt);
+      }
+    });
+
+    const mappedTypes = combinedTypes.map((type, index) => ({
+      id: `event-type-${index}`,
+      label: type,
+      value: type.toLowerCase(),
+    }));
+
+    return [
+      { id: 'all-event-types', label: 'All Events', value: 'all' },
+      ...mappedTypes
+    ];
+  }, [filterOptionsData]);
+
+  const handleSportToggle = (id: string) => {
+    setSelectedSports((prev) => {
+      if (id === 'all-sports') return ['all-sports'];
+      let next = prev.filter(i => i !== 'all-sports');
+      if (next.includes(id)) {
+        next = next.filter(i => i !== id);
+      } else {
+        next.push(id);
+      }
+      return next.length === 0 ? ['all-sports'] : next;
+    });
   };
 
-  const handleEventTypeToggle = (typeId: string) => {
-    setSelectedEventTypes((prev) =>
-      prev.includes(typeId) ? prev.filter((id) => id !== typeId) : [...prev, typeId],
-    );
+  const handleEventTypeToggle = (id: string) => {
+    setSelectedEventTypes((prev) => {
+      if (id === 'all-event-types') return ['all-event-types'];
+      let next = prev.filter(i => i !== 'all-event-types');
+      if (next.includes(id)) {
+        next = next.filter(i => i !== id);
+      } else {
+        next.push(id);
+      }
+      return next.length === 0 ? ['all-event-types'] : next;
+    });
   };
 
   const selectDate = (fullDate: string | null) => {
@@ -142,19 +223,24 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
     let filtered = [...events];
 
     // Filter by sports
-    if (selectedSports.length > 0) {
+    const activeSports = selectedSports.filter(id => id !== 'all-sports');
+    if (activeSports.length > 0) {
       filtered = filtered.filter((event) =>
         event.eventSports?.some((sport) =>
-          selectedSports.includes(sport.toLowerCase()),
+          activeSports.includes(sport.toLowerCase()),
         ),
       );
     }
-
+ 
     // Filter by event type
-    if (selectedEventTypes.length > 0) {
-      filtered = filtered.filter((event) =>
-        selectedEventTypes.includes(event.eventType.toLowerCase()),
-      );
+    const activeEventTypes = selectedEventTypes.filter(id => id !== 'all-event-types');
+    if (activeEventTypes.length > 0) {
+      filtered = filtered.filter((event) => {
+        const eventTypeLower = event.eventType?.toLowerCase() || '';
+        return eventTypeOptions.some(opt => 
+          activeEventTypes.includes(opt.id) && opt.label.toLowerCase() === eventTypeLower
+        );
+      });
     }
 
     // Filter by date
