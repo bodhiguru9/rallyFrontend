@@ -1,13 +1,11 @@
-import { useState } from 'react';
 import { Alert, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
 import type { RootStackParamList } from '@navigation';
-import type { UserType as ComponentUserType } from '@components';
 import { logger } from '@dev-tools/logger';
 import { authService } from '@services';
-import { useAuthStore } from '@store';
+import { useAuthStore, useSignupFormStore } from '@store';
 import { formatErrorForAlert, logError } from '@utils/error-handler';
 import { useGoogleAuth } from './use-google-auth';
 
@@ -23,11 +21,15 @@ export const useSignUp = () => {
   const setGlobalLoading = useAuthStore((state) => state.setGlobalLoading);
   const { signInWithGoogle } = useGoogleAuth();
 
-  // Form state
-  const [userType, setUserType] = useState<ComponentUserType>('player');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [email, setEmail] = useState('');
-  const [useEmail, setUseEmail] = useState(false);
+  // Form state — persisted in signup form store so it survives back-navigation
+  const userType = useSignupFormStore((s) => s.userType);
+  const setUserType = useSignupFormStore((s) => s.setUserType);
+  const phoneNumber = useSignupFormStore((s) => s.phoneNumber);
+  const setPhoneNumber = useSignupFormStore((s) => s.setPhoneNumber);
+  const email = useSignupFormStore((s) => s.email);
+  const setEmail = useSignupFormStore((s) => s.setEmail);
+  const useEmail = useSignupFormStore((s) => s.useEmail);
+  const setUseEmail = useSignupFormStore((s) => s.setUseEmail);
 
   /**
    * Validates signup form data

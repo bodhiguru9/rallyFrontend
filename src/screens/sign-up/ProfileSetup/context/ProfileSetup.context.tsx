@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 import { Alert, Platform } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { authService } from '@services/auth-service';
 import { useAuthStore } from '@store/auth-store';
+import { useSignupFormStore } from '@store/signup-form-store';
 import { formatErrorForAlert, logError } from '@utils';
 import {
   IProfileSetupContextValue,
@@ -24,28 +25,44 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
   // Get data passed from previous screens
   const { phoneNumber: initialPhoneNumber, email: initialEmail, userType } = route.params || {};
 
-  // Common profile form state
-  const [email, setEmail] = useState(initialEmail || '');
-  const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber || '');
-  const [fullName, setFullName] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [primarySport, setPrimarySport] = useState('');
-  const [secondarySport, setSecondarySport] = useState('');
-  const [avatar, setAvatar] = useState<string | null>(null);
+  // Form state — backed by signup form store so it survives back-navigation
+  const store = useSignupFormStore();
+  const email = store.email || initialEmail || '';
+  const setEmail = store.setEmail;
+  const phoneNumber = store.phoneNumber || initialPhoneNumber || '';
+  const setPhoneNumber = store.setPhoneNumber;
+  const fullName = store.fullName;
+  const setFullName = store.setFullName;
+  const password = store.password;
+  const setPassword = store.setPassword;
+  const confirmPassword = store.confirmPassword;
+  const setConfirmPassword = store.setConfirmPassword;
+  const primarySport = store.primarySport;
+  const setPrimarySport = store.setPrimarySport;
+  const secondarySport = store.secondarySport;
+  const setSecondarySport = store.setSecondarySport;
+  const avatar = store.avatar;
 
   // Player-specific state
-  const [dateOfBirth, setDateOfBirth] = useState('');
-  const [gender, setGender] = useState<'male' | 'female' | 'other'>('male');
+  const dateOfBirth = store.dateOfBirth;
+  const gender = store.gender;
+  const setGender = store.setGender;
 
   // Organiser-specific state
-  const [yourBest, setYourBest] = useState<'Organiser' | 'coach' | 'club'>('Organiser');
-  const [communityName, setCommunityName] = useState('');
-  const [yourCity, setYourCity] = useState('');
-  const [additionalSports, setAdditionalSports] = useState<string[]>([]);
-  const [bio, setBio] = useState('');
-  const [instagramLink, setInstagramLink] = useState('');
-  const [profileVisibility, setProfileVisibility] = useState<'public' | 'private'>('private');
+  const yourBest = store.yourBest;
+  const setYourBest = store.setYourBest;
+  const communityName = store.communityName;
+  const setCommunityName = store.setCommunityName;
+  const yourCity = store.yourCity;
+  const setYourCity = store.setYourCity;
+  const additionalSports = store.additionalSports;
+  const setAdditionalSports = store.setAdditionalSports;
+  const bio = store.bio;
+  const setBio = store.setBio;
+  const instagramLink = store.instagramLink;
+  const setInstagramLink = store.setInstagramLink;
+  const profileVisibility = store.profileVisibility;
+  const setProfileVisibility = store.setProfileVisibility;
 
   // Signup mutation - makes the actual API call.
   // Token/user saving is done in handleCompleteSignUp after mutateAsync so we can catch
@@ -68,9 +85,6 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
     if (password.length < 8) {
       return 'Password must be at least 8 characters';
     }
-    if (password !== confirmPassword) {
-      return 'Passwords do not match';
-    }
     if (!primarySport) {
       return 'Please select your primary sport';
     }
@@ -87,6 +101,9 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
 
     // Organiser-specific validations
     if (userType === 'organiser') {
+      if (password !== confirmPassword) {
+        return 'Passwords do not match';
+      }
       if (!avatar) {
         return 'Please add a profile photo';
       }
@@ -139,7 +156,7 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
     const formData = new FormData();
 
     // Append common fields
-    formData.append('userType', userType);
+    formData.append('userType', userType || 'player');
     formData.append('signupToken', signupToken);
 
     if (initialPhoneNumber && email.trim()) {
@@ -226,6 +243,7 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
             result.data.requiresOTPVerification,
           );
           clearSignupToken();
+          store.clearSignupForm();
         } catch (saveError) {
           if (__DEV__) {
             console.warn('[SIGNUP_FLOW] setAuth failed (e.g. SecureStore on Android)', saveError);
@@ -322,7 +340,7 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
    * Handle avatar/profile picture selection
    */
   const handleAvatarSelect = (imageUri: string) => {
-    setAvatar(imageUri);
+    store.setAvatar(imageUri);
   };
 
   /**
@@ -330,7 +348,7 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
    * Expected format: YYYY-MM-DD (for API)
    */
   const handleDateChange = (date: string) => {
-    setDateOfBirth(date);
+    store.setDateOfBirth(date);
   };
 
   const value: IProfileSetupContextValue = {
