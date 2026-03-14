@@ -143,6 +143,8 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
   // Derive filter arrays from API data and local state
   const APP_SPORTS_OPTIONS = [
     { id: 'padel', label: 'Padel', value: 'padel', icon: 'padelIcon' },
+    { id: 'running', label: 'Running', value: 'running', icon: 'runningIcon' },
+    { id: 'pilates', label: 'Pilates', value: 'pilates', icon: 'pilatesIcon' },
     { id: 'badminton', label: 'Badminton', value: 'badminton', icon: 'badmintonIcon' },
     { id: 'cricket', label: 'Cricket', value: 'cricket', icon: 'cricketIcon' },
     { id: 'pickleball', label: 'Pickleball', value: 'pickleball', icon: 'pickleballIcon' },

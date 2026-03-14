@@ -58,6 +58,7 @@ export const EventDetailsScreen: React.FC = () => {
     handleApplePay,
     handleBookEvent,
     cancelBookingId,
+    cancelVariant,
     eventId,
     pendingInvitation,
     acceptInvitationMutation,
@@ -382,6 +383,7 @@ export const EventDetailsScreen: React.FC = () => {
         visible={isCancelBookingModalVisible}
         onClose={handleCloseCancelBookingModal}
         bookingId={cancelBookingId}
+        variant={cancelVariant as any}
         onCancelSuccess={handleCancelBookingSuccess}
       />
       <BookingModal

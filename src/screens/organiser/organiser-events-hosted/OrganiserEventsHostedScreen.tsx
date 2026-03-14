@@ -113,6 +113,16 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
       );
     }
 
+    // Filter by date
+    const selectedDate = dateFilters.find((f) => f.isSelected)?.fullDate;
+    if (selectedDate) {
+      filtered = filtered.filter((event) => {
+        if (!event.eventDateTime) return false;
+        const eDate = event.eventDateTime.split('T')[0];
+        return eDate === selectedDate;
+      });
+    }
+
     // Sort events
     const sortBy = selectedSortBy[0];
     switch (sortBy) {
@@ -132,7 +142,7 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
     }
 
     return filtered;
-  }, [events, selectedSports, selectedEventTypes, selectedSortBy]);
+  }, [events, selectedSports, selectedEventTypes, selectedSortBy, dateFilters]);
 
   const handleEventPress = (eventId: string) => {
     navigation.navigate('OrganiserAnalyticsEventDetails', { eventId });
@@ -153,7 +163,7 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
           >
             <Card style={styles.headerCard}>
               <FlexView flexDirection="row" alignItems="center" justifyContent="space-between">
-                <TextDs size={14} weight="regular" color="black">
+                <TextDs size={14} weight="semibold" color="black">
                   Events Hosted
                 </TextDs>
                 <TouchableOpacity

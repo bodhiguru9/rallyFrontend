@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.glass.background.white,
+    backgroundColor: '#fffdef78',
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border.white,
