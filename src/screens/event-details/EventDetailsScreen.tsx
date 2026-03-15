@@ -60,6 +60,7 @@ export const EventDetailsScreen: React.FC = () => {
     cancelBookingId,
     cancelVariant,
     eventId,
+    isOrganiser,
     pendingInvitation,
     acceptInvitationMutation,
     declineInvitationMutation,
@@ -153,12 +154,13 @@ export const EventDetailsScreen: React.FC = () => {
         <Card style={{ padding: spacing.base, marginBottom: spacing.base }}>
           <TextDs style={styles.cardTitle}>Members & Guests</TextDs>
           <FlexView style={styles.membersSection}>
-            {/* Guest count dropdown - only show if guests are allowed, user hasn't joined, and there's no pending request/payment */}
+            {/* Guest count dropdown - only show if guests are allowed, user hasn't joined, and there's no pending request/payment. Organisers cannot book. */}
             {event.eventOurGuestAllowed !== false &&
               !event?.isJoined &&
               !event?.userJoinStatus?.hasRequest &&
               event?.userJoinStatus?.action !== 'payment-pending' &&
-              !pendingInvitation && (
+              !pendingInvitation &&
+              !isOrganiser && (
               <Dropdown
                 // label="Number of Guests"
                 placeholder="Select guests"
@@ -264,8 +266,9 @@ export const EventDetailsScreen: React.FC = () => {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Pay Now / Cancel Booking - Show when user has joined or payment is pending */}
+      {/* Pay Now / Cancel Booking - Organisers cannot book events (e.g. from tag search) */}
       {/* Combined Sticky Footer Container */}
+      {!isOrganiser && (
       <View style={styles.persistentFooter}>
         <BackdropBlur intensity={80} px={spacing.base} pb={insets.bottom + spacing.sm} pt={spacing.sm}>
 
@@ -350,6 +353,7 @@ export const EventDetailsScreen: React.FC = () => {
           )}
         </BackdropBlur>
       </View>
+      )}
 
       {/* Members Modal */}
       {event && (

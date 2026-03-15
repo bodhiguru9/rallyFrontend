@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, type RouteProp } from '@react-navigation/native';
@@ -9,33 +9,53 @@ import { TextDs } from '@designSystem/atoms/TextDs';
 import { ArrowIcon } from '@components/global/ArrowIcon';
 import { EventCard } from '@components/global/EventCard';
 import { FlexView } from '@components';
-import { useTagSearchEvents } from '@hooks/use-events';
+import { usePlayerEvents } from '@hooks/use-events';
+import type { EventData } from '@app-types';
 
 type TagSearchScreenRouteProp = RouteProp<RootStackParamList, 'TagSearch'>;
 type TagSearchScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'TagSearch'>;
+
+/** Normalize for comparison: lowercase, no spaces/special chars */
+const normalize = (s: string) => String(s ?? '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
 export const TagSearchScreen: React.FC = () => {
     const route = useRoute<TagSearchScreenRouteProp>();
     const navigation = useNavigation<TagSearchScreenNavigationProp>();
     const { searchType, value } = route.params ?? { searchType: undefined, value: undefined };
 
-    const params =
-        searchType === 'sport'
-            ? { eventSports: value }
-            : searchType === 'eventType'
-                ? { eventType: value }
-                : {};
-
-    const { data, isLoading, isError } = useTagSearchEvents(params);
+    const { data, isLoading, isError } = usePlayerEvents();
     const allEvents = data?.events ?? [];
-    
-    // Filter to show only today and upcoming events
-    const events = allEvents.filter((event) => {
-        const eventDate = new Date(event.eventDateTime);
+
+    const events = useMemo(() => {
+        const searchValue = (value ?? '').trim();
+        if (!searchValue) return [];
+
+        const normalizedSearch = normalize(searchValue);
+
+        let filtered: EventData[] = allEvents;
+        if (searchType === 'sport') {
+            filtered = allEvents.filter((e) =>
+                (e.eventSports ?? []).some((s) => normalize(s) === normalizedSearch || normalize(s).includes(normalizedSearch) || normalizedSearch.includes(normalize(s)))
+            );
+        } else if (searchType === 'eventType') {
+            filtered = allEvents.filter((e) => {
+                const type = String(e.eventType ?? '').trim();
+                return normalize(type) === normalizedSearch || normalize(type).includes(normalizedSearch) || normalizedSearch.includes(normalize(type));
+            });
+        } else {
+            // Fallback: try both sport and eventType
+            filtered = allEvents.filter((e) => {
+                const matchSport = (e.eventSports ?? []).some((s) => normalize(s) === normalizedSearch || normalize(s).includes(normalizedSearch) || normalizedSearch.includes(normalize(s)));
+                const type = String(e.eventType ?? '').trim();
+                const matchType = normalize(type) === normalizedSearch || normalize(type).includes(normalizedSearch) || normalizedSearch.includes(normalize(type));
+                return matchSport || matchType;
+            });
+        }
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        return eventDate >= today;
-    });
+        return filtered.filter((event) => new Date(event.eventDateTime) >= today);
+    }, [allEvents, searchType, value]);
 
     const handleBack = () => navigation.goBack();
     const handleEventPress = (eventId: string) => {

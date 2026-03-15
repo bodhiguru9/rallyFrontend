@@ -89,14 +89,15 @@ export async function searchLocation(params: {
   }).toString()}`;
 
   try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'User-Agent': NOMINATIM_USER_AGENT,
-        Accept: 'application/json',
-      },
-      signal,
-    });
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'User-Agent': NOMINATIM_USER_AGENT,
+      Accept: 'application/json',
+      'Accept-Language': 'en',
+    },
+    signal,
+  });
 
     if (!response.ok) {
       const isRateLimit = response.status === 429 || response.status === 509;

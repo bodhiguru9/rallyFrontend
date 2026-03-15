@@ -41,6 +41,7 @@ module.exports = async function locationSearchHandler(req, res) {
       headers: {
         'User-Agent': USER_AGENT,
         Accept: 'application/json',
+        'Accept-Language': 'en',
       },
     });
 
