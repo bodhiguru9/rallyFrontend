@@ -131,6 +131,14 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate('OrganiserMembers');
   };
 
+  const handleMemberPress = (member: { userId: number; fullName: string; profilePic?: string }) => {
+    navigation.navigate('OrganiserMemberJoinedEvents', {
+      userId: member.userId,
+      fullName: member.fullName,
+      profilePic: member.profilePic,
+    });
+  };
+
   const handleRecentTransactionsPress = () => {
     navigation.navigate('OrganiserTransactions');
   };
@@ -162,6 +170,7 @@ export const HomeScreen: React.FC = () => {
           onTotalMembersPress={handleTotalMembersPress}
           onEventsHostedPress={handleEventsHostedPress}
           onMostBookedPress={handleMostBookedPress}
+          onMemberPress={handleMemberPress}
           onRecentTransactionsPress={handleRecentTransactionsPress}
           transactions={organiserTransactions || []}
           isLoadingTransactions={isLoadingTransactions}

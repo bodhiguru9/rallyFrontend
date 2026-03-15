@@ -505,6 +505,24 @@ export const organiserService = {
       const analyticsData = response.data.data;
       const { stats, transactions: apiTransactions } = analyticsData;
 
+      // Fallback: if analytics doesn't return totalMembers, fetch from members API
+      let totalMembers = Number(stats?.totalMembers ?? 0);
+      if (totalMembers === 0) {
+        try {
+          const membersRes = await apiClient.get<OrganiserMembersResponse>('/api/organizers/members', {
+            params: { page: 1, perPage: 1 },
+          });
+          const d = membersRes.data?.data;
+          totalMembers =
+            d?.pagination?.totalCount ??
+            d?.totalMembers ??
+            (membersRes.data as any)?.pagination?.totalCount ??
+            0;
+        } catch {
+          // Ignore; keep 0
+        }
+      }
+
       // Map summary cards
       const summaryCards: SummaryCard[] = [
         {
@@ -516,7 +534,7 @@ export const organiserService = {
           label: 'Events Hosted',
         },
         {
-          value: String(stats?.totalMembers ?? 0),
+          value: String(totalMembers),
           label: 'Total Members',
         },
       ];
@@ -835,11 +853,28 @@ export const organiserService = {
   getOrganiserMembers: async (
     page: number = 1,
     perPage: number = 20,
+    filters?: { period?: string; sport?: string },
   ): Promise<OrganiserMembersResponse> => {
     try {
+      const params: Record<string, string | number> = { page, perPage };
+      if (filters?.period && filters.period !== 'all-time') {
+        params.period = filters.period;
+      }
+      if (filters?.sport) {
+        params.sport = filters.sport;
+      }
       const { data } = await apiClient.get<OrganiserMembersResponse>('/api/organizers/members', {
-        params: { page, perPage },
+        params,
       });
+      // Normalize member data: handle snake_case, use organiserBookingAmount for price
+      if (data.success && data.data?.members) {
+        data.data.members = data.data.members.map((m: any) => ({
+          ...m,
+          profilePic: m.profilePic ?? m.profile_pic ?? null,
+          totalBookedEvents: m.totalBookedEvents ?? m.total_booked_events ?? m.organiserBookedEvents ?? m.organiser_booked_events ?? 0,
+          totalBookingAmount: m.totalBookingAmount ?? m.total_booking_amount ?? m.organiserBookingAmount ?? m.organiser_booking_amount ?? 0,
+        }));
+      }
       return data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message;
@@ -940,6 +975,23 @@ export const organiserService = {
           params: { page, perPage },
         },
       );
+      if (data.success && data.data?.events) {
+        data.data.events = data.data.events.map((event: any) => {
+          const spotsBooked = event.participantsCount ?? event.eventTotalAttendNumber ?? 0;
+          const totalSpots = event.eventMaxGuest ?? 0;
+          const spotsLeft = Math.max(0, totalSpots - spotsBooked);
+          const spotsFull = spotsLeft === 0;
+          const rawImages = event.eventImages ?? event.event_images ?? [];
+          const eventImages = Array.isArray(rawImages) ? rawImages : event.eventImage ? [event.eventImage] : event.gameImages ?? [];
+          return {
+            ...event,
+            eventImages,
+            spotsInfo: event.spotsInfo || { totalSpots, spotsBooked, spotsLeft, spotsFull },
+            availableSpots: event.availableSpots ?? spotsLeft,
+            isFull: event.isFull ?? spotsFull,
+          };
+        });
+      }
       return data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message;

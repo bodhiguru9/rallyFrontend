@@ -19,6 +19,7 @@ interface DashboardProps {
   handleTotalMembersPress: () => void;
   handleTransactionsPress: () => void;
   handleMostBookedPress: () => void;
+  onMemberPress?: (member: { userId: number; fullName: string; profilePic?: string }) => void;
   transactions: OrganiserDashboardData['transactions'];
   isLoadingTransactions: boolean;
   onRefresh?: () => void | Promise<void>;
@@ -33,6 +34,7 @@ export const renderDashboard = ({
   handleEventsHostedPress,
   handleTransactionsPress,
   handleMostBookedPress,
+  onMemberPress,
   transactions,
   isLoadingTransactions,
   onRefresh,
@@ -115,7 +117,7 @@ export const renderDashboard = ({
 
       {/* Most Booked Section */}
       <FlexView style={styles.section}>
-        <MostBookedSection onPress={handleMostBookedPress} />
+        <MostBookedSection onPress={handleMostBookedPress} onMemberPress={onMemberPress} />
       </FlexView>
 
       {/* Recent Transactions */}

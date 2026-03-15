@@ -8,15 +8,15 @@ import { Card } from '@components/global/Card';
 import { FlexView, ImageDs, TextDs, Avatar } from '@components';
 import { FilterDropdown } from '@components/global/filter-dropdown';
 import { useOrganiserMembers } from '@hooks/organiser';
+import { resolveImageUri } from '@utils/image-utils';
 import { colors, spacing } from '@theme';
 import { styles } from './style/OrganiserMembersScreen.styles';
 
 export const OrganiserMembersScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { data, isLoading } = useOrganiserMembers(1, 20);
   const [isPeriodPickerVisible, setIsPeriodPickerVisible] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('all-time');
-  const [selectedSports, setSelectedSports] = useState<string[]>([]);
+  const [selectedSports, setSelectedSports] = useState<string[]>(['all-sports']);
   const [selectedSortBy, setSelectedSortBy] = useState<string[]>(['most-recent']);
 
   const periodOptions = [
@@ -28,15 +28,25 @@ export const OrganiserMembersScreen: React.FC = () => {
   ];
 
   const sportsOptions = [
+    { id: 'all-sports', label: 'All Sports', value: 'all' },
     { id: 'football', label: 'Football', value: 'football' },
     { id: 'basketball', label: 'Basketball', value: 'basketball' },
     { id: 'cricket', label: 'Cricket', value: 'cricket' },
     { id: 'tennis', label: 'Tennis', value: 'tennis' },
     { id: 'badminton', label: 'Badminton', value: 'badminton' },
     { id: 'volleyball', label: 'Volleyball', value: 'volleyball' },
-    { id: 'swimming', label: 'Swimming', value: 'swimming' },
-    { id: 'running', label: 'Running', value: 'running' },
+    { id: 'padel', label: 'Padel', value: 'padel' },
   ];
+
+  const activeSport = useMemo(() => {
+    const id = selectedSports.find((s) => s !== 'all-sports');
+    return id && id !== 'all' ? sportsOptions.find((o) => o.id === id)?.value : undefined;
+  }, [selectedSports]);
+
+  const { data, isLoading } = useOrganiserMembers(1, 50, {
+    period: selectedPeriod,
+    sport: activeSport,
+  });
 
   const sortOptions = [
     { id: 'most-recent', label: 'Most Recent', value: 'most-recent' },
@@ -46,9 +56,15 @@ export const OrganiserMembersScreen: React.FC = () => {
   ];
 
   const handleSportToggle = (sportId: string) => {
-    setSelectedSports((prev) =>
-      prev.includes(sportId) ? prev.filter((id) => id !== sportId) : [...prev, sportId],
-    );
+    setSelectedSports((prev) => {
+      if (sportId === 'all-sports') return ['all-sports'];
+      const next = prev.filter((id) => id !== 'all-sports');
+      if (next.includes(sportId)) {
+        const filtered = next.filter((id) => id !== sportId);
+        return filtered.length === 0 ? ['all-sports'] : filtered;
+      }
+      return [...next, sportId];
+    });
   };
 
   const handleSortToggle = (sortId: string) => {
@@ -58,12 +74,18 @@ export const OrganiserMembersScreen: React.FC = () => {
   const members = useMemo(() => data?.data?.members || [], [data?.data?.members]);
 
   const filteredMembers = useMemo(() => {
-    const filtered = [...members];
+    let filtered = [...members];
 
-    // Filter by sports (if any selected)
-    // Note: Current API doesn't provide sport info per member
-    // In a real implementation, you'd filter based on member.sports or similar
-    // For now, sports filter is a UI placeholder
+    // Sports filter is applied via API (period + sport params)
+    // Client-side filter by member.sports if API returns it
+    const activeSports = selectedSports.filter((id) => id !== 'all-sports');
+    if (activeSports.length > 0 && members.some((m: any) => m.sports || m.sport1 || m.sport2)) {
+      filtered = filtered.filter((m: any) => {
+        const memberSports = [m.sports, m.sport1, m.sport2].flat().filter(Boolean).map((s: string) => String(s).toLowerCase());
+        const opts = sportsOptions.filter((o) => activeSports.includes(o.id));
+        return opts.some((opt) => memberSports.includes(opt.value.toLowerCase()));
+      });
+    }
 
     // Sort members
     const sortBy = selectedSortBy[0];
@@ -79,14 +101,18 @@ export const OrganiserMembersScreen: React.FC = () => {
         break;
       case 'most-recent':
       default:
-        // Keep original order (most recent)
+        filtered.sort((a, b) => {
+          const aDate = a.lastBookedAt ?? a.last_booked_at ?? '';
+          const bDate = b.lastBookedAt ?? b.last_booked_at ?? '';
+          return new Date(bDate).getTime() - new Date(aDate).getTime();
+        });
         break;
     }
 
     return filtered;
-  }, [members, selectedSortBy]);
+  }, [members, selectedSortBy, selectedSports, sportsOptions]);
 
-  const totalCount = data?.data?.totalMembers ?? data?.data?.pagination?.totalCount ?? members.length;
+  const totalCount = filteredMembers.length;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -154,7 +180,7 @@ export const OrganiserMembersScreen: React.FC = () => {
                 >
                   <FlexView style={styles.memberRow}>
                     <Avatar
-                      imageUri={member.profilePic}
+                      imageUri={resolveImageUri(member.profilePic ?? (member as any).profile_pic) ?? undefined}
                       fullName={member.fullName}
                       size="lg"
                     />
@@ -170,7 +196,7 @@ export const OrganiserMembersScreen: React.FC = () => {
                   <FlexView style={styles.memberPrice}>
                     <ImageDs image="DhiramIcon" style={styles.priceIcon} />
                     <TextDs size={14} weight="regular" color="primary">
-                      {member.totalBookingAmount ?? 0}
+                      {member.totalBookingAmount ?? (member as any).organiserBookingAmount ?? (member as any).total_booking_amount ?? 0}
                     </TextDs>
                   </FlexView>
                 </TouchableOpacity>

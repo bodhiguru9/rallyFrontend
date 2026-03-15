@@ -1,5 +1,6 @@
 export * from './date-utils';
 export * from './error-handler';
+export * from './image-utils';
 export * from './share-utils';
 export * from './string-utils';
 export * from './image-picker';

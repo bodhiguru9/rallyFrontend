@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import { FlexView } from '@components';
 import { ActivityIndicator, Image, ScrollView } from 'react-native';
+import { resolveImageUri } from '@utils/image-utils';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation';
 import { Card } from '@components/global/Card';
@@ -18,12 +19,20 @@ type ScreenRouteProp = NativeStackScreenProps<
 >['route'];
 
 export const OrganiserMemberJoinedEventsScreen: React.FC = () => {
+  const navigation = useNavigation();
   const route = useRoute<ScreenRouteProp>();
   const { userId, fullName, profilePic } = route.params;
   const { data, isLoading } = useUserJoinedEvents(userId, 1, 20, { enabled: userId > 0 });
 
   const member = data?.data?.user;
-  const events = useMemo(() => data?.data?.events || [], [data?.data?.events]);
+  const events = useMemo(() => {
+    const list = data?.data?.events || [];
+    return [...list].sort((a, b) => {
+      const dateA = new Date(a.eventDateTime ?? a.event_date_time ?? 0).getTime();
+      const dateB = new Date(b.eventDateTime ?? b.event_date_time ?? 0).getTime();
+      return dateA - dateB;
+    });
+  }, [data?.data?.events]);
   const totalCount = data?.data?.pagination?.totalCount ?? events.length;
 
   return (
@@ -40,8 +49,8 @@ export const OrganiserMemberJoinedEventsScreen: React.FC = () => {
         >
           <Card style={styles.memberCard}>
             <FlexView style={styles.memberRow}>
-              {profilePic ? (
-                <Image source={{ uri: profilePic }} style={styles.avatar} />
+              {(profilePic || member?.profilePic) ? (
+                <Image source={{ uri: resolveImageUri(profilePic ?? member?.profilePic) ?? '' }} style={styles.avatar} />
               ) : (
                 <FlexView style={styles.avatarPlaceholder}>
                   <TextDs size={14} weight="regular" color="primary">
@@ -75,8 +84,8 @@ export const OrganiserMemberJoinedEventsScreen: React.FC = () => {
                     key={event.eventId}
                     id={event.eventId}
                     event={event as any}
-                    onPress={() => { }}
-                    onBookmark={() => { }}
+                    onPress={(id) => navigation.navigate('OrganiserEventDetails', { eventId: String(id) })}
+                    onBookmark={() => {}}
                     spotsStatusLabel={spotsFull ? 'Fully Booked' : 'Spots Available'}
                     hidePrice={false}
                   />

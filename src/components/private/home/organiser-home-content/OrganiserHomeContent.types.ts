@@ -11,6 +11,7 @@ export interface OrganiserHomeContentProps {
   onTotalRevenuePress: () => void;
   onEventsHostedPress: () => void;
   onMostBookedPress: () => void;
+  onMemberPress?: (member: { userId: number; fullName: string; profilePic?: string }) => void;
   onRecentTransactionsPress: () => void;
   onTotalMembersPress: () => void;
   transactions: OrganiserDashboardData['transactions'];
