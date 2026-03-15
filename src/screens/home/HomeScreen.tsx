@@ -26,7 +26,7 @@ export const HomeScreen: React.FC = () => {
     enabled: isOrganiserUser,
   });
   const { data: createdEventsData, isLoading: isLoadingCreatedEvents } = useOrganiserCreatedEvents(
-    2,
+    1,
     10,
     {
       enabled: isOrganiserUser,
@@ -135,6 +135,18 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate('OrganiserTransactions');
   };
 
+  // Filter "Your Calendar" to show only today and upcoming events, sorted by date (nearest first)
+  const upcomingCreatedEvents = React.useMemo(() => {
+    const events = createdEventsData?.data?.events ?? [];
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const filtered = events.filter((e) => {
+      const eventDate = new Date(e.eventDateTime);
+      return eventDate >= todayStart;
+    });
+    return filtered.sort((a, b) => new Date(a.eventDateTime).getTime() - new Date(b.eventDateTime).getTime());
+  }, [createdEventsData?.data?.events]);
+
   // State 2: Organiser user - Show organiser UI
   if (isOrganiserUser) {
     return (
@@ -142,7 +154,7 @@ export const HomeScreen: React.FC = () => {
         <OrganiserHomeContent
           dashboardData={dashboardData}
           isLoading={isLoadingOrganiserData}
-          createdEvents={createdEventsData?.data?.events ?? []}
+          createdEvents={upcomingCreatedEvents}
           isLoadingCreatedEvents={isLoadingCreatedEvents}
           userName={getUserFirstName(user.fullName, user.userType)}
           onCreatePress={handleCreateEvent}

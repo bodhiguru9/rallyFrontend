@@ -124,12 +124,13 @@ const valueToVariantMap: Record<string, IconTagVariant> = {
   private: 'gray',
 };
 
-// Add your specific sport mapping here. 
-// Note: Replace the string values below with your actual `ImageKey` names!
+// Add your specific sport mapping here.
+// Note: normalizedValue removes spaces/special chars and lowercases (e.g. "Table Tennis" -> "tabletennis")
 const valueToIconMap: Record<string, string | LucideIcon> = {
   volleyball: 'volleyball',
   basketball: 'basketballYellow',
   football: 'footballIcon',
+  soccer: 'footballIcon',
   tennis: 'tennisYellow',
   running: 'sport-running',
   yoga: 'sport-yoga',
@@ -137,18 +138,18 @@ const valueToIconMap: Record<string, string | LucideIcon> = {
   pilates: 'pilatesYellow',
   baseball: 'sport-baseball',
   badminton: 'badmintonYellow',
-  pickleball: "pickleballYellow",
+  pickleball: 'pickleballYellow',
   cricket: 'cricketYellow',
   tabletennis: 'tableTennisYellow',
+  'tabletennis': 'tableTennisYellow',
   padel: 'padelYellow',
+  padeltennis: 'padelYellow',
   social: 'socialIcon',
   class: 'classIcon',
   tournament: 'tournamentIcon',
   training: 'trainingIcon',
   group: 'groupIcon',
   private: 'privateIcon',
-  // You can also map directly to Lucide icons if you prefer:
-  // generic_sport: Activity
 };
 
 const variantStyles: Record<IconTagVariant, { background: string; text: string; icon: string }> = {

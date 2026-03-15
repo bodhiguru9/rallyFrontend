@@ -682,15 +682,27 @@ export const organiserService = {
       if (data.success && data.data.events) {
         const transformed = data.data.events
           .filter((event) => event.IsPrivateEvent !== true)
-          .map((event) => {
+          .map((event: any) => {
             // Calculate spotsInfo if not present
             const spotsBooked = event.participantsCount || 0;
             const totalSpots = event.eventMaxGuest || 0;
             const spotsLeft = Math.max(0, totalSpots - spotsBooked);
             const spotsFull = spotsLeft === 0;
 
+            // Normalize eventImages: eventImages, event_images, eventImage (singular), gameImages
+            const rawImages = event.eventImages ?? event.event_images ?? [];
+            let eventImages = Array.isArray(rawImages) ? rawImages : event.eventImage ? [event.eventImage] : [];
+            if (eventImages.length === 0) {
+              const gameImgs = event.gameImages ?? event.game_images ?? [];
+              eventImages = Array.isArray(gameImgs) ? gameImgs : [];
+            }
+            if (eventImages.length === 0 && event.eventImage) {
+              eventImages = [event.eventImage];
+            }
+
             return {
               ...event,
+              eventImages,
               // Ensure spotsInfo exists
               spotsInfo: event.spotsInfo || {
                 totalSpots,
@@ -756,14 +768,26 @@ export const organiserService = {
       );
 
       if (data.success && data.data?.events) {
-        data.data.events = data.data.events.map((event) => {
+        data.data.events = data.data.events.map((event: any) => {
           const spotsBooked = event.participantsCount || 0;
           const totalSpots = event.eventMaxGuest || 0;
           const spotsLeft = Math.max(0, totalSpots - spotsBooked);
           const spotsFull = spotsLeft === 0;
 
+          // Normalize eventImages: eventImages, event_images, eventImage (singular), gameImages
+          const rawImages = event.eventImages ?? event.event_images ?? [];
+          let eventImages = Array.isArray(rawImages) ? rawImages : event.eventImage ? [event.eventImage] : [];
+          if (eventImages.length === 0) {
+            const gameImgs = event.gameImages ?? event.game_images ?? [];
+            eventImages = Array.isArray(gameImgs) ? gameImgs : [];
+          }
+          if (eventImages.length === 0 && event.eventImage) {
+            eventImages = [event.eventImage];
+          }
+
           return {
             ...event,
+            eventImages,
             spotsInfo: event.spotsInfo || {
               totalSpots,
               spotsBooked,

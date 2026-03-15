@@ -8,6 +8,8 @@ export interface CreateEventFormData {
   dateTime: Date | null;
   /** Structured location from EventLocationSearch (OpenStreetMap), or legacy string. */
   location: EventLocation | string | null;
+  /** Raw text from location input (fallback when user types without selecting). */
+  locationRawInput?: string;
   description: string;
   maxGuests: string;
   pricePerGuest: string;

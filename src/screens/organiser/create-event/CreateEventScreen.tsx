@@ -265,14 +265,10 @@ export const CreateEventContent: React.FC = () => {
     updateFormData,
     showCompleteProfileModal,
     setShowCompleteProfileModal,
-    handleCreateEventAPI,
+    handleCreateEvent,
     handleCompleteProfileSubmit,
     isLoading,
   } = useCreateOrganiserEvent();
-
-  const handleCreateEventPress = () => {
-    handleCreateEventAPI();
-  };
 
   return (
     <SafeAreaView style={{ flex: 1, experimental_backgroundImage: colors.gradient.mainBackground }} edges={['top']}>
@@ -384,6 +380,7 @@ export const CreateEventContent: React.FC = () => {
             onChange={(location: EventLocation | null) =>
               updateFormData('location', location)
             }
+            onInputChange={(text) => updateFormData('locationRawInput', text)}
             placeholder="Location"
             leftIcon={<ImageDs image="LocationPin" size={20} />}
             onDropdownVisibilityChange={setIsLocationDropdownOpen}
@@ -607,7 +604,7 @@ export const CreateEventContent: React.FC = () => {
           >
           <FlexView style={styles.blurContainer}>
             <TouchableOpacity
-              onPress={handleCreateEventPress}
+              onPress={handleCreateEvent}
               disabled={isLoading}
               activeOpacity={0.8}
               style={styles.createButton}

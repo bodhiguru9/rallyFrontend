@@ -6,6 +6,8 @@ export interface EventLocationSearchProps {
   value: EventLocation | null;
   /** Called when user selects a location or clears selection. */
   onChange: (location: EventLocation | null) => void;
+  /** Optional: called when input text changes. Use to sync typed text before submit. */
+  onInputChange?: (text: string) => void;
   placeholder?: string;
   leftIcon?: ReactNode;
   /** Min characters before triggering search (default 3). */

@@ -48,10 +48,36 @@ export const OrganiserCalendarScreen: React.FC = () => {
 
   const { groupedEvents } = useGroupedEvents({ events, activeTab, selectedDate });
 
+  const toDateKey = (s: string) => {
+    const d = new Date(s);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
   const selectDate = (fullDate: string | null) => {
-    setDateFilters(prev =>
-      prev.map(f => ({ ...f, isSelected: f.fullDate === fullDate })),
-    );
+    setDateFilters((prev) => {
+      if (!fullDate) {
+        return prev.map((f) => ({ ...f, isSelected: false }));
+      }
+      const targetKey = toDateKey(fullDate);
+      const exists = prev.some((f) => f.fullDate && toDateKey(f.fullDate) === targetKey);
+      if (exists) {
+        return prev.map((f) => ({
+          ...f,
+          isSelected: f.fullDate ? toDateKey(f.fullDate) === targetKey : false,
+        }));
+      }
+      // Add the selected date from calendar popup when not in the list
+      const d = new Date(fullDate);
+      const newEntry = {
+        date: d.getDate(),
+        day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        month: d.toLocaleDateString('en-US', { month: 'short' }),
+        isSelected: true,
+        fullDate: d.toISOString(),
+      };
+      const updated = prev.map((f) => ({ ...f, isSelected: false }));
+      return [...updated, newEntry];
+    });
   };
 
   const handleEventPress = (id: string) => {

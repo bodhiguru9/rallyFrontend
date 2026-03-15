@@ -30,6 +30,7 @@ const DEBOUNCE_MS = 1000;
 export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
   value,
   onChange,
+  onInputChange,
   placeholder = 'Location',
   leftIcon,
   minSearchLength = MIN_SEARCH_LENGTH,
@@ -46,6 +47,8 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
   const isSelectingRef = useRef(false);
+  const inputTextRef = useRef(inputText);
+  inputTextRef.current = inputText;
 
   // Sync input text when value is set externally (e.g. form reset)
   useEffect(() => {
@@ -115,6 +118,7 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
   const handleInputChange = useCallback(
     (text: string) => {
       setInputText(text);
+      onInputChange?.(text);
       setError(null);
       if (text.trim().length >= minSearchLength) {
         debouncedSearch(text);
@@ -124,7 +128,7 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
         setShowEmptyState(false);
       }
     },
-    [minSearchLength, debouncedSearch],
+    [minSearchLength, debouncedSearch, onInputChange],
   );
 
   const handleSelectSuggestion = useCallback(
@@ -153,15 +157,28 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
   );
 
   const handleInputBlur = useCallback(() => {
+    // Sync typed text to form immediately (so validation on submit gets it)
+    const trimmed = inputTextRef.current.trim();
+    if (!isSelectingRef.current) {
+      if (trimmed.length >= 3 && value?.displayName !== trimmed) {
+        onChange({
+          name: trimmed,
+          displayName: trimmed,
+          latitude: 0,
+          longitude: 0,
+        });
+      } else if (trimmed.length === 0 && value !== null) {
+        onChange(null);
+      }
+    }
     // Close dropdown after delay so that tapping a suggestion runs first
-    // Only close if not currently selecting
     setTimeout(() => {
       if (!isSelectingRef.current) {
         setSuggestions([]);
         setShowEmptyState(false);
       }
     }, 200);
-  }, []);
+  }, [value?.displayName, value, onChange]);
 
   const handleInputFocus = useCallback(() => {
     isSelectingRef.current = false;

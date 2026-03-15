@@ -18,6 +18,15 @@ import { MembersModal } from '@screens/event-details/MembersModal';
 import type { EventStatusBadgeVariant } from '@components/global/event-status-badge/EventStatusBadge.types';
 import type { EventData } from '@app-types';
 import type { PlayerBooking } from '@services/booking-service';
+import { ENV } from '@config/env';
+
+function resolveImageUri(uri: string | undefined | null): string | undefined {
+  if (!uri || typeof uri !== 'string' || !uri.trim()) return undefined;
+  const trimmed = uri.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  const base = ENV.API_BASE_URL.replace(/\/$/, '');
+  return trimmed.startsWith('/') ? `${base}${trimmed}` : `${base}/${trimmed}`;
+}
 
 function getStatusBadgeVariant(event: EventData | PlayerBooking): EventStatusBadgeVariant {
   const booking = 'booking' in event ? event.booking : undefined;
@@ -148,15 +157,20 @@ export const EventCard: React.FC<EventCardProps> = ({
     private: 'privateIcon',
   };
 
-  const sportKey = event.eventSports?.[0]?.toLowerCase() ?? '';
-  const eventTypeKey = String(event.eventType ?? '').toLowerCase();
+  const sportKey = (event.eventSports?.[0] ?? '').toString().toLowerCase().replace(/\s+/g, '');
+  const eventTypeKey = String(event.eventType ?? '').toLowerCase().replace(/\s+/g, '');
 
-  // const SportIcon = (sportIconMap[sportKey] ?? 'footballIcon') as any;
   const EventTypeIcon = (eventTypeIconMap[eventTypeKey] ?? 'socialIcon') as any;
-  // Get event image or fallback to organizer profile photo
-  const eventImage = event.eventImages?.[0];
+  // Get event image: eventImages, gameImages, eventImage (singular), then organizer profile
+  const rawEventImage =
+    event.eventImages?.[0] ??
+    (event as EventData).gameImages?.[0] ??
+    (event as any).eventImage;
   const organizerProfilePic = (event as EventData).eventCreatorProfilePic || event.creator?.profilePic;
-  const displayImage = eventImage || organizerProfilePic || undefined;
+  const displayImage =
+    resolveImageUri(rawEventImage) ??
+    resolveImageUri(organizerProfilePic) ??
+    'https://via.placeholder.com/150?text=Event';
 
   return (
     <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.9}>

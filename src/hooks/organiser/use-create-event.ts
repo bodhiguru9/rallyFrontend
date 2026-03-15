@@ -26,6 +26,7 @@ export const useCreateOrganiserEvent = () => {
     eventType: '',
     dateTime: null,
     location: null,
+    locationRawInput: '',
     description: '',
     maxGuests: '',
     pricePerGuest: '',
@@ -74,6 +75,7 @@ export const useCreateOrganiserEvent = () => {
       eventType: '',
       dateTime: null,
       location: null,
+      locationRawInput: '',
       description: '',
       maxGuests: '',
       pricePerGuest: '',
@@ -111,8 +113,11 @@ export const useCreateOrganiserEvent = () => {
       typeof formData.location === 'object' && formData.location !== null
         ? formData.location.displayName
         : String(formData.location ?? '');
-    if (!locationDisplay.trim()) {
-      return 'Location is required';
+    const locationFallback = (formData.locationRawInput ?? '').trim();
+    const hasValidLocation =
+      locationDisplay.trim().length >= 3 || locationFallback.length >= 3;
+    if (!hasValidLocation) {
+      return 'Location is required (minimum 3 characters)';
     }
     if (!formData.description.trim()) {
       return 'Event description is required';
@@ -174,9 +179,10 @@ export const useCreateOrganiserEvent = () => {
       eventType: formData.eventType,
       eventDateTime: formatDateForAPI(formData.dateTime),
       eventLocation:
-        typeof formData.location === 'object' && formData.location !== null
+        (typeof formData.location === 'object' && formData.location !== null
           ? formData.location.displayName
-          : String(formData.location ?? '').trim(),
+          : String(formData.location ?? '').trim()) ||
+        (formData.locationRawInput ?? '').trim(),
       eventDescription: formData.description.trim(),
       eventGender,
       eventSportsLevel,
