@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, startTransition } from 'react';
+import React, { useState, useEffect, useMemo, useRef, startTransition } from 'react';
 import { Modal, TouchableOpacity } from 'react-native';
 import { colors } from '@theme';
 import { Dropdown } from '@designSystem/molecules/dropdown';
@@ -28,16 +28,7 @@ const MONTHS = [
   'December',
 ];
 
-const FREQUENCY_OPTIONS: FrequencyOption[] = [
-  { label: 'Daily', value: 'daily' },
-  { label: 'Weekly on Friday', value: 'weekly-friday' },
-  { label: 'Weekly on Monday', value: 'weekly-monday' },
-  { label: 'Weekly on Saturday', value: 'weekly-saturday' },
-  { label: 'Weekly on Sunday', value: 'weekly-sunday' },
-  { label: 'Monthly', value: 'monthly' },
-  { label: 'Yearly', value: 'yearly' },
-  { label: 'Never', value: 'never' },
-];
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const PICKER_MINUTES = [0, 10, 20, 30, 40, 50];
 
@@ -102,6 +93,19 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
   };
   const [frequency, setFrequency] = useState<string>(initialFrequency || 'never');
 
+  const frequencyOptions = useMemo<FrequencyOption[]>(() => {
+    const selectedWeekday = WEEKDAY_NAMES[selectedDate.getDay()];
+    const weeklyValue = `weekly-${selectedWeekday.toLowerCase()}`;
+
+    return [
+      { label: 'Daily', value: 'daily' },
+      { label: `Weekly on ${selectedWeekday}`, value: weeklyValue },
+      { label: 'Monthly', value: 'monthly' },
+      { label: 'Yearly', value: 'yearly' },
+      { label: 'Never', value: 'never' },
+    ];
+  }, [selectedDate]);
+
   // Track previous initialDate to sync only when it actually changes
   const prevInitialDateRef = useRef<Date | undefined>(initialDate);
 
@@ -122,6 +126,14 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
       });
     }
   }, [visible, initialDate]);
+
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    setFrequency(initialFrequency || 'never');
+  }, [visible, initialFrequency]);
 
   const getDaysInMonth = (month: number, year: number) => {
     return new Date(year, month + 1, 0).getDate();
@@ -284,7 +296,7 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
               <TextDs style={styles.frequencyTitle}>Frequency</TextDs>
               <Dropdown
                 placeholder="Select Frequency"
-                options={FREQUENCY_OPTIONS}
+                options={frequencyOptions}
                 value={frequency}
                 onSelect={setFrequency}
                 position='top'

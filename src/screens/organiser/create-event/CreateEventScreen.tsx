@@ -637,10 +637,17 @@ export const CreateEventContent: React.FC = () => {
           <DateTimePickerModal
             visible={showDateTimePicker}
             onClose={() => setShowDateTimePicker(false)}
-            onConfirm={(date, _frequency) => {
+            onConfirm={(date, frequency) => {
               updateFormData('dateTime', date);
+
+              if (!frequency || frequency === 'never') {
+                updateFormData('frequency', []);
+              } else {
+                updateFormData('frequency', [frequency]);
+              }
             }}
             initialDate={formData.dateTime || undefined}
+            initialFrequency={formData.frequency?.[0]}
           />
 
           {/* Registration Start & End Modal (two-step: start then end) */}
