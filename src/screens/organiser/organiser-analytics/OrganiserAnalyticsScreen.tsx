@@ -77,12 +77,39 @@ const mapBookingEventToEventCard = (event: OrganiserBookingsAnalyticsEvent) => (
 
 export const OrganiserAnalyticsScreen: React.FC = () => {
   const navigation = useNavigation<TNavigation>();
-  const { data, isLoading } = useOrganiserBookingsAnalytics();
   const [isPeriodPickerVisible, setIsPeriodPickerVisible] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('all-time');
   const [selectedSports, setSelectedSports] = useState<string[]>(['all-sports']);
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>(['all-event-types']);
   const [dateFilters, setDateFilters] = useState<DateFilterType[]>(getDateFilters());
+
+  const selectedDate = useMemo(
+    () => dateFilters.find((filter) => filter.isSelected)?.fullDate,
+    [dateFilters],
+  );
+
+  const periodToApiMap: Record<string, 'today' | 'lastWeek' | 'thisMonth' | '6months' | 'lifetime'> = {
+    'all-time': 'lifetime',
+    'today': 'today',
+    'this-week': 'lastWeek',
+    'this-month': 'thisMonth',
+    'last-6-months': '6months',
+  };
+
+  const primarySelectedSport = selectedSports.find((id) => id !== 'all-sports');
+
+  const analyticsFilters = useMemo(() => {
+    const startDate = selectedDate ? new Date(selectedDate).toISOString().split('T')[0] : undefined;
+
+    return {
+      revenuePeriod: periodToApiMap[selectedPeriod] || 'lifetime',
+      sport: primarySelectedSport ? primarySelectedSport.replace(/-/g, ' ') : undefined,
+      startDate,
+      endDate: startDate,
+    };
+  }, [selectedPeriod, primarySelectedSport, selectedDate]);
+
+  const { data, isLoading, isFetching } = useOrganiserBookingsAnalytics(analyticsFilters);
 
   const periodOptions = [
     { label: 'All Time', value: 'all-time' },
@@ -222,12 +249,17 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
   const filteredEvents = useMemo(() => {
     let filtered = [...events];
 
+    const normalizeForCompare = (value: string) =>
+      value.toLowerCase().replace(/[_\s]+/g, '-').trim();
+
     // Filter by sports
     const activeSports = selectedSports.filter(id => id !== 'all-sports');
     if (activeSports.length > 0) {
       filtered = filtered.filter((event) =>
-        event.eventSports?.some((sport) =>
-          activeSports.includes(sport.toLowerCase()),
+        event.eventSports?.some((sport) => {
+          const normalizedSport = normalizeForCompare(sport);
+          return activeSports.includes(normalizedSport);
+        },
         ),
       );
     }
@@ -235,30 +267,37 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
     // Filter by event type
     const activeEventTypes = selectedEventTypes.filter(id => id !== 'all-event-types');
     if (activeEventTypes.length > 0) {
+      const activeTypeValues = eventTypeOptions
+        .filter((option) => activeEventTypes.includes(option.id))
+        .map((option) => option.value);
+
       filtered = filtered.filter((event) => {
-        const eventTypeLower = event.eventType?.toLowerCase() || '';
-        return eventTypeOptions.some(opt => 
-          activeEventTypes.includes(opt.id) && opt.label.toLowerCase() === eventTypeLower
-        );
+        const eventTypeLower = (event.eventType || '').toLowerCase();
+        return activeTypeValues.includes(eventTypeLower);
       });
     }
 
     // Filter by date
-    const selectedDate = dateFilters.find((f) => f.isSelected)?.fullDate;
     if (selectedDate) {
+      const selectedDateOnly = new Date(selectedDate).toISOString().split('T')[0];
       filtered = filtered.filter((event) => {
         if (!event.eventDateTime) return false;
-        const eDate = event.eventDateTime.split('T')[0];
-        return eDate === selectedDate;
+        const eventDateOnly = new Date(event.eventDateTime).toISOString().split('T')[0];
+        return eventDateOnly === selectedDateOnly;
       });
     }
 
+    // Show events from most recent to least recent.
+    filtered.sort(
+      (a, b) => new Date(b.eventDateTime).getTime() - new Date(a.eventDateTime).getTime(),
+    );
+
     return filtered;
-  }, [events, selectedSports, selectedEventTypes, dateFilters]);
+  }, [events, selectedSports, selectedEventTypes, selectedDate, eventTypeOptions]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {isLoading ? (
+      {isLoading || isFetching ? (
         <FlexView style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </FlexView>

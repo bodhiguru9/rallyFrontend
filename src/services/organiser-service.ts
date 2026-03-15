@@ -90,8 +90,18 @@ export interface OrganiserBookingsAnalyticsResponse {
   message: string;
   data?: {
     bookings?: OrganiserBookingsAnalytics;
+    stats?: OrganiserAnalyticsResponse['data']['stats'];
+    revenue?: OrganiserAnalyticsResponse['data']['revenue'];
+    events?: OrganiserAnalyticsResponse['data']['events'] | EventData[];
   };
   bookings?: OrganiserBookingsAnalytics;
+}
+
+export interface OrganiserBookingsAnalyticsFilters {
+  revenuePeriod?: 'today' | 'lastWeek' | 'thisMonth' | '6months' | 'lifetime';
+  sport?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface OrganiserTransactionsResponse {
@@ -431,6 +441,51 @@ const normalizePackageId = (packageId: string): string => {
   return packageId.toUpperCase().replace(/-/g, '');
 };
 
+const mapAnyEventToBookingsAnalyticsEvent = (event: any): OrganiserBookingsAnalyticsEvent => {
+  const participants = Array.isArray(event?.participants)
+    ? event.participants.map((participant: any) => ({
+      userId: Number(participant?.userId ?? 0),
+      profilePic: participant?.profilePic ?? null,
+      fullName: participant?.fullName ?? 'Participant',
+    }))
+    : [];
+
+  const participantsCount = Number(
+    event?.participantsCount ?? event?.eventMaxGuest ?? event?.spotsInfo?.totalSpots ?? 0,
+  );
+
+  const bookedCount = Number(
+    event?.bookedCount ??
+    event?.eventTotalAttendNumber ??
+    event?.spotsInfo?.spotsBooked ??
+    event?.participantsCount ??
+    0,
+  );
+
+  return {
+    eventId: String(event?.eventId ?? event?.id ?? ''),
+    title: String(event?.title ?? event?.eventName ?? 'Untitled Event'),
+    sports: Array.isArray(event?.sports)
+      ? event.sports
+      : Array.isArray(event?.eventSports)
+        ? event.eventSports
+        : [],
+    dateTime: String(event?.dateTime ?? event?.eventDateTime ?? event?.createdAt ?? new Date().toISOString()),
+    address: String(event?.address ?? event?.eventLocation ?? ''),
+    price: Number(event?.price ?? event?.eventPricePerGuest ?? 0),
+    eventImage: String(
+      event?.eventImage ??
+      (Array.isArray(event?.eventImages) ? event.eventImages[0] : '') ??
+      '',
+    ),
+    participants,
+    participantsCount,
+    bookedCount,
+    bookedRevenue: Number(event?.bookedRevenue ?? bookedCount * Number(event?.price ?? event?.eventPricePerGuest ?? 0)),
+    eventType: event?.eventType,
+  };
+};
+
 /**
  * Organiser service for dashboard and organiser-specific operations
  */
@@ -501,18 +556,50 @@ export const organiserService = {
   /**
    * Get organiser bookings analytics (total revenue + event bookings)
    */
-  getOrganiserBookingsAnalytics: async (): Promise<OrganiserBookingsAnalytics> => {
+  getOrganiserBookingsAnalytics: async (
+    filters?: OrganiserBookingsAnalyticsFilters,
+  ): Promise<OrganiserBookingsAnalytics> => {
     try {
       const response = await apiClient.get<OrganiserBookingsAnalyticsResponse>(
         '/api/organizers/analytics',
+        {
+          params: {
+            revenuePeriod: filters?.revenuePeriod,
+            sport: filters?.sport,
+            startDate: filters?.startDate,
+            endDate: filters?.endDate,
+          },
+        },
       );
       const bookings = response.data?.data?.bookings || response.data?.bookings;
+      if (bookings) {
+        return bookings;
+      }
 
-      if (!bookings) {
+      const analyticsData = response.data?.data;
+      if (!analyticsData) {
         throw new Error('Bookings analytics not available');
       }
 
-      return bookings;
+      const eventsField = analyticsData.events;
+      const rawEvents = Array.isArray(eventsField)
+        ? eventsField
+        : [
+          ...(eventsField?.upcoming || []),
+          ...(eventsField?.ongoing || []),
+          ...(eventsField?.past || []),
+        ];
+
+      const mappedEvents = rawEvents.map(mapAnyEventToBookingsAnalyticsEvent);
+
+      return {
+        totalRevenue: Number(analyticsData.stats?.totalRevenue ?? analyticsData.revenue?.total ?? 0),
+        totalBookings: Number(
+          analyticsData.stats?.totalTransactions ??
+          mappedEvents.reduce((sum, event) => sum + (event.bookedCount || 0), 0),
+        ),
+        events: mappedEvents,
+      };
     } catch (error: any) {
       const errorMessage = error.response?.data?.message;
       const statusCode = error.response?.status;

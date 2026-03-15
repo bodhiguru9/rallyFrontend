@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { organiserService } from '@services';
+import type { OrganiserBookingsAnalyticsFilters } from '@services';
 
 interface UseOrganiserBookingsAnalyticsOptions {
   enabled?: boolean;
@@ -8,10 +9,13 @@ interface UseOrganiserBookingsAnalyticsOptions {
 /**
  * Hook to fetch organiser bookings analytics
  */
-export const useOrganiserBookingsAnalytics = (options?: UseOrganiserBookingsAnalyticsOptions) => {
+export const useOrganiserBookingsAnalytics = (
+  filters?: OrganiserBookingsAnalyticsFilters,
+  options?: UseOrganiserBookingsAnalyticsOptions,
+) => {
   return useQuery({
-    queryKey: ['organiserBookingsAnalytics'],
-    queryFn: () => organiserService.getOrganiserBookingsAnalytics(),
+    queryKey: ['organiserBookingsAnalytics', filters],
+    queryFn: () => organiserService.getOrganiserBookingsAnalytics(filters),
     retry: 2,
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: true,
