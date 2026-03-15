@@ -375,7 +375,9 @@ const handleApplePay = () => {
     navigation.navigate('PlayerCalendar');
   };
 
-  /** Cancel booking: if refund date passed show cancel-booking modal (no refund); else call leave API. */
+  const cancelVariant: 'noRefund' | 'cancelSession' = hasRefundPeriodPassed() ? 'noRefund' : 'cancelSession';
+
+  /** Cancel booking: always show the modal, let the modal handle the cancellation via cancelBooking. */
   const handleCancelBooking = () => {
     if (!event) {
       return;
@@ -383,19 +385,8 @@ const handleApplePay = () => {
     if (isPastCancellationTime()) {
       return; // Button is disabled; no-op if somehow called
     }
-    if (hasRefundPeriodPassed()) {
-      setIsCancelBookingModalVisible(true);
-      return;
-    }
-    leaveEvent(eventId, {
-      onSuccess: () => {
-        logger.info('Booking cancelled');
-        navigation.navigate('PlayerCalendar');
-      },
-      onError: (err: Error) => {
-        logger.error('Failed to cancel booking', err);
-      },
-    });
+    // Always show modal. Modal will use the correct variant.
+    setIsCancelBookingModalVisible(true);
   };
 
   const totalPrice = event?.eventPricePerGuest ? event.eventPricePerGuest * guestsCount : 0;
@@ -577,6 +568,7 @@ return {
   handleCloseCancelBookingModal,
   handleCancelBooking,
   handleCancelBookingSuccess,
+  cancelVariant,
   cancelBookingId: (() => {
     const fromEvent = event?.booking?.bookingId ?? event?.payment?.bookingId;
     if (fromEvent) {

@@ -49,10 +49,13 @@ export const styles = StyleSheet.create({
     width: 320,
   },
   filtersScroll: {
-    paddingHorizontal: spacing.base,
     marginBottom: 10,
     overflow: 'visible',
     zIndex: 1,
+  },
+  filtersScrollContainer: {
+    paddingHorizontal: spacing.base,
+    paddingRight: spacing.xl, // Extra padding at the end to ensure the last filter is fully visible
   },
   dateSection: {
     paddingHorizontal: spacing.base,

@@ -122,9 +122,9 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
   });
 
   // Transform API data to FilterOption format using useMemo
-  const [sportsFilterStates, setSportsFilterStates] = useState<Record<string, boolean>>({});
-  const [eventTypeFilterStates, setEventTypeFilterStates] = useState<Record<string, boolean>>({});
-  const [locationFilterStates, setLocationFilterStates] = useState<Record<string, boolean>>({});
+  const [sportsFilterStates, setSportsFilterStates] = useState<Record<string, boolean>>({ 'all-sports': true });
+  const [eventTypeFilterStates, setEventTypeFilterStates] = useState<Record<string, boolean>>({ 'all-event-types': true });
+  const [locationFilterStates, setLocationFilterStates] = useState<Record<string, boolean>>({ 'all-locations': true });
   const [priceFilterStates, setPriceFilterStates] = useState<Record<string, boolean>>({});
 
   // Initialize date filters with 30 days from today
@@ -141,56 +141,137 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
   });
 
   // Derive filter arrays from API data and local state
-  const APP_SPORTS_OPTIONS = [
-    { id: 'padel', label: 'Padel', value: 'padel', icon: 'padelIcon' },
-    { id: 'badminton', label: 'Badminton', value: 'badminton', icon: 'badmintonIcon' },
-    { id: 'cricket', label: 'Cricket', value: 'cricket', icon: 'cricketIcon' },
-    { id: 'pickleball', label: 'Pickleball', value: 'pickleball', icon: 'pickleballIcon' },
-    { id: 'tennis', label: 'Tennis', value: 'tennis', icon: 'tennisIcon' },
-    { id: 'football', label: 'Football', value: 'football', icon: 'footballIcon' },
-    { id: 'table-tennis', label: 'Table Tennis', value: 'table-tennis', icon: 'tableTennisIcon' },
-    { id: 'basketball', label: 'Basketball', value: 'basketball', icon: 'basketballIcon' },
-  ];
-
   const sportsFilters = useMemo(() => {
-    return APP_SPORTS_OPTIONS.map((sport) => ({
-      ...sport,
-      isActive: sportsFilterStates[sport.id] ?? false,
-    }));
-  }, [sportsFilterStates]);
-  const eventTypeFilters = useMemo(() => {
-    if (!filterOptionsData?.eventTypes) {
-      return [];
+    // 1. Define the requested sort order
+    const PRIMARY_SPORTS = [
+      'Padel',
+      'Badminton',
+      'Cricket',
+      'Indoor Cricket',
+      'Pickleball',
+      'Tennis',
+      'Football',
+      'Table-tennis',
+      'Pilates',
+      'Basketball',
+      'Running',
+    ];
+
+    // 2. Map labels to their specific icons (White icons as requested)
+    const iconMap: Record<string, string> = {
+      'Padel': 'padelIcon',
+      'Badminton': 'badmintonIcon',
+      'Cricket': 'cricketIcon',
+      'Indoor Cricket': 'indoorCricketIcon',
+      'Pickleball': 'pickleballIcon',
+      'Tennis': 'tennisIcon',
+      'Football': 'footballIcon',
+      'Table-tennis': 'tableTennisIcon',
+      'Table Tennis': 'tableTennisIcon', // Handle both hyphen and space
+      'Pilates': 'pilatesIcon',
+      'Basketball': 'basketballIcon',
+      'Running': 'runningIcon',
+      'Volleyball': 'basketballIcon', // Placeholder icon if volleyball specific is missing
+    };
+
+    // 3. Merge backend sports with our primary list for resilience
+    const backendSports = filterOptionsData?.sports || [];
+
+    // Debug log to see what the backend is actually sending
+    if (filterOptionsData?.sports) {
+      console.log('⚽ [HOME CONTEXT] Received sports from backend:', filterOptionsData.sports);
     }
+
+    // Combine and deduplicate (case-insensitive)
+    const combinedSports = [...PRIMARY_SPORTS];
+    backendSports.forEach(bs => {
+      if (!combinedSports.some(cs => cs.toLowerCase() === bs.toLowerCase())) {
+        combinedSports.push(bs);
+      }
+    });
+
+    // 4. Create FilterOption objects and sort them
+    const mappedSports = combinedSports
+      .sort((a, b) => {
+        const indexA = PRIMARY_SPORTS.indexOf(a);
+        const indexB = PRIMARY_SPORTS.indexOf(b);
+
+        // If both are in our ordered list, use that order
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        // If only one is in the list, that one comes first
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        // If neither is in the list, sort alphabetically
+        return a.localeCompare(b);
+      })
+      .map((sportLabel) => ({
+        id: sportLabel.toLowerCase().replace(/\s+/g, '-'),
+        label: sportLabel,
+        value: sportLabel.toLowerCase(),
+        isActive: sportsFilterStates[sportLabel.toLowerCase().replace(/\s+/g, '-')] ?? false,
+        icon: iconMap[sportLabel],
+      }));
+
+    // Inject "All Sports" at the beginning
+    return [
+      {
+        id: 'all-sports',
+        label: 'All Sports',
+        value: 'all',
+        isActive: sportsFilterStates['all-sports'] ?? false,
+      },
+      ...mappedSports
+    ];
+  }, [filterOptionsData, sportsFilterStates]);
+  const eventTypeFilters = useMemo(() => {
+    const defaultTypes = filterOptionsData?.eventTypes || [];
     const getEventIcon = (eventType: string): string | undefined => {
       const eventTypeLower = eventType.toLowerCase().replace(/\s+/g, '');
       const iconMap: Record<string, string> = {
         'tournament': 'tournamentIcon',
         'social': 'socialIcon',
         'class': 'classIcon',
-        'training': 'trainingIcon',// Using football sport icon as basketball.png doesn't exist
+        'training': 'trainingIcon',
       };
       return iconMap[eventTypeLower];
     };
-    return filterOptionsData.eventTypes.map((eventType: string, index: number) => ({
+    const mappedTypes = defaultTypes.map((eventType: string, index: number) => ({
       id: `event-type-${index}`,
       label: eventType,
       value: eventType.toLowerCase(),
       isActive: eventTypeFilterStates[`event-type-${index}`] ?? false,
       icon: getEventIcon(eventType),
     }));
+
+    return [
+      {
+        id: 'all-event-types',
+        label: 'All Events',
+        value: 'all',
+        isActive: eventTypeFilterStates['all-event-types'] ?? false,
+      },
+      ...mappedTypes
+    ];
   }, [filterOptionsData, eventTypeFilterStates]);
 
   const locationFilters = useMemo(() => {
-    if (!filterOptionsData?.locations) {
-      return [];
-    }
-    return filterOptionsData.locations.map((location: string, index: number) => ({
+    const defaultLocations = filterOptionsData?.locations || [];
+    const mappedLocations = defaultLocations.map((location: string, index: number) => ({
       id: `location-${index}`,
       label: location,
       value: location.toLowerCase(),
       isActive: locationFilterStates[`location-${index}`] ?? false,
     }));
+
+    return [
+      {
+        id: 'all-locations',
+        label: 'All Locations',
+        value: 'all',
+        isActive: locationFilterStates['all-locations'] ?? false,
+      },
+      ...mappedLocations
+    ];
   }, [filterOptionsData, locationFilterStates]);
 
   const priceFilters = useMemo(() => {
@@ -358,10 +439,20 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
   }, [communitiesResponse]);
 
   const toggleSportsFilter = (id: string) => {
-    setSportsFilterStates((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setSportsFilterStates((prev) => {
+      if (id === 'all-sports') {
+        return { 'all-sports': true };
+      }
+      const newState = { ...prev };
+      newState[id] = !prev[id];
+      delete newState['all-sports'];
+
+      // If nothing left checked, re-enable all
+      const hasActive = Object.values(newState).some(v => v);
+      if (!hasActive) return { 'all-sports': true };
+
+      return newState;
+    });
   };
   // useEffect(() => {
   //   if (!selectedLocation || locationFilters.length === 0) return;
@@ -378,17 +469,35 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
   // }, [selectedLocation, locationFilters.length]); // locationFilters.length ensures it runs once filters are loaded
 
   const toggleEventTypeFilter = (id: string) => {
-    setEventTypeFilterStates((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setEventTypeFilterStates((prev) => {
+      if (id === 'all-event-types') {
+        return { 'all-event-types': true };
+      }
+      const newState = { ...prev };
+      newState[id] = !prev[id];
+      delete newState['all-event-types'];
+
+      const hasActive = Object.values(newState).some(v => v);
+      if (!hasActive) return { 'all-event-types': true };
+
+      return newState;
+    });
   };
 
   const toggleLocationFilter = (id: string) => {
-    setLocationFilterStates((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setLocationFilterStates((prev) => {
+      if (id === 'all-locations') {
+        return { 'all-locations': true };
+      }
+      const newState = { ...prev };
+      newState[id] = !prev[id];
+      delete newState['all-locations'];
+
+      const hasActive = Object.values(newState).some(v => v);
+      if (!hasActive) return { 'all-locations': true };
+
+      return newState;
+    });
   };
 
   const togglePriceFilter = (id: string) => {

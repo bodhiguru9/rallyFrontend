@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { TextDs, FlexView } from '@components';
-import { StyleSheet, ActivityIndicator } from 'react-native';
+import { StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { colors, spacing, borderRadius, getFontStyle } from '@theme';
 import { PickedOrganiserCard, type IconType } from '../PickedOrganiserCard';
 import { FilterDropdown } from '@components/global/filter-dropdown/FilterDropdown';
@@ -10,6 +10,7 @@ import { FilterDropdown } from '@components/global/filter-dropdown/FilterDropdow
 // --- COMPLETE MASTER LIST OF SPORTS ---
 // Generated directly from your getSportIcon mapping
 const APP_SPORTS_OPTIONS = [
+  { id: 'all-sports', label: 'All Sports', value: 'all' },
   { id: 'padel', label: 'Padel', value: 'padel', icon: 'padelIcon' },
   { id: 'badminton', label: 'Badminton', value: 'badminton', icon: 'badmintonIcon' },
   { id: 'cricket', label: 'Cricket', value: 'cricket', icon: 'cricketIcon' },
@@ -77,8 +78,8 @@ export const PickedForYouSection: React.FC<PickedForYouSectionProps> = ({
   communitiesError = null,
   onOrganiserPress,
 }) => {
-  // 1. STATE: Start with an empty array. FilterDropdown will show the default label ("All Sports") when empty.
-  const [selectedSportIds, setSelectedSportIds] = useState<string[]>([]);
+  // 1. STATE: Start with 'all-sports' checked.
+  const [selectedSportIds, setSelectedSportIds] = useState<string[]>(['all-sports']);
 
   const communitiesData = useMemo(() => {
     if (!communities || communities.length === 0) return [];
@@ -107,8 +108,8 @@ export const PickedForYouSection: React.FC<PickedForYouSectionProps> = ({
   console.log('OPTIONS PASSED:', APP_SPORTS_OPTIONS.map(o => o.id));
   // 2. TRUE MULTI-SELECT FILTER LOGIC
   const filteredData = useMemo(() => {
-    // If nothing is checked, show everything
-    if (selectedSportIds.length === 0) {
+    // If "All Sports" is checked or nothing is checked, show everything
+    if (selectedSportIds.includes('all-sports') || selectedSportIds.length === 0) {
       return displayData;
     }
 
@@ -120,10 +121,19 @@ export const PickedForYouSection: React.FC<PickedForYouSectionProps> = ({
 
   const handleToggleSport = (id: string) => {
     setSelectedSportIds((prev) => {
-      if (prev.includes(id)) {
-        return prev.filter((item) => item !== id); // Remove if already checked
+      if (id === 'all-sports') {
+        return ['all-sports'];
       }
-      return [...prev, id]; // Add if not checked
+      
+      let next = [...prev].filter(item => item !== 'all-sports');
+      if (next.includes(id)) {
+        next = next.filter((item) => item !== id);
+      } else {
+        next.push(id);
+      }
+      
+      if (next.length === 0) return ['all-sports'];
+      return next;
     });
   };
 
@@ -144,17 +154,24 @@ export const PickedForYouSection: React.FC<PickedForYouSectionProps> = ({
     <FlexView style={styles.container}>
       <FlexView style={styles.header}>
         <TextDs style={styles.title}>Picked for you</TextDs>
+      </FlexView>
 
-        {/* 3. MULTI-SELECT DROPDOWN */}
+      {/* 3. MULTI-SELECT DROPDOWN ROW */}
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        style={styles.filtersScroll}
+        contentContainerStyle={styles.filtersScrollContainer}
+      >
         <FilterDropdown
-          label="All Sports" // This shows when selectedSportIds is empty
-          options={APP_SPORTS_OPTIONS} // Passing the global static list, NO "All Sports" option inside
+          label="Sports"
+          options={APP_SPORTS_OPTIONS}
           selectedIds={selectedSportIds}
           onToggle={handleToggleSport}
           align="right"
-          isMultiSelect={true} // Enables checkboxes and multi-select behavior
+          isMultiSelect={true}
         />
-      </FlexView>
+      </ScrollView>
 
       {isLoadingCommunities ? (
         <FlexView style={styles.loadingContainer}>
@@ -197,14 +214,23 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   header: {
+    paddingHorizontal: spacing.base,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+    zIndex: 10,
+  },
+  filtersScroll: {
     marginBottom: spacing.md,
     zIndex: 10,
   },
+  filtersScrollContainer: {
+    paddingHorizontal: spacing.base,
+    paddingRight: spacing.xl,
+  },
   title: {
-    ...getFontStyle(16, 'bold'),
+    ...getFontStyle(16, 'semibold'),
     color: colors.text.primary,
   },
   // Updated grid styles for the map() replacement

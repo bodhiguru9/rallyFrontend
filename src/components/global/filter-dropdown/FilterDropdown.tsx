@@ -37,7 +37,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
   };
   const [showModal, setShowModal] = useState(false);
 
-  const selectedCount = selectedIds.length;
+  const selectedCount = selectedIds.filter(id => !id.startsWith('all-')).length;
   const hasSelection = selectedCount > 0;
 
   // Check if this is the price filter
@@ -162,20 +162,22 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                         </TextDs>
                       </>
                     ) : null}
-                    {item.icon && (
-                      <ImageDs image={item.icon as any} size={20} style={styles.sportIcon} />
-                    )}
-                    <TextDs
-                      size={16}
-                      weight={isSelected ? 'medium' : 'regular'}
-                      color="white"
-                      style={styles.optionText}
-                    >
-                      {displayText}
-                    </TextDs>
-                    {!isMultiSelect && isSelected && (
-                      <Check size={14} color={colors.primary} style={styles.checkIcon} />
-                    )}
+                    <FlexView flexDirection='row' alignItems='center' gap={spacing.xs} flex={1}>
+                      {item.icon && (
+                        <ImageDs image={item.icon as any} size={15} style={styles.sportIcon} />
+                      )}
+                      <TextDs
+                        size={16}
+                        weight={isSelected ? 'medium' : 'regular'}
+                        color="white"
+                        style={styles.optionText}
+                      >
+                        {displayText}
+                      </TextDs>
+                      {!isMultiSelect && isSelected && (
+                        <Check size={14} color={colors.primary} style={styles.checkIcon} />
+                      )}
+                    </FlexView>
                   </TouchableOpacity>
                 );
               })}
@@ -191,7 +193,7 @@ const styles = StyleSheet.create({
   dropdownList: {
     position: 'absolute',
     minWidth: 210,
-    maxHeight: 300,
+    maxHeight: 350,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.base,
@@ -216,7 +218,7 @@ const styles = StyleSheet.create({
   },
   optionItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingVertical: spacing.sm,
     justifyContent: 'space-between',
   },

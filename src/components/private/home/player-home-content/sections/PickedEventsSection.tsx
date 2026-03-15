@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { ScrollView } from 'react-native';
+import { spacing } from '@theme';
 import { DateFilter, FilterDropdown, Seperator, TextDs } from '@components';
 import { EventDateGroup } from './EventDateGroup';
 import type { FilterOption, DateFilter as DateFilterType } from '@screens/home/Home.types';
@@ -73,15 +74,15 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
 
   // Get selected filter values for actual filtering
   const selectedSportsValues = useMemo(
-    () => sportsFilters.filter((f) => f.isActive).map((f) => f.value.toLowerCase()),
+    () => sportsFilters.filter((f) => f.isActive && f.id !== 'all-sports').map((f) => f.value.toLowerCase()),
     [sportsFilters],
   );
   const selectedEventTypeValues = useMemo(
-    () => eventTypeFilters.filter((f) => f.isActive).map((f) => f.value.toLowerCase()),
+    () => eventTypeFilters.filter((f) => f.isActive && f.id !== 'all-event-types').map((f) => f.value.toLowerCase()),
     [eventTypeFilters],
   );
   const selectedLocationValues = useMemo(
-    () => locationFilters.filter((f) => f.isActive).map((f) => f.value.toLowerCase()),
+    () => locationFilters.filter((f) => f.isActive && f.id !== 'all-locations').map((f) => f.value.toLowerCase()),
     [locationFilters],
   );
   const selectedPriceValues = useMemo(
@@ -224,10 +225,15 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
 
   return (
     <FlexView>
-      <TextDs size={16} weight='semibold' style={{ paddingInline: 12, marginBottom: 10 }}>Picked for you</TextDs>
+      <TextDs size={16} weight='semibold' style={{ paddingHorizontal: spacing.base, marginBottom: 10 }}>Picked for you</TextDs>
 
       {/* Filter Dropdowns */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        style={styles.filtersScroll}
+        contentContainerStyle={styles.filtersScrollContainer}
+      >
         {sportsFilters.length > 0 && (
           <FilterDropdown
             label="Sports"

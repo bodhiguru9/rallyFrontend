@@ -53,7 +53,12 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
     <FlexView style={styles.wrapper}>
       {/* Filter Dropdowns - Only show for Events tab */}
       {activeTab === 'events' && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles.filtersScroll}
+          contentContainerStyle={styles.filtersScrollContainer}
+        >
           {sportsFilters.length > 0 && toggleSportsFilter && (
             <FilterDropdown
               label="Sports"
@@ -84,6 +89,8 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
               options={priceFilters}
               selectedIds={selectedPriceIds}
               onToggle={togglePriceFilter}
+              align="right"
+              isMultiSelect={false}
             />
           )}
         </ScrollView>
@@ -100,9 +107,13 @@ const styles = StyleSheet.create({
     elevation: 10, // Necessary for Android z-index
   },
   filtersScroll: {
-    paddingHorizontal: spacing.base,
     paddingVertical: spacing.sm,
     // CRITICAL: Prevent the horizontal scroll from clipping the vertical dropdown
     overflow: 'visible',
+  },
+  filtersScrollContainer: {
+    paddingHorizontal: spacing.base,
+    paddingRight: spacing.xl, // Extra padding at the end for the Price filter
+    alignItems: 'center',
   },
 });

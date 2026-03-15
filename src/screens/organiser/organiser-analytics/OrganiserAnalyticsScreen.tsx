@@ -1,18 +1,22 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Modal, ScrollView, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation';
 import { FlexView, ImageDs, TextDs } from '@components';
 import { Card } from '@components/global/Card';
-import { ArrowIcon } from '@components/global/ArrowIcon';
 import { FilterDropdown } from '@components/global/filter-dropdown';
 import { EventCard } from '@components/global/EventCard';
+import { DateFilter } from '@components';
 import { useOrganiserBookingsAnalytics } from '@hooks/organiser';
+import { useFilterOptions } from '@hooks';
 import type { OrganiserBookingsAnalyticsEvent } from '@services';
 import { colors, spacing } from '@theme';
 import { styles } from './style/OrganiserAnalyticsScreen.styles';
+import { getDateFilters } from '@screens/home/context/Home.data';
+import type { DateFilter as DateFilterType } from '@screens/home/Home.types';
+import { ChevronDown } from 'lucide-react-native';
 
 type TNavigation = NativeStackNavigationProp<RootStackParamList, 'OrganiserAnalytics'>;
 
@@ -76,8 +80,9 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
   const { data, isLoading } = useOrganiserBookingsAnalytics();
   const [isPeriodPickerVisible, setIsPeriodPickerVisible] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('all-time');
-  const [selectedSports, setSelectedSports] = useState<string[]>([]);
-  const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
+  const [selectedSports, setSelectedSports] = useState<string[]>(['all-sports']);
+  const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>(['all-event-types']);
+  const [dateFilters, setDateFilters] = useState<DateFilterType[]>(getDateFilters());
 
   const periodOptions = [
     { label: 'All Time', value: 'all-time' },
@@ -87,33 +92,121 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
     { label: 'Last 6 Months', value: 'last-6-months' },
   ];
 
-  const sportsOptions = [
-    { id: 'football', label: 'Football', value: 'football' },
-    { id: 'basketball', label: 'Basketball', value: 'basketball' },
-    { id: 'cricket', label: 'Cricket', value: 'cricket' },
-    { id: 'tennis', label: 'Tennis', value: 'tennis' },
-    { id: 'badminton', label: 'Badminton', value: 'badminton' },
-    { id: 'volleyball', label: 'Volleyball', value: 'volleyball' },
-    { id: 'swimming', label: 'Swimming', value: 'swimming' },
-    { id: 'running', label: 'Running', value: 'running' },
-  ];
+  const { data: filterOptionsData } = useFilterOptions();
 
-  const eventTypeOptions = [
-    { id: 'social', label: 'Social', value: 'social' },
-    { id: 'competitive', label: 'Competitive', value: 'competitive' },
-    { id: 'training', label: 'Training', value: 'training' },
-    { id: 'tournament', label: 'Tournament', value: 'tournament' },
-  ];
+  const sportsOptions = useMemo(() => {
+    const PRIMARY_SPORTS = [
+      'Padel',
+      'Badminton',
+      'Cricket',
+      'Indoor Cricket',
+      'Pickleball',
+      'Tennis',
+      'Football',
+      'Table-tennis',
+      'Pilates',
+      'Basketball',
+      'Running',
+      'Volleyball',
+    ];
 
-  const handleSportToggle = (sportId: string) => {
-    setSelectedSports((prev) =>
-      prev.includes(sportId) ? prev.filter((id) => id !== sportId) : [...prev, sportId],
-    );
+    const iconMap: Record<string, string> = {
+      'Padel': 'padelIcon',
+      'Badminton': 'badmintonIcon',
+      'Cricket': 'cricketIcon',
+      'Indoor Cricket': 'indoorCricketIcon',
+      'Pickleball': 'pickleballIcon',
+      'Tennis': 'tennisIcon',
+      'Football': 'footballIcon',
+      'Table-tennis': 'tableTennisIcon',
+      'Table Tennis': 'tableTennisIcon',
+      'Pilates': 'pilatesIcon',
+      'Basketball': 'basketballIcon',
+      'Running': 'runningIcon',
+      'Volleyball': 'basketballIcon',
+    };
+
+    const backendSports = filterOptionsData?.sports || [];
+    const combinedSports = [...PRIMARY_SPORTS];
+    backendSports.forEach(bs => {
+      if (!combinedSports.some(cs => cs.toLowerCase() === bs.toLowerCase())) {
+        combinedSports.push(bs);
+      }
+    });
+
+    const mappedSports = combinedSports
+      .sort((a, b) => {
+        const indexA = PRIMARY_SPORTS.indexOf(a);
+        const indexB = PRIMARY_SPORTS.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+      })
+      .map((sportLabel) => ({
+        id: sportLabel.toLowerCase().replace(/\s+/g, '-'),
+        label: sportLabel,
+        value: sportLabel.toLowerCase(),
+        icon: iconMap[sportLabel],
+      }));
+
+    return [
+      { id: 'all-sports', label: 'All Sports', value: 'all' },
+      ...mappedSports
+    ];
+  }, [filterOptionsData]);
+
+  const eventTypeOptions = useMemo(() => {
+    const defaultTypes = ['Social', 'Competitive', 'Training', 'Tournament'];
+    const backendTypes = filterOptionsData?.eventTypes || [];
+    const combinedTypes = [...defaultTypes];
+    backendTypes.forEach(bt => {
+      if (!combinedTypes.some(ct => ct.toLowerCase() === bt.toLowerCase())) {
+        combinedTypes.push(bt);
+      }
+    });
+
+    const mappedTypes = combinedTypes.map((type, index) => ({
+      id: `event-type-${index}`,
+      label: type,
+      value: type.toLowerCase(),
+    }));
+
+    return [
+      { id: 'all-event-types', label: 'All Events', value: 'all' },
+      ...mappedTypes
+    ];
+  }, [filterOptionsData]);
+
+  const handleSportToggle = (id: string) => {
+    setSelectedSports((prev) => {
+      if (id === 'all-sports') return ['all-sports'];
+      let next = prev.filter(i => i !== 'all-sports');
+      if (next.includes(id)) {
+        next = next.filter(i => i !== id);
+      } else {
+        next.push(id);
+      }
+      return next.length === 0 ? ['all-sports'] : next;
+    });
   };
 
-  const handleEventTypeToggle = (typeId: string) => {
-    setSelectedEventTypes((prev) =>
-      prev.includes(typeId) ? prev.filter((id) => id !== typeId) : [...prev, typeId],
+  const handleEventTypeToggle = (id: string) => {
+    setSelectedEventTypes((prev) => {
+      if (id === 'all-event-types') return ['all-event-types'];
+      let next = prev.filter(i => i !== 'all-event-types');
+      if (next.includes(id)) {
+        next = next.filter(i => i !== id);
+      } else {
+        next.push(id);
+      }
+      return next.length === 0 ? ['all-event-types'] : next;
+    });
+  };
+
+  const selectDate = (fullDate: string | null) => {
+    setDateFilters(prev =>
+      prev.map(f => ({ ...f, isSelected: f.fullDate === fullDate })),
     );
   };
 
@@ -130,141 +223,156 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
     let filtered = [...events];
 
     // Filter by sports
-    if (selectedSports.length > 0) {
+    const activeSports = selectedSports.filter(id => id !== 'all-sports');
+    if (activeSports.length > 0) {
       filtered = filtered.filter((event) =>
         event.eventSports?.some((sport) =>
-          selectedSports.includes(sport.toLowerCase()),
+          activeSports.includes(sport.toLowerCase()),
         ),
       );
     }
-
+ 
     // Filter by event type
-    if (selectedEventTypes.length > 0) {
-      filtered = filtered.filter((event) =>
-        selectedEventTypes.includes(event.eventType.toLowerCase()),
-      );
+    const activeEventTypes = selectedEventTypes.filter(id => id !== 'all-event-types');
+    if (activeEventTypes.length > 0) {
+      filtered = filtered.filter((event) => {
+        const eventTypeLower = event.eventType?.toLowerCase() || '';
+        return eventTypeOptions.some(opt => 
+          activeEventTypes.includes(opt.id) && opt.label.toLowerCase() === eventTypeLower
+        );
+      });
+    }
+
+    // Filter by date
+    const selectedDate = dateFilters.find((f) => f.isSelected)?.fullDate;
+    if (selectedDate) {
+      filtered = filtered.filter((event) => {
+        if (!event.eventDateTime) return false;
+        const eDate = event.eventDateTime.split('T')[0];
+        return eDate === selectedDate;
+      });
     }
 
     return filtered;
-  }, [events, selectedSports, selectedEventTypes]);
+  }, [events, selectedSports, selectedEventTypes, dateFilters]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* <FlexView style={styles.header}>
-        <ArrowIcon variant="left" onClick={() => navigation.goBack()} />
-        <TextDs size={14} weight="regular" color="primary">
-          Analytics
-        </TextDs>
-        <FlexView style={styles.headerSpacer} />
-      </FlexView> */}
-
       {isLoading ? (
         <FlexView style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </FlexView>
       ) : (
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+        <>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <Card style={styles.revenueCard}>
+              <FlexView flexDirection="row" alignItems="center" justifyContent="space-between">
+                <TextDs size={14} weight="semibold" color="black">
+                  Total Revenue
+                </TextDs>
+                <TouchableOpacity
+                  style={styles.periodButton}
+                  onPress={() => setIsPeriodPickerVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <TextDs size={12} weight="regular" color="blueGray">
+                    {periodOptions.find((opt) => opt.value === selectedPeriod)?.label || 'All Time'}
+                  </TextDs>
+                  <ChevronDown size={14} color={colors.text.blueGray} />
+                </TouchableOpacity>
+              </FlexView>
+              <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
+                <ImageDs image="DhiramIcon" size={16} />
+                <TextDs size={18} weight="semibold" color="blueGray">
+                  {data?.totalRevenue ?? 0}
+                </TextDs>
+              </FlexView>
+            </Card>
+
+            <FlexView style={styles.filtersRow}>
+              <FilterDropdown
+                label="Sports"
+                options={sportsOptions}
+                selectedIds={selectedSports}
+                onToggle={handleSportToggle}
+                align="left"
+              />
+              <FilterDropdown
+                label="Event Type"
+                options={eventTypeOptions}
+                selectedIds={selectedEventTypes}
+                onToggle={handleEventTypeToggle}
+                align="left"
+              />
+            </FlexView>
+
+            {/* Date Filter below filters - extend to full width */}
+            <View style={styles.dateFilterWrapper}>
+              <DateFilter dates={dateFilters} onSelectDate={selectDate} />
+            </View>
+
+            <FlexView style={styles.cardsList}>
+              {filteredEvents.length > 0 ? (
+                filteredEvents.map((event) => (
+                  <EventCard
+                    key={event.eventId}
+                    id={event.eventId}
+                    event={event as any}
+                    onPress={handleEventPress}
+                    onBookmark={() => { }}
+                  />
+                ))
+              ) : (
+                <TextDs size={14} weight="regular" color="tertiary" align="center">
+                  No bookings found yet.
+                </TextDs>
+              )}
+            </FlexView>
+          </ScrollView>
+        </>
+      )}
+
+      {/* Period Picker Modal */}
+      <Modal
+        visible={isPeriodPickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsPeriodPickerVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.periodOverlay}
+          activeOpacity={1}
+          onPress={() => setIsPeriodPickerVisible(false)}
         >
-          <Card style={styles.revenueCard}>
-            <FlexView flexDirection="row" alignItems="center" justifyContent="space-between">
-              <TextDs size={14} weight="regular" color="black">
-                Total Revenue
-              </TextDs>
+          <FlexView style={styles.periodMenu}>
+            {periodOptions.map((option) => (
               <TouchableOpacity
-                style={styles.periodButton}
-                onPress={() => setIsPeriodPickerVisible(true)}
-                activeOpacity={0.8}
+                key={option.value}
+                style={[
+                  styles.periodItem,
+                  selectedPeriod === option.value && styles.periodItemActive,
+                ]}
+                onPress={() => {
+                  setSelectedPeriod(option.value);
+                  setIsPeriodPickerVisible(false);
+                }}
+                activeOpacity={0.7}
               >
-                <TextDs size={14} weight="regular" color="black">
-                  {periodOptions.find((opt) => opt.value === selectedPeriod)?.label || 'All Time'}
+                <TextDs
+                  size={14} weight="regular"
+                  color={selectedPeriod === option.value ? 'primary' : 'black'}
+                >
+                  {option.label}
                 </TextDs>
               </TouchableOpacity>
-            </FlexView>
-            <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
-              <ImageDs image="DhiramIcon" size={16} />
-              <TextDs size={14} weight="regular" color="blueGray">
-                {data?.totalRevenue ?? 0}
-              </TextDs>
-            </FlexView>
-          </Card>
-
-          <Modal
-            visible={isPeriodPickerVisible}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setIsPeriodPickerVisible(false)}
-          >
-            <TouchableOpacity
-              style={styles.periodOverlay}
-              activeOpacity={1}
-              onPress={() => setIsPeriodPickerVisible(false)}
-            >
-              <FlexView style={styles.periodMenu}>
-                {periodOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.periodItem,
-                      selectedPeriod === option.value && styles.periodItemActive,
-                    ]}
-                    onPress={() => {
-                      setSelectedPeriod(option.value);
-                      setIsPeriodPickerVisible(false);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <TextDs
-                      size={14} weight="regular"
-                      color={selectedPeriod === option.value ? 'primary' : 'black'}
-                    >
-                      {option.label}
-                    </TextDs>
-                  </TouchableOpacity>
-                ))}
-              </FlexView>
-            </TouchableOpacity>
-          </Modal>
-
-          <FlexView flexDirection="row" gap={spacing.sm} style={styles.filtersRow}>
-            <FilterDropdown
-              label="Sports"
-              options={sportsOptions}
-              selectedIds={selectedSports}
-              onToggle={handleSportToggle}
-              align="left"
-            />
-            <FilterDropdown
-              label="Event Type"
-              options={eventTypeOptions}
-              selectedIds={selectedEventTypes}
-              onToggle={handleEventTypeToggle}
-              align="left"
-            />
+            ))}
           </FlexView>
-
-          <FlexView style={styles.cardsList}>
-            {filteredEvents.length > 0 ? (
-              filteredEvents.map((event) => (
-                <EventCard
-                  key={event.eventId}
-                  id={event.eventId}
-                  event={event as any}
-                  onPress={handleEventPress}
-                  onBookmark={() => { }}
-                  spotsStatusLabel="Joined"
-                />
-              ))
-            ) : (
-              <TextDs size={14} weight="regular" color="tertiary" align="center">
-                No bookings found yet.
-              </TextDs>
-            )}
-          </FlexView>
-        </ScrollView>
-      )}
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
