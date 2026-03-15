@@ -131,7 +131,10 @@ export const OrganiserCalendarScreen: React.FC = () => {
   };
 
   const handleEventPress = (id: string) => {
-    navigation.navigate('OrganiserEventDetails', { eventId: id });
+    navigation.navigate('OrganiserEventDetails', {
+      eventId: id,
+      isReadOnly: activeTab === 'past',
+    });
   };
 
   const handleBookmark = (id: string) => {

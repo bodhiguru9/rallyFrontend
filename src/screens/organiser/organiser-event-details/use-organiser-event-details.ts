@@ -61,13 +61,13 @@ type OrganiserEventDetailsRouteProp = NativeStackScreenProps<
 export const useOrganiserEventDetails = () => {
   const navigation = useNavigation<OrganiserEventDetailsScreenNavigationProp>();
   const route = useRoute<OrganiserEventDetailsRouteProp>();
-  const { eventId } = route.params;
+  const { eventId, isReadOnly = false } = route.params;
 
   const queryClient = useQueryClient();
   const { data: event, isLoading, error } = useEvent(eventId);
   const updateEventMutation = useUpdateEvent();
 
-  const [activeTab, setActiveTab] = useState<Tab>('members');
+  const [activeTab, setActiveTab] = useState<Tab>(isReadOnly ? 'about' : 'members');
   const [isMembersModalVisible, setIsMembersModalVisible] = useState(false);
   const [isDeleteEventModalVisible, setIsDeleteEventModalVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -174,6 +174,7 @@ export const useOrganiserEventDetails = () => {
     isLoading,
     error,
     eventId,
+    isReadOnly,
 
     // State
     activeTab,

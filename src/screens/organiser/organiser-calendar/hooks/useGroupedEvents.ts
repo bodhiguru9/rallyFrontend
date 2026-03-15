@@ -77,16 +77,22 @@ export const useGroupedEvents = ({
       // Sort events within each date group by time
       Object.keys(grouped).forEach((key) => {
         grouped[key].sort((a, b) => {
+          const timeA = new Date(a.eventDateTime).getTime();
+          const timeB = new Date(b.eventDateTime).getTime();
           if (activeTab === 'past') {
-            return b.eventDateTime.localeCompare(a.eventDateTime);
+            return timeB - timeA;
           }
-          return new Date(a.eventDateTime).getTime() - new Date(b.eventDateTime).getTime();
+          return timeA - timeB;
         });
       });
       return grouped;
     };
 
-    const activeEvents = activeTab === 'upcoming' ? upcoming : past;
+    const activeEvents = (activeTab === 'upcoming' ? upcoming : past).sort((a, b) => {
+      const timeA = new Date(a.eventDateTime).getTime();
+      const timeB = new Date(b.eventDateTime).getTime();
+      return activeTab === 'past' ? timeB - timeA : timeA - timeB;
+    });
     const grouped = groupByDate(activeEvents);
 
     return {

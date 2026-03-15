@@ -136,7 +136,7 @@ export type RootStackParamList = {
   OrganiserPackageDetail: { packageId: string };
   OrganiserPackagePlayerDetail: { userId: number; packageId: string };
   OrganiserCalendar: undefined;
-  OrganiserEventDetails: { eventId: string };
+  OrganiserEventDetails: { eventId: string; isReadOnly?: boolean };
   Search: undefined;
   TagSearch: { searchType: 'sport' | 'eventType'; value: string };
   // Add more screens here as needed

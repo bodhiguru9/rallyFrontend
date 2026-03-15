@@ -36,6 +36,7 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
     isLoading,
     activeTab,
     setActiveTab,
+    isReadOnly,
     isMembersModalVisible,
     isDeleteEventModalVisible,
     isEditMode,
@@ -282,9 +283,11 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Tabs */}
-      <FlexView px={spacing.base} mb={spacing.base} backgroundColor='transparent'>
-        <TabSelector activeTab={activeTab} onTabChange={setActiveTab} />
-      </FlexView>
+      {!isReadOnly && (
+        <FlexView px={spacing.base} mb={spacing.base} backgroundColor='transparent'>
+          <TabSelector activeTab={activeTab} onTabChange={setActiveTab} />
+        </FlexView>
+      )}
 
       {/* Tab Content */}
       {activeTab === 'about' && (
@@ -317,45 +320,47 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
           {isEditMode ? renderEditForm() : renderAboutTab()}
         </>
       )}
-      {activeTab === 'members' && (
+      {!isReadOnly && activeTab === 'members' && (
         <FlexView style={{ flex: 1, paddingHorizontal: spacing.base, paddingTop: spacing.sm }}>
           <MembersTab event={event as EventData} onOpenMembersModal={handleOpenMembersModal} />
         </FlexView>
       )}
-      {activeTab === 'invite' && (
+      {!isReadOnly && activeTab === 'invite' && (
         <FlexView style={{ flex: 1, paddingHorizontal: spacing.base, paddingTop: spacing.sm }}>
           <InviteTab event={event as EventData} />
         </FlexView>
       )}
 
       {/* Bottom buttons: Edit mode = Cancel (exit edit) + Save; View mode = Cancel (session) + Edit */}
-      <FlexView style={[styles.bottomButtonContainer]}>
-        <BackdropBlur intensity={80} px={spacing.base} pb={insets.bottom} pt={spacing.sm}>
-          <FlexView style={styles.buttonRow}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={isEditMode ? handleCancelEdit : handleDeleteEvent}
-              activeOpacity={0.8}
-            >
-              <TextDs style={styles.cancelButtonText}>{isEditMode ? 'Cancel' : 'Delete'}</TextDs>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={isEditMode ? handleSaveEdit : handleEdit}
-              disabled={isEditMode && isSaving}
-              activeOpacity={0.8}
-            >
-              {isEditMode && isSaving ? (
-                <ActivityIndicator color={colors.text.white} />
-              ) : (
-                <TextDs style={styles.editButtonText}>
-                  {isEditMode ? 'Save' : 'Edit'}
-                </TextDs>
-              )}
-            </TouchableOpacity>
-          </FlexView>
-        </BackdropBlur>
-      </FlexView>
+      {!isReadOnly && (
+        <FlexView style={[styles.bottomButtonContainer]}>
+          <BackdropBlur intensity={80} px={spacing.base} pb={insets.bottom} pt={spacing.sm}>
+            <FlexView style={styles.buttonRow}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={isEditMode ? handleCancelEdit : handleDeleteEvent}
+                activeOpacity={0.8}
+              >
+                <TextDs style={styles.cancelButtonText}>{isEditMode ? 'Cancel' : 'Delete'}</TextDs>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={isEditMode ? handleSaveEdit : handleEdit}
+                disabled={isEditMode && isSaving}
+                activeOpacity={0.8}
+              >
+                {isEditMode && isSaving ? (
+                  <ActivityIndicator color={colors.text.white} />
+                ) : (
+                  <TextDs style={styles.editButtonText}>
+                    {isEditMode ? 'Save' : 'Edit'}
+                  </TextDs>
+                )}
+              </TouchableOpacity>
+            </FlexView>
+          </BackdropBlur>
+        </FlexView>
+      )}
 
       {/* Date/time picker for edit mode */}
       {isEditMode && (
