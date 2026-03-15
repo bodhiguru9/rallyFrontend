@@ -4,17 +4,22 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { TextDs } from '@designSystem/atoms/TextDs';
 import { FlexView } from '@designSystem/atoms/FlexView';
 import { FilterDropdown } from '@components/global/filter-dropdown';
+import { DateFilter } from '@components';
 import { useOrganiserTransactions } from '@hooks/organiser';
 import { colors, spacing } from '@theme';
 import { TransactionItem } from '@screens/organiser/components/TransactionItem';
 import { styles } from './style/OrganiserTransactionsScreen.styles';
+import { getDateFilters } from '@screens/home/context/Home.data';
+import type { DateFilter as DateFilterType } from '@screens/home/Home.types';
 
 export const OrganiserTransactionsScreen: React.FC = () => {
   const { data: transactions, isLoading } = useOrganiserTransactions(1, 20, true);
-  const [selectedSports, setSelectedSports] = useState<string[]>([]);
+  const [selectedSports, setSelectedSports] = useState<string[]>(['all-sports']);
   const [selectedSortBy, setSelectedSortBy] = useState<string[]>(['most-recent']);
+  const [dateFilters, setDateFilters] = useState<DateFilterType[]>(getDateFilters());
 
   const sportsOptions = [
+    { id: 'all-sports', label: 'All Sports', value: 'all-sports' },
     { id: 'football', label: 'Football', value: 'football' },
     { id: 'basketball', label: 'Basketball', value: 'basketball' },
     { id: 'cricket', label: 'Cricket', value: 'cricket' },
@@ -33,19 +38,42 @@ export const OrganiserTransactionsScreen: React.FC = () => {
   ];
 
   const handleSportToggle = (sportId: string) => {
-    setSelectedSports((prev) =>
-      prev.includes(sportId) ? prev.filter((id) => id !== sportId) : [...prev, sportId],
-    );
+    setSelectedSports([sportId]);
   };
 
   const handleSortToggle = (sortId: string) => {
     setSelectedSortBy([sortId]);
   };
 
+  const handleDateSelect = (fullDate: string | null) => {
+    setDateFilters((prev) => prev.map((filter) => ({ ...filter, isSelected: filter.fullDate === fullDate })));
+  };
+
+  const selectedDateFilter = useMemo(
+    () => dateFilters.find((filter) => filter.isSelected),
+    [dateFilters],
+  );
+
   const filteredTransactions = useMemo(() => {
     if (!transactions) { return []; }
 
     const filtered = [...transactions];
+
+    // Sport filtering is intentionally not applied yet because transaction data has no sport field.
+    void selectedSports;
+
+    if (selectedDateFilter?.fullDate) {
+      const selectedDate = new Date(selectedDateFilter.fullDate);
+      const selectedDay = selectedDate.getDate().toString();
+      const selectedMonth = selectedDate.toLocaleDateString('en-US', { month: 'short' }).toLowerCase();
+
+      const dateFiltered = filtered.filter((transaction) => {
+        const bookedDate = (transaction.bookedDate || '').toLowerCase();
+        return bookedDate.includes(selectedDay) && bookedDate.includes(selectedMonth);
+      });
+
+      filtered.splice(0, filtered.length, ...dateFiltered);
+    }
 
     // Sort transactions
     const sortBy = selectedSortBy[0];
@@ -66,7 +94,7 @@ export const OrganiserTransactionsScreen: React.FC = () => {
     }
 
     return filtered;
-  }, [transactions, selectedSortBy]);
+  }, [transactions, selectedSortBy, selectedSports, selectedDateFilter]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -91,6 +119,7 @@ export const OrganiserTransactionsScreen: React.FC = () => {
               selectedIds={selectedSports}
               onToggle={handleSportToggle}
               align="left"
+              isMultiSelect={false}
             />
             <FilterDropdown
               label="Sort By"
@@ -98,6 +127,14 @@ export const OrganiserTransactionsScreen: React.FC = () => {
               selectedIds={selectedSortBy}
               onToggle={handleSortToggle}
               align="left"
+              isMultiSelect={false}
+            />
+          </FlexView>
+
+          <FlexView style={styles.dateFilterSection}>
+            <DateFilter
+              dates={dateFilters}
+              onSelectDate={handleDateSelect}
             />
           </FlexView>
 
