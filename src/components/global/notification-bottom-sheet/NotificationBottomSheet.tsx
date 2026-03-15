@@ -44,7 +44,7 @@ export const NotificationBottomSheet: React.FC<NotificationBottomSheetProps> = (
       const waitlistId = notification.data?.waitlistId;
 
       if (eventId && waitlistId) {
-        acceptEventJoinRequestMutation.mutate(waitlistId);
+        acceptEventJoinRequestMutation.mutate({ eventId, waitlistId });
       }
     } else if (notification.type === 'subscription_request') {
       // Accept subscription request
@@ -61,7 +61,7 @@ export const NotificationBottomSheet: React.FC<NotificationBottomSheetProps> = (
       const waitlistId = notification.data?.waitlistId;
 
       if (eventId && waitlistId) {
-        rejectEventJoinRequestMutation.mutate(waitlistId);
+        rejectEventJoinRequestMutation.mutate({ eventId, waitlistId });
       }
     } else if (notification.type === 'subscription_request') {
       // Decline subscription request

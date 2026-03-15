@@ -4,7 +4,13 @@ import { ActivityIndicator, Image, RefreshControl, ScrollView, TouchableOpacity 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useOrganiserNotifications, useAcceptRequest, useRejectRequest } from '@hooks';
+import {
+  useOrganiserNotifications,
+  useAcceptRequest,
+  useRejectRequest,
+  useAcceptSubscriptionRequest,
+  useRejectSubscriptionRequest,
+} from '@hooks';
 import { colors } from '@theme';
 import { styles } from './style/OrganiserNotificationsScreen.styles';
 import type { Notification } from '@components/global/notification-bottom-sheet/NotificationBottomSheet.types';
@@ -20,8 +26,10 @@ export const OrganiserNotificationsScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const { data: notificationData, isLoading, error, refetch } = useOrganiserNotifications(page);
-  const acceptRequestMutation = useAcceptRequest();
-  const rejectRequestMutation = useRejectRequest();
+  const acceptEventWaitlistMutation = useAcceptRequest();
+  const rejectEventWaitlistMutation = useRejectRequest();
+  const acceptSubscriptionMutation = useAcceptSubscriptionRequest();
+  const rejectSubscriptionMutation = useRejectSubscriptionRequest();
 
   const notifications: Notification[] = useMemo(
     () => notificationData?.notifications || [],
@@ -29,29 +37,43 @@ export const OrganiserNotificationsScreen: React.FC = () => {
   );
 
   const requestNotifications = useMemo(
-    () => notifications.filter((n) => n.type === 'subscription_request'),
+    () =>
+      notifications.filter(
+        (n) => n.type === 'event_join_request' || n.type === 'subscription_request',
+      ),
     [notifications],
   );
   const generalNotifications = useMemo(
-    () => notifications.filter((n) => n.type !== 'subscription_request'),
+    () =>
+      notifications.filter(
+        (n) => n.type !== 'event_join_request' && n.type !== 'subscription_request',
+      ),
     [notifications],
   );
 
   const displayedNotifications = activeTab === 'general' ? generalNotifications : requestNotifications;
+
   const handleAcceptRequest = (notification: Notification) => {
-    const eventId = notification.data?.eventId;
-    const waitlistId = notification.data?.waitlistId;
-    console.log('🔍 notification.data:', JSON.stringify(notification.data, null, 2));
-    if (eventId && waitlistId) {
-      acceptRequestMutation.mutate({ eventId, waitlistId });
+    if (notification.type === 'event_join_request') {
+      const eventId = notification.data?.eventId;
+      const waitlistId = notification.data?.waitlistId;
+      if (eventId && waitlistId) {
+        acceptEventWaitlistMutation.mutate({ eventId, waitlistId });
+      }
+    } else if (notification.type === 'subscription_request') {
+      acceptSubscriptionMutation.mutate(notification.notificationId);
     }
   };
 
   const handleRejectRequest = (notification: Notification) => {
-    const eventId = notification.data?.eventId;
-    const waitlistId = notification.data?.waitlistId;
-    if (eventId && waitlistId) {
-      rejectRequestMutation.mutate({ eventId, waitlistId });
+    if (notification.type === 'event_join_request') {
+      const eventId = notification.data?.eventId;
+      const waitlistId = notification.data?.waitlistId;
+      if (eventId && waitlistId) {
+        rejectEventWaitlistMutation.mutate({ eventId, waitlistId });
+      }
+    } else if (notification.type === 'subscription_request') {
+      rejectSubscriptionMutation.mutate(notification.notificationId);
     }
   };
   const handleNotificationPress = (notification: Notification) => {
@@ -94,13 +116,22 @@ export const OrganiserNotificationsScreen: React.FC = () => {
   };
 
   const renderNotificationItem = (notification: Notification) => {
-    const isRequest = notification.type === 'subscription_request';
+    const isRequest =
+      notification.type === 'event_join_request' ||
+      notification.type === 'subscription_request';
 
     const userAvatar = notification.user?.profilePic || 'https://via.placeholder.com/40';
 
-    const isProcessing = acceptRequestMutation.isPending || rejectRequestMutation.isPending;
-    const isRejectPending = rejectRequestMutation.isPending;
-    const isAcceptPending = acceptRequestMutation.isPending;
+    const isEventJoin = notification.type === 'event_join_request';
+    const isProcessing = isEventJoin
+      ? acceptEventWaitlistMutation.isPending || rejectEventWaitlistMutation.isPending
+      : acceptSubscriptionMutation.isPending || rejectSubscriptionMutation.isPending;
+    const isRejectPending = isEventJoin
+      ? rejectEventWaitlistMutation.isPending
+      : rejectSubscriptionMutation.isPending;
+    const isAcceptPending = isEventJoin
+      ? acceptEventWaitlistMutation.isPending
+      : acceptSubscriptionMutation.isPending;
 
     return (
       <TouchableOpacity

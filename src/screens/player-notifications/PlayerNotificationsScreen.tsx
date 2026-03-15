@@ -53,17 +53,8 @@ export const PlayerNotificationsScreen: React.FC = () => {
   const acceptInvitationMutation = useAcceptEventInvitation();
   const declineInvitationMutation = useDeclineEventInvitation();
 
-  // Use API data only
+  // Use API data only - show all notifications (no filtering)
   const notifications: Notification[] = notificationData?.notifications || [];
-
-  // Separate notifications by type
-  // const invitationNotifications = notifications.filter(
-  //   (n) => n.type === 'event_join_request' || n.type === 'subscription_request',
-  // );
-
-  const generalNotifications = notifications.filter(
-    (n) => n.type !== 'event_join_request' && n.type !== 'subscription_request',
-  );
 
   const formatInvitationTimestamp = (createdAt: string): string => {
     const date = new Date(createdAt);
@@ -134,7 +125,7 @@ export const PlayerNotificationsScreen: React.FC = () => {
     };
   });
 
-  const displayedNotifications = activeTab === 'general' ? generalNotifications : [];
+  const displayedNotifications = activeTab === 'general' ? notifications : [];
 
   const formatTimestamp = (createdAt: string): string => {
     const date = new Date(createdAt);

@@ -119,8 +119,8 @@ export const notificationService = {
         type,
         title: isEventJoin ? 'Event join request' : 'Organiser join request',
         message: isEventJoin
-          ? `${userName} requested to join your event${eventTitle ? ` "${eventTitle}"` : ''}`
-          : `${userName} requested to join your organiser`,
+          ? `${userName} requested to join the waitlist for your event${eventTitle ? ` "${eventTitle}"` : ''}`
+          : `${userName} requested to join your community`,
         isRead: notification.status !== 'pending',
         createdAt: notification.createdAt,
         data: {
@@ -229,16 +229,42 @@ export const notificationService = {
   },
 
   /**
-   * Accept any request (event join or subscription)
-   * @param requestId - The request ID
+   * Accept event waitlist request
+   * POST /api/events/{eventId}/waitlist/{waitlistId}/accept
    */
-  acceptRequest: async (eventId: string, waitlistId: string): Promise<void> => {
-  await apiClient.post(`/api/events/${eventId}/waitlist/${waitlistId}/accept`);
-},
+  acceptEventWaitlistRequest: async (
+    eventId: string,
+    waitlistId: string,
+  ): Promise<void> => {
+    await apiClient.post(`/api/events/${eventId}/waitlist/${waitlistId}/accept`);
+  },
 
-rejectRequest: async (eventId: string, waitlistId: string): Promise<void> => {
-  await apiClient.post(`/api/events/${eventId}/waitlist/${waitlistId}/reject`);
-},
+  /**
+   * Reject event waitlist request
+   * POST /api/events/{eventId}/waitlist/{waitlistId}/reject
+   */
+  rejectEventWaitlistRequest: async (
+    eventId: string,
+    waitlistId: string,
+  ): Promise<void> => {
+    await apiClient.post(`/api/events/${eventId}/waitlist/${waitlistId}/reject`);
+  },
+
+  /**
+   * Accept subscription/organiser join request (private organiser profile only)
+   * POST /api/request/{requestId}/accept
+   */
+  acceptSubscriptionRequest: async (requestId: string): Promise<void> => {
+    await apiClient.post(`/api/request/${requestId}/accept`);
+  },
+
+  /**
+   * Reject subscription/organiser join request
+   * POST /api/request/{requestId}/reject
+   */
+  rejectSubscriptionRequest: async (requestId: string): Promise<void> => {
+    await apiClient.post(`/api/request/${requestId}/reject`);
+  },
   /**
    * Delete a notification
    * @param notificationId - The notification ID

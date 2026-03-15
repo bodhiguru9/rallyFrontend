@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation';
 import { Container } from '@components/global/layout/Container';
 import { useAuthStore } from '@store/auth-store';
-import { usePlayerNotifications } from '@hooks';
+import { usePlayerNotifications, useOrganiserNotifications } from '@hooks';
 import { logger } from '@dev-tools';
 import type { HomeContainerProps } from './HomeContainer.types';
 
@@ -59,16 +59,21 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
   const isPlayerUser = isAuthenticated && user?.userType === 'player';
   const isOrganiserUser = isAuthenticated && user?.userType === 'organiser';
 
-  // Automatically fetch notification count for players
+  // Automatically fetch notification count based on user type
   const { data: playerNotificationsData } = usePlayerNotifications(1, {
     enabled: isPlayerUser,
+  });
+  const { data: organiserNotificationsData } = useOrganiserNotifications(1, {
+    enabled: isOrganiserUser,
   });
 
   // Automatically determine notification count
   const notificationCount =
-    isPlayerUser && playerNotificationsData?.unreadCount
+    isPlayerUser && playerNotificationsData?.unreadCount !== undefined
       ? playerNotificationsData.unreadCount
-      : undefined;
+      : isOrganiserUser && organiserNotificationsData?.unreadCount !== undefined
+        ? organiserNotificationsData.unreadCount
+        : undefined;
 
   // Smart navigation handlers - all handled internally
   const handleSearchPress = () => {

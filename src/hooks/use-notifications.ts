@@ -113,14 +113,13 @@ export const useMarkAllOrganiserNotificationsAsRead = () => {
 };
 
 /**
- * Hook to accept any request (event join or subscription)
- * This will also refresh all player-related data
+ * Hook to accept event waitlist request
  */
 export const useAcceptRequest = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ eventId, waitlistId }: { eventId: string; waitlistId: string }) =>
-      notificationService.acceptRequest(eventId, waitlistId),
+      notificationService.acceptEventWaitlistRequest(eventId, waitlistId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['player-events'] });
@@ -137,14 +136,47 @@ export const useAcceptRequest = () => {
     },
   });
 };
+
 /**
- * Hook to reject any request (event join or subscription)
+ * Hook to reject event waitlist request
  */
 export const useRejectRequest = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ eventId, waitlistId }: { eventId: string; waitlistId: string }) =>
-      notificationService.rejectRequest(eventId, waitlistId),
+      notificationService.rejectEventWaitlistRequest(eventId, waitlistId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+};
+
+/**
+ * Hook to accept subscription/organiser join request (for private organiser profiles)
+ */
+export const useAcceptSubscriptionRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId: string) =>
+      notificationService.acceptSubscriptionRequest(requestId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['accepted-subscribers'] });
+      queryClient.invalidateQueries({ queryKey: ['top-organisers'] });
+      queryClient.invalidateQueries({ queryKey: ['search-organisers'] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+    },
+  });
+};
+
+/**
+ * Hook to reject subscription/organiser join request
+ */
+export const useRejectSubscriptionRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId: string) =>
+      notificationService.rejectSubscriptionRequest(requestId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
@@ -157,11 +189,11 @@ export const useAcceptEventJoinRequest = useAcceptRequest;
 // Deprecated: Use useRejectRequest instead
 export const useRejectEventJoinRequest = useRejectRequest;
 
-// Deprecated: Use useAcceptRequest instead
-export const useAcceptSubscription = useAcceptRequest;
+// Deprecated: Use useAcceptSubscriptionRequest instead
+export const useAcceptSubscription = useAcceptSubscriptionRequest;
 
-// Deprecated: Use useRejectRequest instead
-export const useDeclineSubscription = useRejectRequest;
+// Deprecated: Use useRejectSubscriptionRequest instead
+export const useDeclineSubscription = useRejectSubscriptionRequest;
 
 /**
  * Hook to delete a notification
