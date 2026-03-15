@@ -13,4 +13,5 @@ export interface EventCardProps {
   spotsStatusLabel?: string;
   showRevenue?: boolean;
   disableTags?: boolean;
+  displayTimeZone?: string;
 }

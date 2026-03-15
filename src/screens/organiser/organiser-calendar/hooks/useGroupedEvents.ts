@@ -14,6 +14,24 @@ interface GroupedEventsResult {
   groupedEvents: { [key: string]: PlayerBooking[] };
 }
 
+const GST_TIME_ZONE = 'Asia/Dubai';
+
+const getDateKeyInTimeZone = (input: Date | string, timeZone: string): string => {
+  const date = typeof input === 'string' ? new Date(input) : input;
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+
+  const year = parts.find((part) => part.type === 'year')?.value || '';
+  const month = parts.find((part) => part.type === 'month')?.value || '';
+  const day = parts.find((part) => part.type === 'day')?.value || '';
+
+  return `${year}-${month}-${day}`;
+};
+
 /**
  * Hook to filter and group organiser events by date and tab.
  * Mirrors the player calendar's useGroupedEvents logic.
@@ -27,13 +45,10 @@ export const useGroupedEvents = ({
     // Filter events by selected date if provided
     let filteredEvents = events;
     if (selectedDate) {
+      const selectedDateKey = getDateKeyInTimeZone(selectedDate, GST_TIME_ZONE);
       filteredEvents = events.filter((event) => {
-        const eventDate = new Date(event.eventDateTime);
-        return (
-          eventDate.getFullYear() === selectedDate.getFullYear() &&
-          eventDate.getMonth() === selectedDate.getMonth() &&
-          eventDate.getDate() === selectedDate.getDate()
-        );
+        const eventDateKey = getDateKeyInTimeZone(event.eventDateTime, GST_TIME_ZONE);
+        return eventDateKey === selectedDateKey;
       });
     }
 
@@ -53,11 +68,7 @@ export const useGroupedEvents = ({
     const groupByDate = (eventList: PlayerBooking[]) => {
       const grouped: { [key: string]: PlayerBooking[] } = {};
       eventList.forEach((event) => {
-        const eventDate = new Date(event.eventDateTime);
-        const year = eventDate.getFullYear();
-        const month = String(eventDate.getMonth() + 1).padStart(2, '0');
-        const day = String(eventDate.getDate()).padStart(2, '0');
-        const dateKey = `${year}-${month}-${day}`;
+        const dateKey = getDateKeyInTimeZone(event.eventDateTime, GST_TIME_ZONE);
         if (!grouped[dateKey]) {
           grouped[dateKey] = [];
         }

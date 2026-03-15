@@ -33,6 +33,7 @@ export const formatDate = (
   options?: {
     endTime?: string | Date | number; // For range formats
     locale?: string; // Locale for formatting (default: 'en-US')
+    timeZone?: string; // IANA timezone (e.g., "Asia/Dubai")
   },
 ): string => {
   try {
@@ -44,6 +45,7 @@ export const formatDate = (
     }
 
     const locale = options?.locale || 'en-US';
+    const timeZone = options?.timeZone;
 
     switch (variant) {
       case 'date':
@@ -52,6 +54,7 @@ export const formatDate = (
           day: 'numeric',
           month: 'short',
           year: 'numeric',
+          timeZone,
         });
 
       case 'date-long':
@@ -60,6 +63,7 @@ export const formatDate = (
           day: 'numeric',
           month: 'long',
           year: 'numeric',
+          timeZone,
         });
 
       case 'date-short':
@@ -68,6 +72,7 @@ export const formatDate = (
           day: '2-digit',
           month: '2-digit',
           year: 'numeric',
+          timeZone,
         });
 
       case 'time':
@@ -76,6 +81,7 @@ export const formatDate = (
           hour: 'numeric',
           minute: '2-digit',
           hour12: true,
+          timeZone,
         });
 
       case 'time-24h':
@@ -84,6 +90,7 @@ export const formatDate = (
           hour: '2-digit',
           minute: '2-digit',
           hour12: false,
+          timeZone,
         });
 
       case 'datetime':
@@ -100,11 +107,11 @@ export const formatDate = (
 
       case 'display':
         // e.g., "Sat 24 Oct, 1:00 PM"
-        return formatDisplayDate(date, locale);
+        return formatDisplayDate(date, locale, timeZone);
 
       case 'display-range':
         // e.g., "Sat 24 Oct, 1:00 - 2:00 PM"
-        return formatDisplayRange(date, options?.endTime, locale);
+        return formatDisplayRange(date, options?.endTime, locale, timeZone);
 
       default:
         return formatDate(date, 'datetime', options);
@@ -115,29 +122,81 @@ export const formatDate = (
   }
 };
 
-/**
- * Format date in display format: "Sat 21 Oct, 1:00 PM"
- */
-const formatDisplayDate = (date: Date, _locale: string): string => {
-  return moment(date).format('ddd D MMM, h:mm A');
+const getPartValue = (parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes) => {
+  return parts.find((part) => part.type === type)?.value || '';
 };
 
-/**
- * Format date range in display format: "Sat 21 Oct, 1:00 - 2:00 PM"
- */
+const formatDisplayDate = (date: Date, locale: string, timeZone?: string): string => {
+  if (!timeZone) {
+    return moment(date).format('ddd D MMM, h:mm A');
+  }
+
+  const parts = new Intl.DateTimeFormat(locale, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone,
+  }).formatToParts(date);
+
+  const weekday = getPartValue(parts, 'weekday');
+  const day = getPartValue(parts, 'day');
+  const month = getPartValue(parts, 'month');
+  const hour = getPartValue(parts, 'hour');
+  const minute = getPartValue(parts, 'minute');
+  const dayPeriod = getPartValue(parts, 'dayPeriod').toUpperCase();
+
+  return `${weekday} ${day} ${month}, ${hour}:${minute} ${dayPeriod}`;
+};
+
 const formatDisplayRange = (
   startDate: Date,
   endTime: string | Date | number | undefined,
-  _locale: string,
+  locale: string,
+  timeZone?: string,
 ): string => {
-  const start = moment(startDate);
-  const end = endTime ? moment(endTime) : moment(startDate).add(1, 'hour');
+  if (!timeZone) {
+    const start = moment(startDate);
+    const end = endTime ? moment(endTime) : moment(startDate).add(1, 'hour');
 
-  const datePart = start.format('ddd D MMM');
-  const startTimeStr = start.format('h:mm');
-  const endTimeStr = end.format('h:mm A');
+    const datePart = start.format('ddd D MMM');
+    const startTimeStr = start.format('h:mm');
+    const endTimeStr = end.format('h:mm A');
 
-  return `${datePart}, ${startTimeStr} - ${endTimeStr}`;
+    return `${datePart}, ${startTimeStr} - ${endTimeStr}`;
+  }
+
+  const endDate = endTime ? new Date(endTime) : new Date(startDate.getTime() + 60 * 60 * 1000);
+
+  const startParts = new Intl.DateTimeFormat(locale, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone,
+  }).formatToParts(startDate);
+
+  const endParts = new Intl.DateTimeFormat(locale, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone,
+  }).formatToParts(endDate);
+
+  const weekday = getPartValue(startParts, 'weekday');
+  const day = getPartValue(startParts, 'day');
+  const month = getPartValue(startParts, 'month');
+  const startHour = getPartValue(startParts, 'hour');
+  const startMinute = getPartValue(startParts, 'minute');
+  const endHour = getPartValue(endParts, 'hour');
+  const endMinute = getPartValue(endParts, 'minute');
+  const endDayPeriod = getPartValue(endParts, 'dayPeriod').toUpperCase();
+
+  return `${weekday} ${day} ${month}, ${startHour}:${startMinute} - ${endHour}:${endMinute} ${endDayPeriod}`;
 };
 
 /**

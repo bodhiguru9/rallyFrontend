@@ -89,6 +89,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   hideCreator = false,
   showStatus = false,
   spotsStatusLabel,
+  displayTimeZone,
 }) => {
   const [isMembersModalVisible, setIsMembersModalVisible] = useState(false);
 
@@ -105,7 +106,9 @@ export const EventCard: React.FC<EventCardProps> = ({
   };
 
   // Format date for display: "Sat 24 Oct, 1:00 - 2:00 PM"
-  const formattedDateTime = formatDate(event.eventDateTime, 'display-range');
+  const formattedDateTime = formatDate(event.eventDateTime, 'display-range', {
+    timeZone: displayTimeZone,
+  });
 
   const handleShare = () => {
     // Calculate spots info

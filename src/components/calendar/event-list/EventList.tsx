@@ -17,6 +17,7 @@ interface EventListProps {
   onBookmark: (id: string) => void;
   showTimeline?: boolean;
   showStatus?: boolean;
+  displayTimeZone?: string;
 }
 
 export const EventList: React.FC<EventListProps> = ({
@@ -28,6 +29,7 @@ export const EventList: React.FC<EventListProps> = ({
   onBookmark,
   showTimeline = true,
   showStatus = true,
+  displayTimeZone,
 }) => {
   if (isLoading) {
     return <LoadingState />;
@@ -60,6 +62,7 @@ export const EventList: React.FC<EventListProps> = ({
             onBookmark={onBookmark}
             showTimeline={showTimeline}
             showStatus={showStatus}
+            displayTimeZone={displayTimeZone}
           />
         );
       })}
