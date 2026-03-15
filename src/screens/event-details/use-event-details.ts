@@ -92,7 +92,7 @@ export const useEventDetails = () => {
     }
   }, [error, isLoading, isInvitesLoading, pendingInvitation, navigation]);
 
-  // Reset guestsCount when event doesn't allow guests
+  // Reset guestsCount when event doesn't allow guests; cap to spotsLeft when event is full
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
     if (event) {
@@ -107,6 +107,13 @@ export const useEventDetails = () => {
           setGuestsCount(1);
         }, 0);
       }
+      // Cap guestsCount to available spots (enforce organiser limit)
+      const spotsLeft = event.spotsInfo?.spotsLeft ?? event.availableSpots ?? (event.eventMaxGuest - (event.participantsCount ?? event.spotsInfo?.spotsBooked ?? 0));
+      if (spotsLeft >= 0 && guestsCount > spotsLeft) {
+        timeoutId = setTimeout(() => {
+          setGuestsCount(Math.max(1, spotsLeft));
+        }, 0);
+      }
     }
     return () => {
       if (timeoutId) {
@@ -114,7 +121,7 @@ export const useEventDetails = () => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event?.eventOurGuestAllowed, event?.eventId, guestsCount]);
+  }, [event?.eventOurGuestAllowed, event?.eventId, event?.spotsInfo?.spotsLeft, event?.availableSpots, event?.eventMaxGuest, event?.participantsCount, guestsCount]);
 
   // Check if registration is open by comparing current time with registration start time
   const isRegistrationOpen = (() => {
@@ -181,7 +188,7 @@ const handleApplePay = () => {
   logger.info('Apple Pay selected');
 };
 
-  const handleBookNow = () => {
+  const handleBookNow = async () => {
     if (!event) {
       return;
     }
@@ -196,10 +203,15 @@ const handleApplePay = () => {
       return;
     }
 
+    // Refetch event to get latest spots (avoid overbooking from stale data)
+    await queryClient.refetchQueries({ queryKey: ['event', eventId, true, true] });
+    const freshEvent = queryClient.getQueryData<typeof event>(['event', eventId, true, true]);
+    const ev = freshEvent ?? event;
+
     // Check if request is pending
-    if (event.isPending) {
+    if (ev.isPending) {
       // Exception: User is in waitlist and a spot just opened up!
-      if (event.userJoinStatus?.inWaitlist && !event.spotsInfo?.spotsFull) {
+      if (ev.userJoinStatus?.inWaitlist && !ev.spotsInfo?.spotsFull) {
         // Allow them to proceed to booking modal!
       } else {
         logger.info('Join request is pending approval');
@@ -208,29 +220,29 @@ const handleApplePay = () => {
     }
 
     // Check if user has already sent a join request (hasRequest from API)
-    if (event.userJoinStatus?.hasRequest) {
+    if (ev.userJoinStatus?.hasRequest) {
       logger.info('Join request already sent');
       return;
     }
 
     // Check if user has left (can rejoin)
-    if (event.isLeave) {
+    if (ev.isLeave) {
       // User previously left, can rejoin - treat as new join
       // Fall through to normal join flow
     }
 
     if (!isRegistrationOpen) {
-      addReminder(eventId, {
+      addReminder(ev.eventId ?? eventId, {
         onSuccess: () => {
           navigation.navigate('RequestSent', {
             variant: 'registration',
-            eventId: event.eventId ?? eventId,
-            eventTitle: event.eventName ?? 'Event',
-            organizerName: event.creator?.fullName || event.eventCreatorName || 'Unknown Organizer',
-            eventImage:
-              event.eventImages?.[0] || event.gameImages?.[0] || 'https://via.placeholder.com/150',
-            eventDate: formatDate(event.eventDateTime ?? '', 'display-range'),
-            eventLocation: event.eventLocation ?? '',
+          eventId: ev.eventId ?? eventId,
+          eventTitle: ev.eventName ?? 'Event',
+          organizerName: ev.creator?.fullName || ev.eventCreatorName || 'Unknown Organizer',
+          eventImage:
+            ev.eventImages?.[0] || ev.gameImages?.[0] || 'https://via.placeholder.com/150',
+          eventDate: formatDate(ev.eventDateTime ?? '', 'display-range'),
+          eventLocation: ev.eventLocation ?? '',
             amountDue: totalPrice,
             currency: 'AED',
             bookingId: generateBookingId() ?? '',
@@ -245,18 +257,20 @@ const handleApplePay = () => {
       return;
     }
 
-    if (event.spotsInfo?.spotsFull) {
+    // Enforce organiser limit: route to waitlist when full (defensive check with multiple sources)
+    const spotsLeft = ev.spotsInfo?.spotsLeft ?? ev.availableSpots ?? Math.max(0, (ev.eventMaxGuest ?? 0) - (ev.participantsCount ?? ev.spotsInfo?.spotsBooked ?? 0));
+    if (ev.spotsInfo?.spotsFull || spotsLeft <= 0) {
       joinWaitlist(eventId, {
         onSuccess: () => {
           navigation.navigate('RequestSent', {
             variant: 'waitlist',
-            eventId: event.eventId ?? eventId,
-            eventTitle: event.eventName ?? 'Event',
-            organizerName: event.creator?.fullName || event.eventCreatorName || 'Unknown Organizer',
-            eventImage:
-              event.eventImages?.[0] || event.gameImages?.[0] || 'https://via.placeholder.com/150',
-            eventDate: formatDate(event.eventDateTime ?? '', 'display-range'),
-            eventLocation: event.eventLocation ?? '',
+          eventId: ev.eventId ?? eventId,
+          eventTitle: ev.eventName ?? 'Event',
+          organizerName: ev.creator?.fullName || ev.eventCreatorName || 'Unknown Organizer',
+          eventImage:
+            ev.eventImages?.[0] || ev.gameImages?.[0] || 'https://via.placeholder.com/150',
+          eventDate: formatDate(ev.eventDateTime ?? '', 'display-range'),
+          eventLocation: ev.eventLocation ?? '',
             amountDue: totalPrice,
             currency: 'AED',
             bookingId: generateBookingId() ?? '',
@@ -271,21 +285,26 @@ const handleApplePay = () => {
       return;
     }
 
-    if (event.IsPrivateEvent || event.eventApprovalReq) {
+    // Cap guests to available spots before opening modal
+    if (guestsCount > spotsLeft) {
+      setGuestsCount(Math.max(1, spotsLeft));
+    }
+
+    if (ev.IsPrivateEvent || ev.eventApprovalReq) {
       const requestSentParams = {
         variant: 'private' as const,
-        eventId: event.eventId ?? eventId,
-        eventTitle: event.eventName ?? 'Event',
-        organizerName: event.creator?.fullName || event.eventCreatorName || 'Unknown Organizer',
+        eventId: ev.eventId ?? eventId,
+        eventTitle: ev.eventName ?? 'Event',
+        organizerName: ev.creator?.fullName || ev.eventCreatorName || 'Unknown Organizer',
         eventImage:
-          event.eventImages?.[0] || event.gameImages?.[0] || 'https://via.placeholder.com/150',
-        eventDate: formatDate(event.eventDateTime ?? '', 'display-range'),
-        eventLocation: event.eventLocation ?? '',
+          ev.eventImages?.[0] || ev.gameImages?.[0] || 'https://via.placeholder.com/150',
+        eventDate: formatDate(ev.eventDateTime ?? '', 'display-range'),
+        eventLocation: ev.eventLocation ?? '',
         amountDue: totalPrice,
         currency: 'AED',
         bookingId: generateBookingId() ?? '',
-        categories: event.eventSports ?? [],
-        eventType: event.eventType ?? 'Event',
+        categories: ev.eventSports ?? [],
+        eventType: ev.eventType ?? 'Event',
       };
       sendJoinRequest(eventId, {
         onSuccess: () => {

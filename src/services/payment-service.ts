@@ -87,22 +87,26 @@ export interface VerifyPaymentResponse {
 }
 
 export const paymentService: {
-  createBookingWithPayment: (eventId: string, promoCode?: string | null) => Promise<BookEventPaymentResponse>;
+  createBookingWithPayment: (eventId: string, promoCode?: string | null, guestsCount?: number) => Promise<BookEventPaymentResponse>;
   verifyPayment: (paymentIntentId: string) => Promise<VerifyPaymentResponse>;
 } = {
   /**
    * Create booking and get Stripe Payment Intent
    * @param eventId - The ID of the event to book
    * @param promoCode - Optional promo code
+   * @param guestsCount - Number of guests (user + additional). Backend uses this to enforce eventMaxGuest limit.
    * @returns BookEventPaymentResponse with Stripe payment intent
    */
   createBookingWithPayment: async (
     eventId: string,
     promoCode?: string | null,
+    guestsCount: number = 1,
   ): Promise<BookEventPaymentResponse> => {
-    const url = promoCode
-      ? `/api/bookings/book-event/${eventId}?promoCode=${promoCode}`
-      : `/api/bookings/book-event/${eventId}`;
+    const params = new URLSearchParams();
+    if (promoCode) params.set('promoCode', promoCode);
+    if (guestsCount > 1) params.set('guestsCount', String(guestsCount));
+    const query = params.toString();
+    const url = query ? `/api/bookings/book-event/${eventId}?${query}` : `/api/bookings/book-event/${eventId}`;
 
     const { data } = await apiClient.post<BookEventPaymentResponse>(url);
     return data;

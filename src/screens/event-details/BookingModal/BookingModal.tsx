@@ -245,10 +245,11 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       }
 
       // Step 1: Create booking and get Stripe Payment Intent
-      logger.info('Creating booking for event:', eventId);
+      logger.info('Creating booking for event:', eventId, 'guests:', guestsCount);
       const bookingResponse = await paymentService.createBookingWithPayment(
         eventId,
         appliedPromoCode || (promoCode.trim() || null),
+        Math.max(1, guestsCount),
       );
 
       if (!bookingResponse.success) {
