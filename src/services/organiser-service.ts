@@ -502,35 +502,86 @@ export const organiserService = {
         throw new Error(response.data.message || 'Failed to load dashboard data');
       }
 
-      const analyticsData = response.data.data;
-      const { stats, transactions: apiTransactions } = analyticsData;
+      const analyticsData = response.data.data as OrganiserAnalyticsResponse['data'] & {
+        bookings?: OrganiserBookingsAnalytics;
+      };
+      const stats = analyticsData?.stats;
+      const bookings = analyticsData?.bookings;
+      const apiTransactions = analyticsData?.transactions || [];
 
-      // Fallback: if analytics doesn't return totalMembers, fetch from members API
+      let totalRevenue = Number(
+        stats?.totalRevenue ??
+        analyticsData?.revenue?.total ??
+        bookings?.totalRevenue ??
+        0,
+      );
+
+      const totalEvents = Number(
+        stats?.totalEvents ??
+        bookings?.events?.length ??
+        0,
+      );
+
+      // Source of truth for homepage revenue + member count:
+      // /api/organizers/members -> totalBookingAmount
       let totalMembers = Number(stats?.totalMembers ?? 0);
-      if (totalMembers === 0) {
-        try {
-          const membersRes = await apiClient.get<OrganiserMembersResponse>('/api/organizers/members', {
-            params: { page: 1, perPage: 1 },
+      try {
+        const firstPage = await apiClient.get<OrganiserMembersResponse>('/api/organizers/members', {
+          params: { page: 1, perPage: 200 },
+        });
+
+        const firstData = firstPage.data?.data;
+        const firstMembers = firstData?.members || [];
+
+        const readMemberAmount = (member: any) =>
+          Number(
+            member?.totalBookingAmount ??
+            member?.total_booking_amount ??
+            member?.organiserBookingAmount ??
+            member?.organiser_booking_amount ??
+            0,
+          );
+
+        let membersRevenue = firstMembers.reduce((sum, member) => sum + readMemberAmount(member), 0);
+
+        const totalPages = Number(firstData?.pagination?.totalPages ?? 1);
+
+        if (totalPages > 1) {
+          const pageRequests: Promise<any>[] = [];
+          for (let page = 2; page <= totalPages; page++) {
+            pageRequests.push(
+              apiClient.get<OrganiserMembersResponse>('/api/organizers/members', {
+                params: { page, perPage: 200 },
+              }),
+            );
+          }
+
+          const otherPages = await Promise.all(pageRequests);
+          otherPages.forEach((pageResponse) => {
+            const members = pageResponse.data?.data?.members || [];
+            membersRevenue += members.reduce((sum: number, member: any) => sum + readMemberAmount(member), 0);
           });
-          const d = membersRes.data?.data;
-          totalMembers =
-            d?.pagination?.totalCount ??
-            d?.totalMembers ??
-            (membersRes.data as any)?.pagination?.totalCount ??
-            0;
-        } catch {
-          // Ignore; keep 0
         }
+
+        totalRevenue = membersRevenue;
+
+        totalMembers =
+          Number(firstData?.pagination?.totalCount) ||
+          Number(firstData?.totalMembers) ||
+          Number(totalMembers) ||
+          0;
+      } catch {
+        // If members API fails, keep analytics-derived totals.
       }
 
       // Map summary cards
       const summaryCards: SummaryCard[] = [
         {
-          value: formatNumber(stats.totalRevenue),
+          value: formatNumber(totalRevenue),
           label: 'Total Revenue',
         },
         {
-          value: stats.totalEvents.toString(),
+          value: totalEvents.toString(),
           label: 'Events Hosted',
         },
         {
