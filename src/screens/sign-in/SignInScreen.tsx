@@ -87,9 +87,9 @@ export const SignInScreen: React.FC = () => {
               justifyContent="center"
               gap={spacing.sm}
             >
-              <TextDs size={16} weight="bold">Welcome Back</TextDs>
-              <TextDs size={14} weight="regular" color="secondary">
-                Sign in to continue
+              <TextDs size={20} weight="bold">Welcome Back</TextDs>
+              <TextDs size={14} weight="regular" color="secondary" align='center'>
+                Enter your WhatsApp Number and password to sign in
               </TextDs>
             </FlexView>
 

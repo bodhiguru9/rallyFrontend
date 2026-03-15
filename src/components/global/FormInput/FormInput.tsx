@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   inputContainerGlass: {
-    backgroundColor: "#fffdef7e",
+    backgroundColor: "#FFFDEF80",
     borderWidth: 1,
     paddingHorizontal: spacing.md,
     borderColor: colors.border.white,

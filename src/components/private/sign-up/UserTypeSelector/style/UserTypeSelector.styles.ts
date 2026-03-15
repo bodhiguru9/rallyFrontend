@@ -23,7 +23,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.glass.background.white,
+    backgroundColor: "#FFFDEF80",
     borderWidth: 1,
     borderColor: colors.border.white,
   },
