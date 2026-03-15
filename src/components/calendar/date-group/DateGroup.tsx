@@ -4,7 +4,6 @@ import { EventCard } from '@components/global/EventCard';
 import { colors, spacing } from '@theme';
 import type { PlayerBooking } from '@services/booking-service';
 import { EventStatusBadge } from '@components/global/event-status-badge';
-import moment from 'moment';
 import { TextDs } from '@designSystem/atoms/TextDs';
 import { styles } from './DateGroup.styles';
 
@@ -14,12 +13,35 @@ interface DateGroupProps {
   onBookmark: (id: string) => void;
   showTimeline?: boolean;
   showStatus?: boolean;
+  displayTimeZone?: string;
 }
 
-export const DateGroup: React.FC<DateGroupProps> = ({ events, onEventPress, onBookmark, showTimeline = true, showStatus = true }) => {
+const getTimelineDateLabel = (date: Date, timeZone?: string): string => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    day: 'numeric',
+    month: 'short',
+    weekday: 'long',
+    timeZone,
+  }).formatToParts(date);
+
+  const day = parts.find((part) => part.type === 'day')?.value || '';
+  const month = parts.find((part) => part.type === 'month')?.value || '';
+  const weekday = parts.find((part) => part.type === 'weekday')?.value || '';
+
+  return `${day} ${month}, ${weekday}`;
+};
+
+export const DateGroup: React.FC<DateGroupProps> = ({
+  events,
+  onEventPress,
+  onBookmark,
+  showTimeline = true,
+  showStatus = true,
+  displayTimeZone,
+}) => {
   const hasOngoing = events.some(e => e.booking?.bookingStatus === 'ongoing');
   const firstEventDate = events[0]?.eventDateTime ? new Date(events[0].eventDateTime) : new Date();
-  const dateFormatted = moment(firstEventDate).format('D MMM, dddd');
+  const dateFormatted = getTimelineDateLabel(firstEventDate, displayTimeZone);
 
   return (
     <FlexView flexDirection="row" alignItems="stretch" width={'100%'} overflow="hidden">
@@ -59,6 +81,7 @@ export const DateGroup: React.FC<DateGroupProps> = ({ events, onEventPress, onBo
             hideCreator
             hidePrice
             showStatus={showStatus}
+            displayTimeZone={displayTimeZone}
           />
         ))}
       </FlexView>
