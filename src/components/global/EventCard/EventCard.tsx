@@ -89,6 +89,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   hideCreator = false,
   showStatus = false,
   spotsStatusLabel,
+  showRevenue = false,
   displayTimeZone,
 }) => {
   const [isMembersModalVisible, setIsMembersModalVisible] = useState(false);
@@ -308,7 +309,13 @@ export const EventCard: React.FC<EventCardProps> = ({
             <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
               <ImageDs image="DhiramIcon" size={14} />
               <TextDs size={18} weight="semibold" color="blueGray">
-                {event.eventPricePerGuest}
+                {showRevenue
+                  ? (() => {
+                      const spotsBooked = (event as EventData).spotsInfo?.spotsBooked ?? (event as PlayerBooking).eventTotalAttendNumber ?? 0;
+                      const pricePerGuest = typeof event.eventPricePerGuest === 'number' ? event.eventPricePerGuest : parseFloat(String(event.eventPricePerGuest ?? 0)) || 0;
+                      return Math.round(spotsBooked * pricePerGuest);
+                    })()
+                  : event.eventPricePerGuest}
               </TextDs>
             </FlexView>
           )}

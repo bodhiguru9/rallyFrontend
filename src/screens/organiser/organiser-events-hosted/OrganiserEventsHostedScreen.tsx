@@ -223,7 +223,8 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
         break;
       case 'most-recent':
       default:
-        // Keep original order (most recent)
+        // Chronological: earliest date first (e.g. March 12 before March 16)
+        filtered.sort((a, b) => new Date(a.eventDateTime).getTime() - new Date(b.eventDateTime).getTime());
         break;
     }
 
@@ -311,7 +312,8 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
                     id={event.eventId}
                     event={event as any}
                     onPress={handleEventPress}
-                    onBookmark={() => { }}
+                    onBookmark={() => {}}
+                    showRevenue
                   />
                 ))
               ) : (
