@@ -12,7 +12,9 @@ import { FlexView, Seperator } from '@components';
 import { usePlayerEvents } from '@hooks/use-events';
 import { FeaturedEventsSection } from '@components/private/home/player-home-content/sections/FeaturedEventsSection';
 import { PickedEventsSection } from '@components/private/home/player-home-content/sections/PickedEventsSection';
+import { TopOrganisersSection } from '@components/private/home/player-home-content/sections/TopOrganisersSection';
 import { useHome } from '../../home/context/Home.context';
+import { useAuthStore } from '@store/auth-store';
 import { ScrollView } from 'react-native';
 import type { EventData } from '@app-types';
 
@@ -26,6 +28,7 @@ export const TagSearchScreen: React.FC = () => {
     const route = useRoute<TagSearchScreenRouteProp>();
     const navigation = useNavigation<TagSearchScreenNavigationProp>();
     const { searchType, value } = route.params ?? { searchType: undefined, value: undefined };
+    const { isAuthenticated } = useAuthStore();
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const params =
         searchType === 'sport'
@@ -54,6 +57,7 @@ export const TagSearchScreen: React.FC = () => {
         loadMoreDates,
         canLoadMore,
         refetchEvents,
+        topOrganisers,
     } = useHome();
 
     // Lock filters based on search tag
@@ -85,6 +89,10 @@ export const TagSearchScreen: React.FC = () => {
     };
     const handleBookmark = (eventId: string) => {
         console.log('Bookmark event:', eventId);
+    };
+
+    const handleOrganiserPress = (id: string) => {
+        navigation.navigate('PlayerOrgEventDetails', { organiserId: id });
     };
 
     return (
@@ -135,6 +143,12 @@ export const TagSearchScreen: React.FC = () => {
                         canLoadMore={canLoadMore}
                         onEventPress={handleEventPress}
                         onBookmark={handleBookmark}
+                    />
+
+                    <TopOrganisersSection
+                        topOrganisers={topOrganisers}
+                        onOrganiserPress={handleOrganiserPress}
+                        isAuthenticated={isAuthenticated}
                     />
                 </ScrollView>
             )}
