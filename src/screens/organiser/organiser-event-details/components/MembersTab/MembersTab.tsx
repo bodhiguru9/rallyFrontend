@@ -16,7 +16,7 @@ import { usePendingRequestMutations } from './use-pending-request-mutations';
 import { eventService } from '@services/event-service';
 import { privateEventsService } from '@services/private-events-service';
 import { shareEventWithPlayers } from '@utils/share-utils';
-import { formatDate } from '@utils/date-utils';
+import { formatDate, formatBookingSlot } from '@utils/date-utils';
 import { apiClient } from '@services/api/api-client';
 
 type MembersView = 'joined' | 'waitlisted' | 'requests';
@@ -36,8 +36,26 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
   const [selectedWaitlistPlayer, setSelectedWaitlistPlayer] = useState<WaitlistEntry | null>(null);
   const [isWaitlistModalVisible, setIsWaitlistModalVisible] = useState(false);
 
-  const participants = event.participants || [];
-  const spotsBooked = event.spotsInfo?.spotsBooked || participants.length;
+  // Filter out cancelled players and normalize guest count + payment status (API may send snake_case)
+  const allParticipants = (event.participants || [])
+    .filter((p) => {
+      const status = (p as EventParticipant & { bookingStatus?: string }).bookingStatus ?? (p as any).booking_status;
+      return status !== 'cancelled';
+    })
+    .map((p) => ({
+      ...p,
+      guestCount: p.guestCount ?? (p as any).guest_count ?? 0,
+      paymentStatus: p.paymentStatus ?? (p as any).payment_status ?? null,
+    }));
+
+  // Joined = participants from API, excluding only those with explicit paymentStatus='pending'.
+  // If backend doesn't send paymentStatus, treat as joined (backend is source of truth).
+  const hasExplicitPaymentPending = (p: typeof allParticipants[0]) => {
+    const ps = String(p.paymentStatus ?? (p as any).payment_status ?? '').toLowerCase();
+    return ps === 'pending' || ps.includes('pending');
+  };
+  const participants = allParticipants.filter((p) => !hasExplicitPaymentPending(p));
+  const spotsBooked = event.spotsInfo?.spotsBooked ?? participants.length;
   const totalSpots = event.spotsInfo?.totalSpots || event.eventMaxGuest || 0;
   const spotsAvailable = totalSpots - spotsBooked;
 
@@ -61,8 +79,18 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
     enabled: !!event.eventId,
   });
 
-  const pendingRequests = pendingRequestsData?.data?.pendingRequests ?? [];
-  const totalPendingRequests = pendingRequestsData?.data?.totalPendingRequests ?? 0;
+  const allPendingRequests = pendingRequestsData?.data?.pendingRequests ?? [];
+  // Anyone in participants (from API) is joined - filter them from Requests
+  const joinedUserIds = allParticipants.map((p) => p.userId);
+  const joinedSet = new Set(joinedUserIds);
+  const isRequestPaid = (r: { user: { userId: number }; paymentStatus?: string | null; payment_status?: string | null }) => {
+    const s = String(r.paymentStatus ?? r.payment_status ?? '').toLowerCase();
+    return s === 'paid' || s.includes('paid');
+  };
+  const pendingRequests = allPendingRequests.filter(
+    (r) => !joinedSet.has(r.user.userId) && !isRequestPaid(r)
+  );
+  const totalPendingRequests = pendingRequests.length;
 
   // Accept waitlisted player mutation
   const acceptPlayerMutation = useMutation({
@@ -134,7 +162,9 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
 
   const removePlayerMutation = useMutation({
     mutationFn: ({ eventId, playerId }: { eventId: string; playerId: number }) =>
-      privateEventsService.removePlayer(eventId, playerId),
+      event.IsPrivateEvent
+        ? privateEventsService.removePlayer(eventId, playerId)
+        : eventService.removeParticipant(eventId, String(playerId)),
     onSuccess: () => {
       handleCloseRemoveModal();
       queryClient.invalidateQueries({ queryKey: ['event', event.eventId] });
@@ -185,7 +215,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
               color={activeView === 'joined' ? 'white' : 'primary'}
               style={styles.statNumber}
             >
-              {participants.length}
+              {spotsBooked}
             </TextDs>
             <TextDs
               size={14} weight="regular"
@@ -300,45 +330,74 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
           </FlexView>
 
           {participants.length > 0 ? (
-            <FlexView style={styles.playersGrid}>
-              {participants.map((participant: EventParticipant) => (
-                <TouchableOpacity
-                  key={participant.userId}
-                  style={styles.playerItem}
-                  activeOpacity={0.7}
-                  onPress={() => handlePlayerPress(participant.userId, participant.fullName)}
-                >
-                  <FlexView width={60} height={60} position='relative'>
-                    <Avatar
-                      imageUri={participant.profilePic}
-                      fullName={participant.fullName}
-                      size="xl"
-                    />
-                    <FlexView position='absolute' bottom={0} right={0}>
-                      <TouchableOpacity
-                        style={styles.glassMinusTouchable}
-                        activeOpacity={0.7}
-                        disabled={removePlayerMutation.isPending}
-                        onPress={() => {
-                          if (participant.userId) {
-                            handlePlayerPress(participant.userId, participant.fullName);
-                          }
-                        }}
-                      >
-                        <ImageDs image='glassMinus' size={20} />
-                      </TouchableOpacity>
-                    </FlexView>
-                  </FlexView>
-                  <TextDs
-                    size={14} weight="regular"
-                    color="primary"
-                    style={styles.playerName}
-                    numberOfLines={2}
+            <FlexView style={styles.playersList}>
+              {participants.map((participant: EventParticipant) => {
+                const guestCount = participant.guestCount ?? (participant as any).guest_count ?? 0;
+                const hasGuest = guestCount > 0;
+                const guestSuffix = hasGuest ? ` +${guestCount}` : '';
+                const hasSlot = !!(participant.slotStartTime);
+                const bookingText = hasSlot
+                  ? formatBookingSlot(participant.slotStartTime!, participant.slotEndTime)
+                  : null;
+                const hasPrice = participant.amountPaid != null && participant.amountPaid > 0;
+
+                return (
+                  <TouchableOpacity
+                    key={participant.userId}
+                    style={styles.playerRow}
+                    activeOpacity={0.7}
+                    onPress={() => handlePlayerPress(participant.userId, participant.fullName)}
                   >
-                    {participant.fullName}
-                  </TextDs>
-                </TouchableOpacity>
-              ))}
+                    <FlexView width={48} height={48} position="relative">
+                      <Avatar
+                        imageUri={participant.profilePic}
+                        fullName={participant.fullName}
+                        size="lg"
+                      />
+                      <FlexView position="absolute" bottom={-4} right={-4}>
+                        <TouchableOpacity
+                          style={styles.glassMinusTouchable}
+                          activeOpacity={0.7}
+                          disabled={removePlayerMutation.isPending}
+                          onPress={() => {
+                            if (participant.userId) {
+                              handlePlayerPress(participant.userId, participant.fullName);
+                            }
+                          }}
+                        >
+                          <ImageDs image="glassMinus" size={18} />
+                        </TouchableOpacity>
+                      </FlexView>
+                    </FlexView>
+                    <FlexView flex={1} style={styles.playerContent}>
+                      <TextDs
+                        size={14}
+                        weight="medium"
+                        color="primary"
+                        numberOfLines={1}
+                      >
+                        {participant.fullName}{guestSuffix}
+                      </TextDs>
+                      {bookingText ? (
+                        <TextDs
+                          size={12}
+                          weight="regular"
+                          color="secondary"
+                          style={styles.bookingText}
+                          numberOfLines={1}
+                        >
+                          Booked: {bookingText}
+                        </TextDs>
+                      ) : null}
+                    </FlexView>
+                    {hasPrice ? (
+                      <TextDs size={14} weight="medium" color="primary">
+                        ₹ {Math.round(participant.amountPaid!)}
+                      </TextDs>
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
             </FlexView>
           ) : (
             <Card style={{ padding: spacing.xl, alignItems: 'center' }}>
@@ -353,7 +412,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
       {activeView === 'requests' && (
         <>
           {pendingRequests.length > 0 ? (
-            <PendingRequestsList eventId={event.eventId} />
+            <PendingRequestsList eventId={event.eventId} joinedUserIds={joinedUserIds} />
           ) : (
             <Card style={{ padding: spacing.xl, alignItems: 'center' }}>
               <TextDs size={14} weight="regular" color="secondary">
@@ -457,6 +516,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  playersList: {
+    gap: spacing.sm,
+  },
   playersGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -467,15 +529,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.base,
   },
+  playerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: colors.background.secondary,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+    gap: spacing.md,
+  },
+  playerContent: {
+    marginRight: 'auto',
+  },
+  bookingText: {
+    marginTop: 2,
+  },
+  playerName: {
+    textAlign: 'center',
+  },
   playerAvatar: {
     width: 60,
     height: 60,
     borderRadius: borderRadius.full,
     backgroundColor: colors.background.secondary,
     marginBottom: spacing.xs,
-  },
-  playerName: {
-    textAlign: 'center',
   },
   glassMinusTouchable: {
     padding: 0,

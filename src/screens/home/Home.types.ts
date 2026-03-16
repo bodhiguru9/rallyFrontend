@@ -103,6 +103,15 @@ export interface ApiEventParticipant {
   sport1: string;
   sport2?: string;
   joinedAt: string;
+  /** Number of additional guests (+1, +2). API may send as guestCount or guest_count */
+  guestCount?: number;
+  guest_count?: number;
+  /** Per-participant booking status. When 'cancelled', exclude from joined list */
+  bookingStatus?: 'upcoming' | 'ongoing' | 'past' | 'cancelled' | string;
+  /** Per-participant payment status. When 'pending', show "Pending Payment" tag (approval-required events) */
+  paymentStatus?: 'pending' | 'paid' | 'unpaid' | string | null;
+  /** Amount paid by this participant. When backend sends this, show price (e.g. "₹ 120") */
+  amountPaid?: number;
 }
 
 export interface TimeUntilStart {

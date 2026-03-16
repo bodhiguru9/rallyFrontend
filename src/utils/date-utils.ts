@@ -498,3 +498,25 @@ export const canLoadMoreDates = (currentEndDate: Date): boolean => {
 export const transformTime = (isoDateString: string): string => {
   return formatDate(isoDateString, 'display-range');
 };
+
+/**
+ * Format per-player booking slot for Members tab (e.g., "23 Oct, 4:00 - 6:30 PM")
+ * Use when backend sends slotStartTime/slotEndTime per participant
+ * @param slotStartTime - ISO 8601 start time
+ * @param slotEndTime - Optional ISO 8601 end time (falls back to start + 1hr if missing)
+ */
+export const formatBookingSlot = (
+  slotStartTime: string | Date | number,
+  slotEndTime?: string | Date | number,
+): string => {
+  try {
+    const start = moment(slotStartTime);
+    const end = slotEndTime ? moment(slotEndTime) : moment(slotStartTime).add(1, 'hour');
+    const datePart = start.format('D MMM');
+    const startTimeStr = start.format('h:mm');
+    const endTimeStr = end.format('h:mm A');
+    return `${datePart}, ${startTimeStr} - ${endTimeStr}`;
+  } catch {
+    return '';
+  }
+};

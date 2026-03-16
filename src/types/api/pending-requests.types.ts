@@ -12,6 +12,12 @@ export interface PendingRequest {
   status: string;
   requestedAt: string;
   user: PendingRequestUser;
+  /** Number of guests requested. API may send as guestCount or guest_count */
+  guestCount?: number;
+  guest_count?: number;
+  /** When status is 'accepted', player awaits payment. Show "Pending Payment" tag */
+  paymentStatus?: 'pending' | 'paid' | 'unpaid' | string | null;
+  payment_status?: string | null;
 }
 
 export interface PendingRequestsPagination {
