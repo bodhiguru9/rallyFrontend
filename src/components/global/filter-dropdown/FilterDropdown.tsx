@@ -15,6 +15,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
   onToggle,
   align = "left",
   isMultiSelect = true,
+  alwaysShowLabel = false,
   buttonIcon: ButtonIcon,
 }) => {
   const buttonRef = useRef<View>(null);
@@ -54,7 +55,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
 
   const displayLabel = isMultiSelect
     ? (hasSelection ? `${label} (${selectedCount})` : label)
-    : (hasSelection ? getDisplayLabel(options.find(opt => selectedIds.includes(opt.id))?.label || label) : label);
+    : (alwaysShowLabel ? label : (hasSelection ? getDisplayLabel(options.find(opt => selectedIds.includes(opt.id))?.label || label) : label));
 
   const handleToggle = (id: string) => {
     if (!isMultiSelect) {

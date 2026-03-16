@@ -124,7 +124,7 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
   // Transform API data to FilterOption format using useMemo
   const [sportsFilterStates, setSportsFilterStates] = useState<Record<string, boolean>>({ 'all-sports': true });
   const [eventTypeFilterStates, setEventTypeFilterStates] = useState<Record<string, boolean>>({ 'all-event-types': true });
-  const [locationFilterStates, setLocationFilterStates] = useState<Record<string, boolean>>({ 'all-locations': true });
+  const [locationFilterStates, setLocationFilterStates] = useState<Record<string, boolean>>({ 'distance-everywhere': true });
   const [priceFilterStates, setPriceFilterStates] = useState<Record<string, boolean>>({});
 
   // Initialize date filters with 30 days from today
@@ -255,24 +255,20 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
   }, [filterOptionsData, eventTypeFilterStates]);
 
   const locationFilters = useMemo(() => {
-    const defaultLocations = filterOptionsData?.locations || [];
-    const mappedLocations = defaultLocations.map((location: string, index: number) => ({
-      id: `location-${index}`,
-      label: location,
-      value: location.toLowerCase(),
-      isActive: locationFilterStates[`location-${index}`] ?? false,
-    }));
-
-    return [
-      {
-        id: 'all-locations',
-        label: 'All Locations',
-        value: 'all',
-        isActive: locationFilterStates['all-locations'] ?? false,
-      },
-      ...mappedLocations
+    const distanceOptions = [
+      { id: 'distance-2', label: 'Nearby (<2 kms)', value: '2' },
+      { id: 'distance-5', label: 'Within 5 kms', value: '5' },
+      { id: 'distance-10', label: 'Within 10 kms', value: '10' },
+      { id: 'distance-20', label: 'Within 20 kms', value: '20' },
+      { id: 'distance-50', label: 'Within 50 kms', value: '50' },
+      { id: 'distance-everywhere', label: 'Everywhere', value: 'everywhere' },
     ];
-  }, [filterOptionsData, locationFilterStates]);
+
+    return distanceOptions.map((option) => ({
+      ...option,
+      isActive: locationFilterStates[option.id] ?? false,
+    }));
+  }, [locationFilterStates]);
 
   const priceFilters = useMemo(() => {
     const prices = [0, 30, 50, 100, 150, 300];
@@ -349,6 +345,8 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
       eventType: booking.eventType,
       eventSports: booking.eventSports,
       eventDateTime: booking.eventDateTime,
+      eventLatitude: undefined,
+      eventLongitude: undefined,
       eventFrequency: booking.eventFrequency,
       eventLocation: booking.eventLocation,
       eventDescription: booking.eventDescription,
@@ -486,17 +484,11 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
 
   const toggleLocationFilter = (id: string) => {
     setLocationFilterStates((prev) => {
-      if (id === 'all-locations') {
-        return { 'all-locations': true };
+      const isAlreadyActive = !!prev[id];
+      if (isAlreadyActive) {
+        return prev;
       }
-      const newState = { ...prev };
-      newState[id] = !prev[id];
-      delete newState['all-locations'];
-
-      const hasActive = Object.values(newState).some(v => v);
-      if (!hasActive) return { 'all-locations': true };
-
-      return newState;
+      return { [id]: true };
     });
   };
 

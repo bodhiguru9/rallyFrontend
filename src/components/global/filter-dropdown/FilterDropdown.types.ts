@@ -11,6 +11,7 @@ export interface FilterDropdownProps {
   selectedIds: string[];
   align?: 'left' | 'right';
   isMultiSelect?: boolean; // If false, only one option can be selected at a time
+  alwaysShowLabel?: boolean; // Keep button headline fixed to `label` even when an item is selected
   onToggle: (id: string) => void;
   /** When dropdown opens/closes. Parent should set ScrollView scrollEnabled={!open} so the list scrolls on Android. */
   onOpenChange?: (open: boolean) => void;
