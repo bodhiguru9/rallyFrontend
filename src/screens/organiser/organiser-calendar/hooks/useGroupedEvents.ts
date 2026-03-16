@@ -1,6 +1,11 @@
 import { useMemo } from 'react';
 import type { PlayerBooking } from '@services/booking-service';
 import type { CalendarTab } from '../OrganiserCalendarScreen.types';
+import {
+  isRecurringEvent,
+  isRecurringEventOnDate,
+  getRecurringEventInstanceDateTime,
+} from '@utils/recurrence-utils';
 
 interface UseGroupedEventsProps {
   events: PlayerBooking[];
@@ -14,27 +19,20 @@ interface GroupedEventsResult {
   groupedEvents: { [key: string]: PlayerBooking[] };
 }
 
-const GST_TIME_ZONE = 'Asia/Dubai';
-
-const getDateKeyInTimeZone = (input: Date | string, timeZone: string): string => {
+/** Get YYYY-MM-DD in local timezone for consistent date grouping */
+const getLocalDateKey = (input: Date | string): string => {
   const date = typeof input === 'string' ? new Date(input) : input;
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(date);
-
-  const year = parts.find((part) => part.type === 'year')?.value || '';
-  const month = parts.find((part) => part.type === 'month')?.value || '';
-  const day = parts.find((part) => part.type === 'day')?.value || '';
-
-  return `${year}-${month}-${day}`;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 };
 
 /**
  * Hook to filter and group organiser events by date and tab.
  * Mirrors the player calendar's useGroupedEvents logic.
+ * Supports recurring events: when a date is selected, recurring events that occur
+ * on that date are included (e.g. "Every Tuesday" shows on each Tuesday).
  */
 export const useGroupedEvents = ({
   events,
@@ -45,11 +43,25 @@ export const useGroupedEvents = ({
     // Filter events by selected date if provided
     let filteredEvents = events;
     if (selectedDate) {
-      const selectedDateKey = getDateKeyInTimeZone(selectedDate, GST_TIME_ZONE);
-      filteredEvents = events.filter((event) => {
-        const eventDateKey = getDateKeyInTimeZone(event.eventDateTime, GST_TIME_ZONE);
-        return eventDateKey === selectedDateKey;
-      });
+      const selectedDateKey = getLocalDateKey(selectedDate);
+      filteredEvents = events
+        .filter((event) => {
+          if (isRecurringEvent(event)) {
+            return isRecurringEventOnDate(event, selectedDate);
+          }
+          const eventDateKey = getLocalDateKey(event.eventDateTime);
+          return eventDateKey === selectedDateKey;
+        })
+        .map((event) => {
+          // For recurring events on selected date, use the instance datetime for correct display
+          if (isRecurringEvent(event) && isRecurringEventOnDate(event, selectedDate)) {
+            return {
+              ...event,
+              eventDateTime: getRecurringEventInstanceDateTime(event, selectedDate),
+            };
+          }
+          return event;
+        });
     }
 
     const upcoming: PlayerBooking[] = [];
@@ -68,7 +80,7 @@ export const useGroupedEvents = ({
     const groupByDate = (eventList: PlayerBooking[]) => {
       const grouped: { [key: string]: PlayerBooking[] } = {};
       eventList.forEach((event) => {
-        const dateKey = getDateKeyInTimeZone(event.eventDateTime, GST_TIME_ZONE);
+        const dateKey = getLocalDateKey(event.eventDateTime);
         if (!grouped[dateKey]) {
           grouped[dateKey] = [];
         }

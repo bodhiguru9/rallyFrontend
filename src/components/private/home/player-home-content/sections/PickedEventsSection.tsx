@@ -9,10 +9,12 @@ import { styles } from '../style/PlayerHomeContent.styles';
 import { FlexView } from '@designSystem/atoms/FlexView';
 import { EventData } from '@app-types';
 import { useLocationStore } from '@store/location-store';
+import { expandRecurringEvents } from '@utils/recurrence-utils';
+import { parseLocalDate } from '@utils/date-utils';
 
-const isSameCalendarDay = (iso1: string, iso2: string): boolean => {
-  const d1 = new Date(iso1);
-  const d2 = new Date(iso2);
+const isSameCalendarDay = (eventDateTime: string, fullDate: string): boolean => {
+  const d1 = new Date(eventDateTime);
+  const d2 = parseLocalDate(fullDate);
   return (
     d1.getFullYear() === d2.getFullYear() &&
     d1.getMonth() === d2.getMonth() &&
@@ -127,9 +129,17 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
     [dateFilters],
   );
 
+  // Date range from filters (for expanding recurring events)
+  const dateRangeStrings = useMemo(
+    () => dateFilters.map((f) => f.fullDate).filter((d): d is string => !!d),
+    [dateFilters],
+  );
+
   // Filter events by all selected filters
   const filteredEvents = useMemo(() => {
-    let filtered = pickedEvents;
+    // Expand recurring events into instances for each matching date in the visible range
+    const expanded = expandRecurringEvents(pickedEvents, dateRangeStrings);
+    let filtered = expanded;
 
     // Filter out past events - only show future and currently ongoing events
     const now = new Date();
@@ -146,7 +156,7 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
       return eventStartDate >= now;
     });
 
-    // Filter by date
+    // Filter by date (when a date is selected)
     if (selectedDateFullDate) {
       filtered = filtered.filter((event) =>
         isSameCalendarDay(event.eventDateTime, selectedDateFullDate),
@@ -204,6 +214,7 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
     return filtered;
   }, [
     pickedEvents,
+    dateRangeStrings,
     selectedDateFullDate,
     selectedSportsValues,
     selectedEventTypeValues,

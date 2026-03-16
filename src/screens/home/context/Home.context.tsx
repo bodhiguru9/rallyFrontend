@@ -348,6 +348,7 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
       eventLatitude: undefined,
       eventLongitude: undefined,
       eventFrequency: booking.eventFrequency,
+      eventFrequencyEndDate: booking.eventFrequencyEndDate,
       eventLocation: booking.eventLocation,
       eventDescription: booking.eventDescription,
       eventGender: booking.eventGender,

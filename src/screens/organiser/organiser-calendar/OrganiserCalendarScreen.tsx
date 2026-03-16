@@ -16,56 +16,16 @@ import type { PlayerBooking } from '@services/booking-service';
 import type { DateFilter as DateFilterType } from '@screens/home/Home.types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const GST_TIME_ZONE = 'Asia/Dubai';
+import {
+  toLocalDateString,
+  generateDateFilters,
+  addTime,
+  getMaxDateFilterEndDate,
+  canLoadMoreDates,
+} from '@utils/date-utils';
 
-const getDatePart = (
-  date: Date,
-  part: 'day' | 'weekday' | 'month' | 'year',
-  format?: 'short' | 'numeric',
-) => {
-  const options: Intl.DateTimeFormatOptions = { timeZone: GST_TIME_ZONE };
-
-  if (part === 'day') {
-    options.day = 'numeric';
-  }
-  if (part === 'weekday') {
-    options.weekday = 'short';
-  }
-  if (part === 'month') {
-    options.month = 'short';
-  }
-  if (part === 'year') {
-    options.year = format === 'numeric' ? 'numeric' : '2-digit';
-  }
-
-  return new Intl.DateTimeFormat('en-US', options).format(date);
-};
-
-const getGstDateFilters = (): DateFilterType[] => {
-  const dates: DateFilterType[] = [];
-  const now = new Date();
-
-  for (let i = 0; i < 8; i++) {
-    const date = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
-    const year = getDatePart(date, 'year', 'numeric');
-    const month = String(
-      new Intl.DateTimeFormat('en-US', { timeZone: GST_TIME_ZONE, month: '2-digit' }).format(date),
-    );
-    const day = String(
-      new Intl.DateTimeFormat('en-US', { timeZone: GST_TIME_ZONE, day: '2-digit' }).format(date),
-    );
-
-    dates.push({
-      date: Number(getDatePart(date, 'day')),
-      day: getDatePart(date, 'weekday'),
-      month: getDatePart(date, 'month'),
-      isSelected: false,
-      fullDate: `${year}-${month}-${day}T00:00:00+04:00`,
-    });
-  }
-
-  return dates;
-};
+/** Display timezone for event times (was GST/Dubai - keeping for consistency) */
+const DISPLAY_TIME_ZONE = 'Asia/Dubai';
 
 const ORGANISER_CALENDAR_TABS = [
   { value: 'upcoming' as CalendarTab, label: 'Upcoming' },
@@ -78,7 +38,14 @@ export const OrganiserCalendarScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<OrganiserCalendarScreenNavigationProp>();
   const [activeTab, setActiveTab] = useState<CalendarTab>('upcoming');
-  const [dateFilters, setDateFilters] = useState<DateFilterType[]>(getGstDateFilters());
+  const [dateFilters, setDateFilters] = useState<DateFilterType[]>(() => {
+    const today = new Date();
+    return generateDateFilters(today, 30);
+  });
+  const [dateFilterState, setDateFilterState] = useState({
+    currentEndDate: addTime(new Date(), 29, 'days'),
+    isLoadingMore: false,
+  });
 
   const userId = useAuthStore((state) => state.user?.userId ?? state.user?.id ?? 0);
   const { data: organiserEventsData, isLoading, error } = useOrganiserEvents(userId, 1, 20, {
@@ -99,9 +66,37 @@ export const OrganiserCalendarScreen: React.FC = () => {
   const { groupedEvents } = useGroupedEvents({ events, activeTab, selectedDate });
 
   const toDateKey = (s: string) => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
     const d = new Date(s);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
+
+  const loadMoreDates = React.useCallback(() => {
+    if (dateFilterState.isLoadingMore) return;
+    if (!canLoadMoreDates(dateFilterState.currentEndDate)) return;
+
+    setDateFilterState((prev) => ({ ...prev, isLoadingMore: true }));
+    const nextStartDate = new Date(dateFilterState.currentEndDate);
+    nextStartDate.setDate(nextStartDate.getDate() + 1);
+    const maxDate = getMaxDateFilterEndDate();
+    const daysToGenerate = Math.min(
+      30,
+      Math.floor((maxDate.getTime() - nextStartDate.getTime()) / (24 * 60 * 60 * 1000)) + 1,
+    );
+    if (daysToGenerate > 0) {
+      const newDates = generateDateFilters(nextStartDate, daysToGenerate);
+      setDateFilters((prev) => [...prev, ...newDates]);
+      setDateFilterState((prev) => ({
+        ...prev,
+        currentEndDate: addTime(nextStartDate, daysToGenerate - 1, 'days'),
+        isLoadingMore: false,
+      }));
+    } else {
+      setDateFilterState((prev) => ({ ...prev, isLoadingMore: false }));
+    }
+  }, [dateFilterState]);
+
+  const canLoadMore = canLoadMoreDates(dateFilterState.currentEndDate);
 
   const selectDate = (fullDate: string | null) => {
     setDateFilters((prev) => {
@@ -123,7 +118,7 @@ export const OrganiserCalendarScreen: React.FC = () => {
         day: d.toLocaleDateString('en-US', { weekday: 'short' }),
         month: d.toLocaleDateString('en-US', { month: 'short' }),
         isSelected: true,
-        fullDate: d.toISOString(),
+        fullDate: toLocalDateString(d),
       };
       const updated = prev.map((f) => ({ ...f, isSelected: false }));
       return [...updated, newEntry];
@@ -144,7 +139,12 @@ export const OrganiserCalendarScreen: React.FC = () => {
   return (
     <HomeContainer activeTab="calendar" userType="organiser">
       <View style={{ paddingTop: insets.top }}>
-        <DateFilter dates={dateFilters} onSelectDate={selectDate} />
+        <DateFilter
+          dates={dateFilters}
+          onSelectDate={selectDate}
+          onScrollNearEnd={loadMoreDates}
+          canLoadMore={canLoadMore}
+        />
       </View>
 
       <TabSelector
@@ -168,7 +168,7 @@ export const OrganiserCalendarScreen: React.FC = () => {
           onEventPress={handleEventPress}
           onBookmark={handleBookmark}
           showStatus={false}
-          displayTimeZone={GST_TIME_ZONE}
+          displayTimeZone={DISPLAY_TIME_ZONE}
         />
       </ScrollView>
     </HomeContainer>

@@ -639,8 +639,14 @@ export const CreateEventContent: React.FC = () => {
               updateFormData('dateTime', date);
               if (!frequency) {
                 updateFormData('frequency', []);
+                updateFormData('frequencyEndDate', null);
               } else {
                 updateFormData('frequency', frequencyToFormValue(frequency));
+                const endDate =
+                  frequency.ends !== 'never' && typeof frequency.ends === 'object'
+                    ? frequency.ends.on.toISOString().split('T')[0]
+                    : null;
+                updateFormData('frequencyEndDate', endDate);
               }
             }}
             initialDate={formData.dateTime || undefined}

@@ -20,6 +20,8 @@ export interface OrganiserEventEditFormData {
   IsPrivateEvent: boolean;
   eventOurGuestAllowed: boolean;
   eventApprovalReq: boolean;
+  eventFrequency?: string[];
+  eventFrequencyEndDate?: string | null;
 }
 
 const defaultEditFormData: OrganiserEventEditFormData = {
@@ -32,6 +34,8 @@ const defaultEditFormData: OrganiserEventEditFormData = {
   IsPrivateEvent: false,
   eventOurGuestAllowed: true,
   eventApprovalReq: false,
+  eventFrequency: [],
+  eventFrequencyEndDate: null,
 };
 
 function eventToEditFormData(event: EventData): OrganiserEventEditFormData {
@@ -45,6 +49,8 @@ function eventToEditFormData(event: EventData): OrganiserEventEditFormData {
     IsPrivateEvent: event.IsPrivateEvent ?? false,
     eventOurGuestAllowed: event.eventOurGuestAllowed ?? true,
     eventApprovalReq: event.eventApprovalReq ?? false,
+    eventFrequency: event.eventFrequency ?? [],
+    eventFrequencyEndDate: event.eventFrequencyEndDate ?? null,
   };
 }
 
@@ -119,6 +125,8 @@ export const useOrganiserEventDetails = () => {
       IsPrivateEvent: editFormData.IsPrivateEvent,
       eventOurGuestAllowed: editFormData.eventOurGuestAllowed,
       eventApprovalReq: editFormData.eventApprovalReq,
+      eventFrequency: editFormData.eventFrequency ?? [],
+      eventFrequencyEndDate: editFormData.eventFrequencyEndDate ?? undefined,
     };
     try {
       await updateEventMutation.mutateAsync({ id, event: payload });

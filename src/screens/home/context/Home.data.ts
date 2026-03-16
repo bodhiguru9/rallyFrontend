@@ -1,4 +1,5 @@
 import type { Event, Organiser, DateFilter } from '../Home.types';
+import { toLocalDateString } from '@utils/date-utils';
 
 export const getDummyOrganisers = (): Organiser[] => [
   {
@@ -269,7 +270,7 @@ export const getDateFilters = (): DateFilter[] => {
       day: date.toLocaleDateString('en-US', { weekday: 'short' }),
       month: date.toLocaleDateString('en-US', { month: 'short' }),
       isSelected: false,
-      fullDate: date.toISOString(),
+      fullDate: toLocalDateString(date),
     });
   }
 
