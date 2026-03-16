@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextDs,  FlexView } from '@components';
+import { TextDs, FlexView } from '@components';
 import { ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
@@ -70,7 +70,6 @@ export const PreferencesScreen: React.FC = () => {
       </FlexView>
 
       {/* Drag Handle */}
-      <FlexView style={styles.dragHandle} />
 
       <ScrollView
         style={styles.scrollView}

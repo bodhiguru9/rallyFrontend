@@ -39,6 +39,8 @@ export interface UseEventOptions {
   forPlayer?: boolean;
   /** When true, bypasses the private event check even if forPlayer is true. Used when a player has an invitation. */
   allowPrivate?: boolean;
+  /** From useQuery options */
+  enabled?: boolean;
 }
 
 /**
@@ -47,7 +49,7 @@ export interface UseEventOptions {
  * When forPlayer is true, private events are not shown (throws so UI shows not found).
  */
 export const useEvent = (id: string, options?: UseEventOptions) => {
-  const { forPlayer = false, allowPrivate = false } = options ?? {};
+  const { forPlayer = false, allowPrivate = false, enabled } = options ?? {};
   return useQuery({
     queryKey: ['event', id, forPlayer, allowPrivate],
     queryFn: async () => {
@@ -87,7 +89,7 @@ export const useEvent = (id: string, options?: UseEventOptions) => {
 
       return normalized;
     },
-    enabled: !!id, // Only run query if id is provided
+    enabled: (enabled !== undefined ? enabled : true) && !!id, // Only run query if id is provided and enabled
   });
 };
 

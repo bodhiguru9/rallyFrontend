@@ -24,6 +24,8 @@ export interface CarouselProps<T> {
   renderItem: (info: CarouselRenderItemInfo<T>) => React.ReactElement | null;
   keyExtractor?: (item: T, index: number) => string;
   onIndexChange?: (index: number) => void;
+  autoPlay?: boolean;
+  autoPlayInterval?: number;
   containerStyle?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
   listProps?: Omit<

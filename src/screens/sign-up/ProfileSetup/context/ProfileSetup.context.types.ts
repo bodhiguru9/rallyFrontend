@@ -49,6 +49,10 @@ export interface IProfileSetupContextValue {
   setYourCity: (value: string) => void;
   additionalSports: string[];
   setAdditionalSports: (value: string[]) => void;
+  additionalSportText: string;
+  setAdditionalSportText: (value: string) => void;
+  showAdditionalSport: boolean;
+  setShowAdditionalSport: (value: boolean) => void;
   bio: string;
   setBio: (value: string) => void;
   instagramLink: string;

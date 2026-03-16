@@ -10,6 +10,7 @@ export interface Participant {
   sport1?: string;
   sport2?: string;
   joinedAt?: string;
+  guestsCount?: number;
 }
 
 export interface MembersModalProps {

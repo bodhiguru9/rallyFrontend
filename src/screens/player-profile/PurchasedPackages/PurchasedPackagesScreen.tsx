@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { TextDs,  FlexView } from '@components';
+import { TextDs, FlexView } from '@components';
 import { ScrollView, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -64,8 +64,6 @@ export const PurchasedPackagesScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Drag Handle */}
-      <FlexView style={styles.dragHandle} />
 
       {/* Header */}
       <FlexView style={styles.header}>

@@ -22,11 +22,14 @@ export const Carousel = <T,>({
   renderItem,
   keyExtractor,
   onIndexChange,
+  autoPlay = false,
+  autoPlayInterval = 3000,
   containerStyle,
   contentContainerStyle,
   listProps,
 }: CarouselProps<T>) => {
   const listRef = useRef<FlatList<T>>(null);
+  const [internalIndex, setInternalIndex] = React.useState(0);
   const scrollX = useMemo(() => new Animated.Value(0), []);
   const lastReportedIndexRef = useRef(0);
 
@@ -49,6 +52,7 @@ export const Carousel = <T,>({
       const index = clamp(Math.round(x / snapInterval), 0, maxIndex);
       if (index !== lastReportedIndexRef.current) {
         lastReportedIndexRef.current = index;
+        setInternalIndex(index);
         onIndexChange?.(index);
       }
     },
@@ -61,8 +65,21 @@ export const Carousel = <T,>({
     }
     scrollX.setValue(resolvedInitialIndex * snapInterval);
     lastReportedIndexRef.current = resolvedInitialIndex;
+    setInternalIndex(resolvedInitialIndex);
     onIndexChange?.(resolvedInitialIndex);
   }, [data.length, resolvedInitialIndex, snapInterval, scrollX, onIndexChange]);
+
+  React.useEffect(() => {
+    if (!autoPlay || data.length <= 1) return;
+
+    const interval = setInterval(() => {
+      const nextIndex = (internalIndex + 1) % data.length;
+      listRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+      setInternalIndex(nextIndex);
+    }, autoPlayInterval);
+
+    return () => clearInterval(interval);
+  }, [autoPlay, autoPlayInterval, data.length, internalIndex]);
 
   const renderCarouselItem = useCallback(
     (info: ListRenderItemInfo<T>) => {

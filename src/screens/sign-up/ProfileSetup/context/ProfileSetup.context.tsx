@@ -57,6 +57,10 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
   const setYourCity = store.setYourCity;
   const additionalSports = store.additionalSports;
   const setAdditionalSports = store.setAdditionalSports;
+  const additionalSportText = store.additionalSportText;
+  const setAdditionalSportText = store.setAdditionalSportText;
+  const showAdditionalSport = store.showAdditionalSport;
+  const setShowAdditionalSport = store.setShowAdditionalSport;
   const bio = store.bio;
   const setBio = store.setBio;
   const instagramLink = store.instagramLink;
@@ -203,6 +207,10 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
         additionalSports.forEach((sport) => {
           formData.append('sports', sport);
         });
+      }
+
+      if (showAdditionalSport && additionalSportText.trim()) {
+        formData.append('sports', additionalSportText.trim());
       }
 
       formData.append('bio', bio.trim());
@@ -388,6 +396,10 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
     setYourCity,
     additionalSports,
     setAdditionalSports,
+    additionalSportText,
+    setAdditionalSportText,
+    showAdditionalSport,
+    setShowAdditionalSport,
     bio,
     setBio,
     instagramLink,

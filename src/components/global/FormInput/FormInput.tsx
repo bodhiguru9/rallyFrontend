@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   inputContainerGlass: {
-    backgroundColor: "#FFFDEF80",
+    backgroundColor: colors.glass.background.white,
     borderWidth: 1,
     paddingHorizontal: spacing.md,
     borderColor: colors.border.white,
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   input: {
-    ...getFontStyle(16, 'regular'),
+    ...getFontStyle(12, 'regular'),
     color: colors.text.primary,
     flex: 1,
     paddingRight: spacing.xl, // Add padding for eye icon

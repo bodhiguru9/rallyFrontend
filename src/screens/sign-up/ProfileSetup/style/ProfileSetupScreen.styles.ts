@@ -83,8 +83,8 @@ export const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   rolePill: {
-    flex: 1,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
     backgroundColor: colors.glass.background.white,
     borderWidth: 1,
@@ -95,5 +95,24 @@ export const styles = StyleSheet.create({
   rolePillActive: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  addSportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#7fa1baff',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    gap: spacing.xs,
+  },
+  addSportButtonText: {
+    ...getFontStyle(12, 'medium'),
+    color: colors.text.white,
   },
 });

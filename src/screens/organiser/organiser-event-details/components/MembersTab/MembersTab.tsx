@@ -16,7 +16,7 @@ import { usePendingRequestMutations } from './use-pending-request-mutations';
 import { eventService } from '@services/event-service';
 import { privateEventsService } from '@services/private-events-service';
 import { shareEventWithPlayers } from '@utils/share-utils';
-import { formatDate, formatBookingSlot } from '@utils/date-utils';
+import { formatDate, formatBookingSlot, calculateSpotsFilled } from '@utils';
 import { apiClient } from '@services/api/api-client';
 
 type MembersView = 'joined' | 'waitlisted' | 'requests';
@@ -55,7 +55,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
     return ps === 'pending' || ps.includes('pending');
   };
   const participants = allParticipants.filter((p) => !hasExplicitPaymentPending(p));
-  const spotsBooked = event.spotsInfo?.spotsBooked ?? participants.length;
+  const spotsBooked = calculateSpotsFilled(event);
   const totalSpots = event.spotsInfo?.totalSpots || event.eventMaxGuest || 0;
   const spotsAvailable = totalSpots - spotsBooked;
 

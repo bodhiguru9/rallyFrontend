@@ -76,6 +76,8 @@ export const styles = StyleSheet.create({
   categoriesContainer: {
     flexDirection: 'row',
     gap: spacing.sm,
+    overflow: 'hidden',
+    flexWrap: 'wrap',
   },
   categoryBadge: {
     paddingHorizontal: spacing.sm,
@@ -160,21 +162,21 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   doneButton: {
-  backgroundColor: colors.primary,
-  borderRadius: borderRadius.full,
-  paddingVertical: spacing.sm,
-  paddingHorizontal: spacing.xl,
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '100%',
-},
-doneButtonText: {
-  ...getFontStyle(16, 'semibold', 'primary'), // Changed from 'bold' to 'semibold'
-  color: colors.text.white,
-},
-footer: {
-  paddingHorizontal: spacing.base,
-  paddingBottom: spacing.xl,
-  paddingTop: spacing.md,
-},
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.full,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  doneButtonText: {
+    ...getFontStyle(16, 'semibold', 'primary'), // Changed from 'bold' to 'semibold'
+    color: colors.text.white,
+  },
+  footer: {
+    paddingHorizontal: spacing.base,
+    paddingBottom: spacing.xl,
+    paddingTop: spacing.md,
+  },
 });

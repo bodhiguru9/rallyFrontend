@@ -10,3 +10,4 @@ export * from './storage-recovery';
 export * from './user-utils';
 export * from './normalize-event-join-flags';
 export * from './debounce';
+export * from './event-utils';

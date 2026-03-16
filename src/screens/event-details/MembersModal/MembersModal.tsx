@@ -88,7 +88,10 @@ export const MembersModal: React.FC<MembersModalProps> = ({
                     />
                   </FlexView>
                   <TextDs style={styles.participantName} numberOfLines={2}>
-                    {item.fullName}
+                    {item.fullName}{(() => {
+                      const gCount = item.guestsCount ?? (item as any).guestCount ?? (item as any).guest_count ?? 0;
+                      return gCount > 0 ? ` (+${gCount})` : '';
+                    })()}
                   </TextDs>
                 </FlexView>
               ))}

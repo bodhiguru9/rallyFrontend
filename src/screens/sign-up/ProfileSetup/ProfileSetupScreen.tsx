@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Info } from 'lucide-react-native';
+import { Info, Plus } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { borderRadius, colors, spacing } from '@theme';
@@ -65,8 +65,6 @@ const ProfileSetupScreenContent: React.FC = () => {
     setCommunityName,
     yourCity,
     setYourCity,
-    additionalSports,
-    setAdditionalSports,
     bio,
     setBio,
     instagramLink,
@@ -78,6 +76,10 @@ const ProfileSetupScreenContent: React.FC = () => {
     setPrimarySport,
     secondarySport,
     setSecondarySport,
+    showAdditionalSport,
+    setShowAdditionalSport,
+    additionalSportText,
+    setAdditionalSportText,
     avatar,
     isLoading,
     handleCompleteSignUp,
@@ -90,18 +92,17 @@ const ProfileSetupScreenContent: React.FC = () => {
   // Sport value → ImageKey string lookup for dropdown icons
   // Using "yellow" variants since the dropdown has a light background
   const sportIconLookup: Record<string, string> = {
-    'tennis': 'tennisIcon',
-    'badminton': 'badmintonIcon',
-    'basketball': 'basketballIcon',
-    'padel': 'padelIcon',
-    'football': 'footballIcon',
-    'cricket': 'cricketIcon',
-    'indoor-cricket': 'indoorCricketIcon',
-    'pilates': 'pilatesIcon',
-    'running': 'runningIcon',
-    'table-tennis': 'tableTennisIcon',
-    'pickleball': 'pickleballIcon',
-    'volleyball': 'basketballIcon',
+    'tennis': 'tennisYellow',
+    'badminton': 'badmintonYellow',
+    'basketball': 'basketballYellow',
+    'padel': 'padelYellow',
+    'football': 'footballYellow',
+    'cricket': 'cricketYellow',
+    'indoor-cricket': 'indoorCricketYellow',
+    'pilates': 'pilatesYellow',
+    'running': 'runningYellow',
+    'table-tennis': 'tableTennisYellow',
+    'pickleball': 'pickleballYellow'
   };
 
   // Transform API sports data to Dropdown option format
@@ -111,7 +112,7 @@ const ProfileSetupScreenContent: React.FC = () => {
     const PRIMARY_SPORTS = [
       'Padel', 'Badminton', 'Cricket', 'Indoor Cricket', 'Pickleball',
       'Tennis', 'Football', 'Table-tennis', 'Pilates', 'Basketball',
-      'Running', 'Volleyball'
+      'Running'
     ];
 
     const backendSports = filterOptions?.sports || [];
@@ -132,7 +133,7 @@ const ProfileSetupScreenContent: React.FC = () => {
       return {
         label: sport,
         value: sportValue,
-        icon: iconKey ? (images[iconKey as keyof typeof images] || images.basketballIcon) : images.basketballIcon,
+        icon: iconKey || 'basketballIcon',
       };
     }).sort((a, b) => {
       const indexA = PRIMARY_SPORTS.indexOf(a.label);
@@ -178,15 +179,6 @@ const ProfileSetupScreenContent: React.FC = () => {
         ? dynamicSportOptions.filter((opt) => opt.value !== primarySport)
         : dynamicSportOptions,
     [dynamicSportOptions, primarySport]
-  );
-
-  // Additional sports options: exclude primary and secondary so they are not duplicated
-  const additionalSportOptions = React.useMemo(
-    () =>
-      dynamicSportOptions.filter(
-        (opt) => opt.value !== primarySport && opt.value !== secondarySport
-      ),
-    [dynamicSportOptions, primarySport, secondarySport]
   );
 
   const getInitials = (name: string): string => {
@@ -431,7 +423,7 @@ const ProfileSetupScreenContent: React.FC = () => {
                             activeOpacity={0.7}
                           >
                             <TextDs
-                              size={14}
+                              size={12}
                               weight="medium"
                               color={yourBest === (role === 'Coach' ? 'coach' : role === 'Club' ? 'club' : 'Organiser') ? 'white' : 'tertiary'}
                             >
@@ -485,37 +477,47 @@ const ProfileSetupScreenContent: React.FC = () => {
                 {organiserStep === 2 && (
                   <>
                     {/* Primary Sport and Secondary Sport */}
-                    <FlexView style={styles.row}>
-                      <FlexView style={styles.halfWidth}>
+                    <FlexView gap={spacing.base}>
+                      <FlexView>
+                        <FlexView style={styles.labelRow}>
+                          <TextDs size={14} weight="semibold">Sport 1</TextDs>
+                          {!showAdditionalSport && (
+                            <TouchableOpacity
+                              style={styles.addSportButton}
+                              onPress={() => setShowAdditionalSport(true)}
+                              activeOpacity={0.7}
+                            >
+                              <Plus size={14} color={colors.text.white} />
+                              <TextDs style={styles.addSportButtonText}>Add Sport</TextDs>
+                            </TouchableOpacity>
+                          )}
+                        </FlexView>
                         <Dropdown
-                          label="Sport 1"
                           placeholder="Select Sport"
                           options={primarySportOptions}
                           value={primarySport}
                           onSelect={setPrimarySport}
                         />
                       </FlexView>
-                      <FlexView style={styles.halfWidth}>
-                        <Dropdown
-                          label="Sport 2"
-                          placeholder="Select Sport"
-                          options={secondarySportOptions}
-                          value={secondarySport}
-                          onSelect={setSecondarySport}
-                        />
-                      </FlexView>
+
+                      <Dropdown
+                        label="Sport 2"
+                        placeholder="Select Sport"
+                        options={secondarySportOptions}
+                        value={secondarySport}
+                        onSelect={setSecondarySport}
+                      />
                     </FlexView>
 
-                    {/* Additional Sports (Optional) */}
-                    <Dropdown
-                      label="Additional Sports (Optional)"
-                      placeholder="Select additional sports"
-                      options={additionalSportOptions}
-                      value={additionalSports}
-                      onSelect={setAdditionalSports}
-                      multiSelect
-                      maxSelections={5}
-                    />
+                    {/* Additional Sport Text Field (shown when "Add Sport" is clicked) */}
+                    {showAdditionalSport && (
+                      <FormInput
+                        label="Additional Sport"
+                        placeholder="Enter another sport (e.g. Golf)"
+                        value={additionalSportText}
+                        onChangeText={setAdditionalSportText}
+                      />
+                    )}
 
                     {/* Bio */}
                     <TextArea

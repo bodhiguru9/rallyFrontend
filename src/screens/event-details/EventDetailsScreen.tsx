@@ -13,7 +13,7 @@ import { Dropdown } from '@designSystem/molecules/dropdown';
 import { IconTag } from '@components/global/IconTag';
 import { images } from '@assets/images';
 import { Calendar1, Users, ChevronUp } from 'lucide-react-native';
-import { formatDate } from '@utils';
+import { formatDate, calculateSpotsFilled } from '@utils';
 import { resolveImageUri } from '@utils/image-utils';
 import { YellowBanner, EventDetailsMap } from './components';
 import { Card } from '@components/global/Card';
@@ -36,6 +36,8 @@ export const EventDetailsScreen: React.FC = () => {
     event,
     isLoading,
     isAuthenticated,
+    user,
+    isOrganiser,
     guestsCount,
     setGuestsCount,
     isMembersModalVisible,
@@ -62,12 +64,12 @@ export const EventDetailsScreen: React.FC = () => {
     cancelBookingId,
     cancelVariant,
     eventId,
-    isOrganiser,
     pendingInvitation,
     acceptInvitationMutation,
     declineInvitationMutation,
     isBookingEvent,
     isLeavingEvent,
+    isRegistrationEnded,
   } = useEventDetails();
 
 
@@ -191,7 +193,7 @@ export const EventDetailsScreen: React.FC = () => {
                   options={
                     event.spotsInfo?.spotsLeft && event.spotsInfo.spotsLeft > 0
                       ? Array.from({ length: Math.min(event.spotsInfo.spotsLeft, event.eventMaxGuest || 1) }, (_, i) => ({
-                        label: `${i + 1} ${i + 1 === 1 ? 'Guest' : 'Guests'}`,
+                        label: `${i + 1} ${i + 1 === 1 ? 'Person' : 'People'}`,
                         value: String(i + 1),
                       }))
                       : []
@@ -202,16 +204,15 @@ export const EventDetailsScreen: React.FC = () => {
                   containerStyle={{ marginBottom: spacing.sm, width: 140 }}
                 />
               ) : (
-                <TextDs style={[styles.guestsCount, { textAlign: 'left', marginHorizontal: 0, marginBottom: spacing.sm }]}>
+                <TextDs style={[styles.guestsCount, { textAlign: 'left', marginHorizontal: 0, marginBottom: spacing.sm, flex: 1 }]}>
                   {guestsCount > 1 ? `1 Member & ${guestsCount - 1} ${guestsCount - 1 === 1 ? 'Guest' : 'Guests'}` : '1 Member'}
                 </TextDs>
               )}
             <FlexView style={styles.spotsAndParticipants}>
               <TouchableOpacity onPress={handleOpenMembersModal} activeOpacity={0.7} style={{ marginRight: spacing.sm }}>
-                <TextDs style={styles.spotsAvailable}>
-                  {event.availableSpots !== undefined && event.availableSpots > 0
-                    ? 'Spots Available'
-                    : 'Waiting List'}
+                <TextDs style={styles.spotsAvailable}>{event.availableSpots !== undefined && event.availableSpots > 0
+                  ? 'Spots Available'
+                  : 'Waiting List'}
                 </TextDs>
               </TouchableOpacity>
               <ParticipantProfiles
@@ -280,12 +281,12 @@ export const EventDetailsScreen: React.FC = () => {
               <FlexView style={styles.organizerStats}>
                 <IconTag
                   title={`${event.creator?.eventsCreated || 0} Hosted`}
-                  icon={Calendar1}
+                  icon='calendarHosted'
                   variant="purple"
                 />
                 <IconTag
                   title={`${event.creator?.totalAttendees || 0} Attendees`}
-                  icon={Users}
+                  icon='multipleUser'
                   variant="yellow"
                 />
               </FlexView>
@@ -302,15 +303,15 @@ export const EventDetailsScreen: React.FC = () => {
 
             {/* 1. THE TOTAL ROW: Only show this in the 'Book Now' flow AND only when modal is hidden and not pending invitation */}
             {(!event?.isJoined && event?.userJoinStatus?.action !== 'payment-pending' && !pendingInvitation) && !isBookingModalVisible && (
-              <FlexView style={[styles.card, { marginBottom: spacing.base }]}>
+              <FlexView style={[styles.card, { marginBottom: spacing.base, opacity: isRegistrationEnded ? 0.6 : 1 }]}>
                 <TouchableOpacity
                   activeOpacity={0.7}
                   onPress={!isAuthenticated ? handleSignIn : handleBookNow}
-                  disabled={isBookingEvent || event?.isPending}
+                  disabled={isBookingEvent || event?.isPending || isRegistrationEnded}
                 >
                   <FlexView flexDirection="row" alignItems="center" justifyContent="space-between" style={{ marginBottom: spacing.md }}>
                     <TextDs style={[styles.cardTitle, { marginBottom: 0 }]}>Payment Details</TextDs>
-                    <ChevronUp size={20} color="#000" />
+                    {!isRegistrationEnded && <ChevronUp size={20} color="#000" />}
                   </FlexView>
                 </TouchableOpacity>
                 <FlexView style={styles.footerTotalRow}>
@@ -371,9 +372,9 @@ export const EventDetailsScreen: React.FC = () => {
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
-                  style={[styles.bookButton, (isBookingEvent || event?.isPending) && styles.bookButtonDisabled]}
+                  style={[styles.bookButton, (isBookingEvent || event?.isPending || isRegistrationEnded) && styles.bookButtonDisabled]}
                   onPress={handleBookNow}
-                  disabled={isBookingEvent || event?.isPending}
+                  disabled={isBookingEvent || event?.isPending || isRegistrationEnded}
                 >
                   <TextDs style={styles.bookButtonText}>{buttonText}</TextDs>
                 </TouchableOpacity>
@@ -391,22 +392,32 @@ export const EventDetailsScreen: React.FC = () => {
             eventTitle={event.eventName ?? 'Event'}
             organizerName={event.creator?.fullName || event.eventCreatorName || 'Unknown Organizer'}
             participants={
-              event.participants?.map((p) => ({
-                userId: p.userId,
-                userType: p.userType || 'player',
-                email: p.email || '',
-                mobileNumber: p.mobileNumber || '',
-                profilePic: p.profilePic,
-                fullName: p.fullName,
-                dob: p.dob,
-                gender: p.gender,
-                sport1: p.sport1,
-                sport2: p.sport2,
-                joinedAt: p.joinedAt,
-              })) || []
+              event.participants?.map((p) => {
+                const rawGuestCount = (p as any).guestCount ?? (p as any).guest_count ?? 0;
+                // If it's the current user, we can also fallback to the state guestsCount if available
+                const finalGuestCount = p.userId === user?.userId
+                  ? Math.max(rawGuestCount, Math.max(0, guestsCount - 1))
+                  : rawGuestCount;
+
+                return {
+                  ...p,
+                  userId: p.userId,
+                  userType: p.userType || 'player',
+                  email: p.email || '',
+                  mobileNumber: p.mobileNumber || '',
+                  profilePic: p.profilePic,
+                  fullName: p.fullName,
+                  dob: p.dob,
+                  gender: p.gender,
+                  sport1: p.sport1,
+                  sport2: p.sport2,
+                  joinedAt: p.joinedAt,
+                  guestsCount: finalGuestCount,
+                };
+              }) || []
             }
-            spotsFilled={event.spotsInfo?.spotsBooked || 0}
-            totalSpots={event.spotsInfo?.totalSpots || 0}
+            spotsFilled={calculateSpotsFilled(event, user?.userId, guestsCount)}
+            totalSpots={event.eventMaxGuest ?? event.spotsInfo?.totalSpots ?? 0}
             onClose={handleCloseMembersModal}
           />
         )

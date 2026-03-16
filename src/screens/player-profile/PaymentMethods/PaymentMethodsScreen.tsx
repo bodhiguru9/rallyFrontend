@@ -164,7 +164,6 @@ export const PaymentMethodsScreen: React.FC = () => {
       </FlexView>
 
       {/* Drag Handle */}
-      <FlexView style={styles.dragHandle} />
 
       <ScrollView
         style={styles.scrollView}

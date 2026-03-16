@@ -155,6 +155,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.sm,
+    flexWrap: 'wrap',
+    gap: spacing.sm,
   },
   guestsSelector: {
     flexDirection: 'row',
@@ -179,8 +181,9 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    flex: 1,
+    // flex: 1, // Remove flex: 1 to allow wrapping
     justifyContent: 'flex-end',
+    minWidth: 150, // Ensure it has some base space
   },
   spotsAvailable: {
     ...getFontStyle(12, 'medium'),

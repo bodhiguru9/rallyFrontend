@@ -3,7 +3,10 @@ import { Image, StyleSheet } from 'react-native';
 import { images, type ImageKey } from '@assets/images';
 import type { ImageDsProps, ImageFit } from './ImageDs.types';
 
-function toImageKey(name: string): ImageKey {
+function toImageKey(name: any): ImageKey {
+  if (typeof name !== 'string' || !name) {
+    return name as ImageKey;
+  }
   const camel = name.charAt(0).toLowerCase() + name.slice(1);
   if (camel in images) {
     return camel as ImageKey;
