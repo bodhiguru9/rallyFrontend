@@ -245,7 +245,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       }
 
       // Step 1: Create booking and get Stripe Payment Intent
-      logger.info('Creating booking for event:', eventId, 'guests:', guestsCount);
+      logger.info(`Creating booking for event: ${eventId}, guests: ${guestsCount}`);
       const bookingResponse = await paymentService.createBookingWithPayment(
         eventId,
         appliedPromoCode || (promoCode.trim() || null),
@@ -560,7 +560,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
             </TextDs>
 
             {/* Apple Pay stays at the bottom of the scroll or below */}
-            {onApplePay && (
+            {onApplePay && Platform.OS === 'ios' && (
               <TouchableOpacity style={styles.applePayButton} onPress={onApplePay}>
                 <TextDs style={styles.applePayButtonText}>Pay with Apple Pay</TextDs>
               </TouchableOpacity>

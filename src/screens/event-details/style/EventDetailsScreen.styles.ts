@@ -8,7 +8,7 @@ export const styles = StyleSheet.create({
   },
   persistentFooter: {
     // Remove position: 'absolute', bottom: 0, etc.
-    backgroundColor: '#FFFDEF80', // Matches the modal background
+    backgroundColor: 'white', // Matches the modal background
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     // Shadow to give it that "elevated" look from the image
@@ -23,9 +23,8 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingBottom: spacing.sm,
-    marginBottom: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0', // Very light divider
+    // marginBottom: spacing.sm,
+    // Very light divider
   },
   loadingContainer: {
     flex: 1,

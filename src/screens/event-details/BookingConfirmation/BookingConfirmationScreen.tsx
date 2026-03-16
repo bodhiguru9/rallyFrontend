@@ -10,7 +10,7 @@ import {
   TBookingConfirmationScreenNavigationProp,
 } from './BookingConfirmation.types';
 import { useEvent } from '@hooks/use-events';
-import { formatDate, shareEvent } from '@utils';
+import { formatDate, shareEvent, resolveImageUri } from '@utils';
 import { CalendarPlus, Check } from 'lucide-react-native';
 import { IconTag } from '@components/global/IconTag';
 import { TextDs, FlexView, ImageDs } from '@components';
@@ -22,6 +22,13 @@ export const BookingConfirmationScreen: React.FC = () => {
 
   // Fetch event data from API
   const { data: event, isLoading } = useEvent(eventId);
+
+  const displayImage = React.useMemo(() => {
+    if (!event) return 'https://via.placeholder.com/400?text=Event';
+    const rawImage = event.eventImages?.[0] || (event as any).gameImages?.[0] || (event as any).eventImage;
+    const organizerImage = event.creator?.profilePic || (event as any).eventCreatorProfilePic;
+    return resolveImageUri(rawImage) || resolveImageUri(organizerImage) || 'https://via.placeholder.com/400?text=Event';
+  }, [event]);
 
   if (isLoading) {
     return (
@@ -87,7 +94,7 @@ export const BookingConfirmationScreen: React.FC = () => {
           <FlexView style={styles.eventOverview}>
             <Image
               source={{
-                uri: event.eventImages?.[0] || 'https://via.placeholder.com/150',
+                uri: displayImage,
               }}
               style={styles.eventImage}
             />
@@ -129,7 +136,7 @@ export const BookingConfirmationScreen: React.FC = () => {
               {currency === 'AED' ? (
                 <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
                   <ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />
-                  <TextDs size={14} weight="regular" color="#3D6F92">
+                  <TextDs size={14} weight="regular" color="blueGray">
                     {amountPaid.toFixed(2)}
                   </TextDs>
                 </FlexView>

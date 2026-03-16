@@ -26,9 +26,10 @@ export const styles = StyleSheet.create({
     color: colors.text.primary,
     textAlign: 'center',
     marginBottom: spacing.sm,
+    marginTop: spacing.lg,
   },
   subtitle: {
-    ...getFontStyle(16, 'regular'),
+    ...getFontStyle(14, 'regular'),
     color: colors.text.secondary,
     textAlign: 'center',
     marginBottom: spacing.xl,
@@ -94,7 +95,7 @@ export const styles = StyleSheet.create({
   },
   amountValue: {
     ...getFontStyle(20, 'bold'),
-    color: colors.text.primary,
+    color: colors.text.blueGray,
   },
   priceIcon: {
     marginRight: spacing.xs,
@@ -122,8 +123,8 @@ export const styles = StyleSheet.create({
     padding: spacing.xl,
     paddingBottom: spacing.base,
   },
-doneButton: {
-    backgroundColor: colors.primary, 
+  doneButton: {
+    backgroundColor: colors.primary,
     borderRadius: borderRadius.full, // Note: If you want it truly edge-to-edge, you might want to change this to 0
     paddingVertical: spacing.md, // Slightly increased vertical padding since we removed it from the text
     alignItems: 'center',

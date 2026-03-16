@@ -9,6 +9,7 @@ import { userService } from '@services/user-service';
 import { logger } from '@dev-tools/logger';
 import { useAuthStore } from '@store/auth-store';
 import { InstagramTag } from '@designSystem/molecules/instagram-tag';
+import { resolveImageUri } from '@utils/image-utils';
 import axios from 'axios';
 
 interface OrganiserProfileHeaderProps {
@@ -293,7 +294,7 @@ export const OrganiserProfileHeader: React.FC<OrganiserProfileHeaderProps> = ({
   return (
     <FlexView px={spacing.base} py={spacing.lg}>
       <FlexView flexDirection="row" alignItems="center" mb={spacing.md} gap={spacing.sm}>
-        <Image source={{ uri: profileImage }} style={styles.profileImage} resizeMode="cover" />
+        <Image source={{ uri: resolveImageUri(profileImage) }} style={styles.profileImage} resizeMode="cover" />
         <FlexView flex={1} justifyContent="center">
           <FlexView flexDirection="row" alignItems="center" mb={spacing.xs} gap={spacing.base}>
             <TextDs size={16} weight="bold">{name}</TextDs>

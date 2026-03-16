@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { StyleSheet, FlatList, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,8 +8,12 @@ import { colors, spacing } from '@theme';
 import { TextDs } from '@designSystem/atoms/TextDs';
 import { ArrowIcon } from '@components/global/ArrowIcon';
 import { EventCard } from '@components/global/EventCard';
-import { FlexView } from '@components';
+import { FlexView, Seperator } from '@components';
 import { usePlayerEvents } from '@hooks/use-events';
+import { FeaturedEventsSection } from '@components/private/home/player-home-content/sections/FeaturedEventsSection';
+import { PickedEventsSection } from '@components/private/home/player-home-content/sections/PickedEventsSection';
+import { useHome } from '../../home/context/Home.context';
+import { ScrollView } from 'react-native';
 import type { EventData } from '@app-types';
 
 type TagSearchScreenRouteProp = RouteProp<RootStackParamList, 'TagSearch'>;
@@ -22,40 +26,56 @@ export const TagSearchScreen: React.FC = () => {
     const route = useRoute<TagSearchScreenRouteProp>();
     const navigation = useNavigation<TagSearchScreenNavigationProp>();
     const { searchType, value } = route.params ?? { searchType: undefined, value: undefined };
-
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+    const params =
+        searchType === 'sport'
+            ? { eventSports: value }
+            : searchType === 'eventType'
+                ? { eventType: value }
+                : {};
     const { data, isLoading, isError } = usePlayerEvents();
     const allEvents = data?.events ?? [];
 
-    const events = useMemo(() => {
-        const searchValue = (value ?? '').trim();
-        if (!searchValue) return [];
+    const featuredEvents = useMemo(() => {
+        return allEvents.slice(0, 3);
+    }, [allEvents]);
 
-        const normalizedSearch = normalize(searchValue);
+    const {
+        sportsFilters: globalSportsFilters,
+        eventTypeFilters: globalEventTypeFilters,
+        locationFilters,
+        priceFilters,
+        dateFilters,
+        toggleSportsFilter,
+        toggleEventTypeFilter,
+        toggleLocationFilter,
+        togglePriceFilter,
+        selectDate: globalSelectDate,
+        loadMoreDates,
+        canLoadMore,
+        refetchEvents,
+    } = useHome();
 
-        let filtered: EventData[] = allEvents;
-        if (searchType === 'sport') {
-            filtered = allEvents.filter((e) =>
-                (e.eventSports ?? []).some((s) => normalize(s) === normalizedSearch || normalize(s).includes(normalizedSearch) || normalizedSearch.includes(normalize(s)))
-            );
-        } else if (searchType === 'eventType') {
-            filtered = allEvents.filter((e) => {
-                const type = String(e.eventType ?? '').trim();
-                return normalize(type) === normalizedSearch || normalize(type).includes(normalizedSearch) || normalizedSearch.includes(normalize(type));
-            });
-        } else {
-            // Fallback: try both sport and eventType
-            filtered = allEvents.filter((e) => {
-                const matchSport = (e.eventSports ?? []).some((s) => normalize(s) === normalizedSearch || normalize(s).includes(normalizedSearch) || normalizedSearch.includes(normalize(s)));
-                const type = String(e.eventType ?? '').trim();
-                const matchType = normalize(type) === normalizedSearch || normalize(type).includes(normalizedSearch) || normalizedSearch.includes(normalize(type));
-                return matchSport || matchType;
-            });
+    // Lock filters based on search tag
+    const lockedSportsFilters = useMemo(() => {
+        if (searchType === 'sport' && value) {
+            return globalSportsFilters.map(f => ({
+                ...f,
+                isActive: f.label.toLowerCase() === value.toLowerCase() || f.value.toLowerCase() === value.toLowerCase(),
+            }));
         }
+        return globalSportsFilters;
+    }, [globalSportsFilters, searchType, value]);
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return filtered.filter((event) => new Date(event.eventDateTime) >= today);
-    }, [allEvents, searchType, value]);
+    const lockedEventTypeFilters = useMemo(() => {
+        if (searchType === 'eventType' && value) {
+            return globalEventTypeFilters.map(f => ({
+                ...f,
+                isActive: f.label.toLowerCase() === value.toLowerCase() || f.value.toLowerCase() === value.toLowerCase(),
+            }));
+        }
+        return globalEventTypeFilters;
+    }, [globalEventTypeFilters, searchType, value]);
 
     const handleBack = () => navigation.goBack();
     const handleEventPress = (eventId: string) => {
@@ -71,7 +91,7 @@ export const TagSearchScreen: React.FC = () => {
         <SafeAreaView style={styles.container} edges={['top']}>
             <FlexView row alignItems="center" gap={12} style={styles.header}>
                 <ArrowIcon variant="left" onClick={handleBack} />
-                <FlexView row gap={8} alignItems="center">
+                <FlexView flex={1} row gap={8} alignItems="center" justifyContent="center" style={{ marginRight: 40 }}>
                     <TextDs size={20} color="blueGray" style={styles.hash}>
                         #
                     </TextDs>
@@ -89,24 +109,34 @@ export const TagSearchScreen: React.FC = () => {
                 <FlexView style={styles.centered}>
                     <TextDs style={styles.emptyText}>Error loading events</TextDs>
                 </FlexView>
-            ) : events.length === 0 ? (
-                <FlexView style={styles.centered}>
-                    <TextDs style={styles.emptyText}>No events found</TextDs>
-                </FlexView>
             ) : (
-                <FlatList
-                    data={events}
-                    keyExtractor={(item) => item.eventId}
-                    contentContainerStyle={styles.listContent}
-                    renderItem={({ item }) => (
-                        <EventCard
-                            id={item.eventId}
-                            event={item}
-                            onPress={handleEventPress}
+                <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+                    {featuredEvents.length > 0 && (
+                        <FeaturedEventsSection
+                            events={featuredEvents}
+                            onEventPress={handleEventPress}
                             onBookmark={handleBookmark}
                         />
                     )}
-                />
+
+                    <PickedEventsSection
+                        pickedEvents={allEvents}
+                        sportsFilters={lockedSportsFilters}
+                        eventTypeFilters={lockedEventTypeFilters}
+                        locationFilters={locationFilters}
+                        priceFilters={priceFilters}
+                        dateFilters={dateFilters}
+                        toggleSportsFilter={searchType === 'sport' ? () => { } : toggleSportsFilter}
+                        toggleEventTypeFilter={searchType === 'eventType' ? () => { } : toggleEventTypeFilter}
+                        toggleLocationFilter={toggleLocationFilter}
+                        togglePriceFilter={togglePriceFilter}
+                        selectDate={globalSelectDate}
+                        loadMoreDates={loadMoreDates}
+                        canLoadMore={canLoadMore}
+                        onEventPress={handleEventPress}
+                        onBookmark={handleBookmark}
+                    />
+                </ScrollView>
             )}
         </SafeAreaView>
     );
@@ -133,12 +163,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: spacing.base,
     },
+    emptyCentered: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: spacing.base,
+        marginTop: spacing.xl,
+    },
     emptyText: {
         color: colors.text.secondary,
         fontSize: 16,
     },
     listContent: {
-        padding: spacing.base,
         paddingBottom: spacing.xxl,
         gap: 12,
     },

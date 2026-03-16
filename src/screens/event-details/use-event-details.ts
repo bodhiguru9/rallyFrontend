@@ -44,11 +44,12 @@ export const useEventDetails = () => {
   
   // Check for ANY invitation (pending or accepted) — not just pending
   const myInvitation = invitesData?.invitations?.find(
-    (inv) => (inv.inviteId ?? inv.event.eventId) === eventId && (inv.status === 'pending' || inv.status === 'accepted')
+    (inv) => {
+      const match = (inv.inviteId ?? inv.event?.eventId) === eventId;
+      return match && (inv.status === 'pending' || inv.status === 'accepted');
+    }
   );
   const pendingInvitation = myInvitation?.status === 'pending' ? myInvitation : undefined;
-
-
 
   // Always allow private events — the backend handles access control.
   // The frontend should not block viewing private events for authenticated users.
@@ -56,8 +57,6 @@ export const useEventDetails = () => {
     forPlayer: true, 
     allowPrivate: true   // Backend is the source of truth for access control
   });
-
-
 
   const { data: playerBookingsData } = usePlayerBookings({
     enabled: isAuthenticated && !!eventId,
@@ -95,13 +94,27 @@ export const useEventDetails = () => {
   }, [error, isLoading, isInvitesLoading, pendingInvitation, navigation]);
 
   // Reset guestsCount when event doesn't allow guests; cap to spotsLeft when event is full
+  // NEW: Also sync with actual booking if already joined
   useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-    if (event) {
-      // If guests are not allowed (eventOurGuestAllowed is false), set to 0
-      if (event.eventOurGuestAllowed === false && guestsCount !== 0) {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    
+    // Check if user is already joined and has a booking
+    const joinedBooking = playerBookingsData?.data?.bookings?.find(b => b.eventId === eventId);
+    if (joinedBooking && (joinedBooking as any).guestsCount !== undefined) {
+      if (guestsCount !== (joinedBooking as any).guestsCount) {
         timeoutId = setTimeout(() => {
-          setGuestsCount(0);
+          setGuestsCount((joinedBooking as any).guestsCount);
+        }, 0);
+        return () => { if (timeoutId) clearTimeout(timeoutId); };
+      }
+      return; // If already synced, don't run regular logic
+    }
+
+    if (event) {
+      // If guests are not allowed (eventOurGuestAllowed is false), set to 1 (for '1 Member' label)
+      if (event.eventOurGuestAllowed === false && guestsCount !== 1) {
+        timeoutId = setTimeout(() => {
+          setGuestsCount(1);
         }, 0);
       } else if (guestsCount === 0 && event.eventOurGuestAllowed === true) {
         // If guests are allowed and current count is 0, reset to 1
@@ -111,7 +124,7 @@ export const useEventDetails = () => {
       }
       // Cap guestsCount to available spots (enforce organiser limit)
       const spotsLeft = event.spotsInfo?.spotsLeft ?? event.availableSpots ?? (event.eventMaxGuest - (event.participantsCount ?? event.spotsInfo?.spotsBooked ?? 0));
-      if (spotsLeft >= 0 && guestsCount > spotsLeft) {
+      if (spotsLeft >= 0 && guestsCount > spotsLeft && !event.isJoined) { // Only cap if not already joined
         timeoutId = setTimeout(() => {
           setGuestsCount(Math.max(1, spotsLeft));
         }, 0);
@@ -123,7 +136,7 @@ export const useEventDetails = () => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event?.eventOurGuestAllowed, event?.eventId, event?.spotsInfo?.spotsLeft, event?.availableSpots, event?.eventMaxGuest, event?.participantsCount, guestsCount]);
+  }, [event?.eventOurGuestAllowed, event?.eventId, event?.spotsInfo?.spotsLeft, event?.availableSpots, event?.eventMaxGuest, event?.participantsCount, guestsCount, playerBookingsData]);
 
   // Check if registration is open by comparing current time with registration start time
   const isRegistrationOpen = (() => {

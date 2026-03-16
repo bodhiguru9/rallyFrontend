@@ -19,14 +19,8 @@ import type { EventStatusBadgeVariant } from '@components/global/event-status-ba
 import type { EventData } from '@app-types';
 import type { PlayerBooking } from '@services/booking-service';
 import { ENV } from '@config/env';
+import { resolveImageUri } from '@utils/image-utils';
 
-function resolveImageUri(uri: string | undefined | null): string | undefined {
-  if (!uri || typeof uri !== 'string' || !uri.trim()) return undefined;
-  const trimmed = uri.trim();
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
-  const base = ENV.API_BASE_URL.replace(/\/$/, '');
-  return trimmed.startsWith('/') ? `${base}${trimmed}` : `${base}/${trimmed}`;
-}
 
 function getStatusBadgeVariant(event: EventData | PlayerBooking): EventStatusBadgeVariant {
   const booking = 'booking' in event ? event.booking : undefined;
@@ -153,11 +147,10 @@ export const EventCard: React.FC<EventCardProps> = ({
   // };
 
   const eventTypeIconMap: Record<string, string> = {
-    social: 'socialIcon',
-    tournament: 'tournamentIcon',
-    training: 'trainingIcon',
-    class: 'classIcon',
-    group: 'socialIcon',
+    social: 'socialColor',
+    tournament: 'tournamentColor',
+    training: 'trainingColor',
+    class: 'classColor',
     private: 'privateIcon',
   };
 
@@ -311,10 +304,10 @@ export const EventCard: React.FC<EventCardProps> = ({
               <TextDs size={18} weight="semibold" color="blueGray">
                 {showRevenue
                   ? (() => {
-                      const spotsBooked = (event as EventData).spotsInfo?.spotsBooked ?? (event as PlayerBooking).eventTotalAttendNumber ?? 0;
-                      const pricePerGuest = typeof event.eventPricePerGuest === 'number' ? event.eventPricePerGuest : parseFloat(String(event.eventPricePerGuest ?? 0)) || 0;
-                      return Math.round(spotsBooked * pricePerGuest);
-                    })()
+                    const spotsBooked = (event as EventData).spotsInfo?.spotsBooked ?? (event as PlayerBooking).eventTotalAttendNumber ?? 0;
+                    const pricePerGuest = typeof event.eventPricePerGuest === 'number' ? event.eventPricePerGuest : parseFloat(String(event.eventPricePerGuest ?? 0)) || 0;
+                    return Math.round(spotsBooked * pricePerGuest);
+                  })()
                   : event.eventPricePerGuest}
               </TextDs>
             </FlexView>

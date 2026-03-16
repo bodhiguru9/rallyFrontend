@@ -10,7 +10,9 @@ import { Card } from '@components/global/Card';
 import { Subtitle, Title } from '@components/global';
 import { IconTag } from '@components/global/IconTag';
 import { colors, spacing } from '@theme';
-import { shareEvent } from '@utils/share-utils';
+import { formatDate, shareEvent } from '@utils';
+import { resolveImageUri } from '@utils/image-utils';
+import { images } from '@assets/images';
 import { styles } from './RequestSentScreen.styles';
 
 type RequestSentScreenProps = NativeStackScreenProps<RootStackParamList, 'RequestSent'>;
@@ -89,7 +91,14 @@ export const RequestSentScreen: React.FC = () => {
         <FlexView style={styles.eventCardWrapper}>
           <Card>
             <FlexView style={styles.eventHeader}>
-              <Image source={{ uri: eventImage }} style={styles.eventImage} />
+              <Image
+                source={
+                  resolveImageUri(eventImage)
+                    ? { uri: resolveImageUri(eventImage) }
+                    : images.blackLogo
+                }
+                style={styles.eventImage}
+              />
               <FlexView style={styles.eventInfo}>
                 <Title variant="cardTitle">{eventTitle}</Title>
                 <Subtitle variant="default">by {organizerName}</Subtitle>

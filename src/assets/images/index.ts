@@ -102,6 +102,11 @@ export const images = {
   footballYellow: require('./icons/footballYellow.png'),
 
 
+  // EventStatusBadge event Icons:
+  tournamentColor: require('./icons/tournament.png'),
+  classColor: require('./icons/class.png'),
+  trainingColor: require('./icons/training.png'),
+  socialColor: require('./icons/social.png'),
   // Illustrations and Empty States
   createEventEmptyScreen: require('./files/create-event-empty-screen.png'),
   imageImport: require('./files/image-import.png'),

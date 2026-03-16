@@ -7,6 +7,7 @@ import { TextDs } from '@designSystem/atoms/TextDs';
 import { IconTag } from '@components/global/IconTag';
 import { formatDate } from '@utils';
 import { ImageDs } from '@designSystem/atoms/image';
+import { resolveImageUri } from '@utils/image-utils';
 
 export const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
   id,
@@ -39,6 +40,13 @@ export const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
     };
   }, [relativeIndex]);
 
+  const displayImage = useMemo(() => {
+    const rawImage = event.eventImages?.[0] || (event as any).gameImages?.[0] || (event as any).eventImage;
+    const organizerImage = event.creator?.profilePic || (event as any).eventCreatorProfilePic;
+    
+    return resolveImageUri(rawImage) || resolveImageUri(organizerImage) || 'https://via.placeholder.com/400?text=Event';
+  }, [event]);
+
   return (
     <Animated.View
       style={[
@@ -54,7 +62,7 @@ export const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
         activeOpacity={0.9}
       >
         <Image
-          source={{ uri: event.eventImages[0] }}
+          source={{ uri: displayImage }}
           style={[styles.image, styles.imageBackground]}
           resizeMode="cover"
         />
