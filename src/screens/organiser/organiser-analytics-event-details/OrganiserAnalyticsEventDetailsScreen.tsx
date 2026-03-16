@@ -9,7 +9,7 @@ import { Card } from '@components/global/Card';
 import { FlexView, ImageDs, TextDs, Avatar } from '@components';
 import { useEvent } from '@hooks/use-events';
 import { colors, spacing } from '@theme';
-import { formatDate, shareEvent } from '@utils';
+import { formatDate, shareEvent, calculateSpotsFilled } from '@utils';
 import { Map } from 'lucide-react-native';
 import { styles } from './style/OrganiserAnalyticsEventDetailsScreen.styles';
 import { styles as eventStyles } from '@screens/event-details/style/EventDetailsScreen.styles';
@@ -192,7 +192,7 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
             <FlexView style={styles.statsRow}>
               <FlexView style={[styles.statCard, styles.statCardActive]}>
                 <TextDs size={14} weight="regular">
-                  {event.participantsCount ?? (event.participants?.length ?? 0)}
+                  {calculateSpotsFilled(event)}
                 </TextDs>
                 <TextDs size={14} weight="regular">
                   Joined
@@ -210,7 +210,7 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
 
             <FlexView style={styles.progressRow}>
               <TextDs size={14} weight="regular" color="secondary">
-                {event.participantsCount ?? (event.participants?.length ?? 0)}/{event.eventMaxGuest}
+                {calculateSpotsFilled(event)}/{event.eventMaxGuest}
               </TextDs>
               <TextDs size={14} weight="regular" color="secondary">
                 {event.spotsInfo?.spotsFull ? 'Waitlist Open' : 'Waitlist Closed'}
@@ -223,7 +223,7 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
                   {
                     width: `${event.eventMaxGuest
                       ? Math.min(
-                        ((event.participantsCount ?? (event.participants?.length ?? 0)) / event.eventMaxGuest) *
+                        (calculateSpotsFilled(event) / event.eventMaxGuest) *
                         100,
                         100,
                       )

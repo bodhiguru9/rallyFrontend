@@ -8,7 +8,7 @@ import { ImageDs } from '@designSystem/atoms/image';
 import { TextDs } from '@designSystem/atoms/TextDs';
 import { IconTag } from '@components/global/IconTag';
 import { EventStatusBadge } from '@components/global/event-status-badge';
-import { formatDate } from '@utils';
+import { formatDate, calculateSpotsFilled } from '@utils';
 import type { EventCardProps } from './EventCard.types';
 import { Card } from '../Card';
 import { Title } from '../Title';
@@ -387,11 +387,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             })) ?? []
           );
         })()}
-        spotsFilled={
-          (displayEvent as any).eventTotalAttendNumber ??
-          eventToDisplay.spotsInfo?.spotsBooked ??
-          0
-        }
+        spotsFilled={calculateSpotsFilled(eventToDisplay)}
         totalSpots={
           eventToDisplay.spotsInfo?.totalSpots ??
           (displayEvent as PlayerBooking).eventMaxGuest ??

@@ -13,7 +13,7 @@ import { Dropdown } from '@designSystem/molecules/dropdown';
 import { IconTag } from '@components/global/IconTag';
 import { images } from '@assets/images';
 import { Calendar1, Users, ChevronUp } from 'lucide-react-native';
-import { formatDate } from '@utils';
+import { formatDate, calculateSpotsFilled } from '@utils';
 import { resolveImageUri } from '@utils/image-utils';
 import { YellowBanner, EventDetailsMap } from './components';
 import { Card } from '@components/global/Card';
@@ -210,10 +210,9 @@ export const EventDetailsScreen: React.FC = () => {
               )}
             <FlexView style={styles.spotsAndParticipants}>
               <TouchableOpacity onPress={handleOpenMembersModal} activeOpacity={0.7} style={{ marginRight: spacing.sm }}>
-                <TextDs style={styles.spotsAvailable}>
-                  {event.availableSpots !== undefined && event.availableSpots > 0
-                    ? 'Spots Available'
-                    : 'Waiting List'}
+                <TextDs style={styles.spotsAvailable}>{event.availableSpots !== undefined && event.availableSpots > 0
+                  ? 'Spots Available'
+                  : 'Waiting List'}
                 </TextDs>
               </TouchableOpacity>
               <ParticipantProfiles
@@ -393,22 +392,31 @@ export const EventDetailsScreen: React.FC = () => {
             eventTitle={event.eventName ?? 'Event'}
             organizerName={event.creator?.fullName || event.eventCreatorName || 'Unknown Organizer'}
             participants={
-              event.participants?.map((p) => ({
-                userId: p.userId,
-                userType: p.userType || 'player',
-                email: p.email || '',
-                mobileNumber: p.mobileNumber || '',
-                profilePic: p.profilePic,
-                fullName: p.fullName,
-                dob: p.dob,
-                gender: p.gender,
-                sport1: p.sport1,
-                sport2: p.sport2,
-                joinedAt: p.joinedAt,
-                guestsCount: p.userId === user?.userId ? Math.max(0, guestsCount - 1) : undefined,
-              })) || []
+              event.participants?.map((p) => {
+                const rawGuestCount = (p as any).guestCount ?? (p as any).guest_count ?? 0;
+                // If it's the current user, we can also fallback to the state guestsCount if available
+                const finalGuestCount = p.userId === user?.userId
+                  ? Math.max(rawGuestCount, Math.max(0, guestsCount - 1))
+                  : rawGuestCount;
+
+                return {
+                  ...p,
+                  userId: p.userId,
+                  userType: p.userType || 'player',
+                  email: p.email || '',
+                  mobileNumber: p.mobileNumber || '',
+                  profilePic: p.profilePic,
+                  fullName: p.fullName,
+                  dob: p.dob,
+                  gender: p.gender,
+                  sport1: p.sport1,
+                  sport2: p.sport2,
+                  joinedAt: p.joinedAt,
+                  guestsCount: finalGuestCount,
+                };
+              }) || []
             }
-            spotsFilled={event.eventTotalAttendNumber ?? event.spotsInfo?.spotsBooked ?? 0}
+            spotsFilled={calculateSpotsFilled(event, user?.userId, guestsCount)}
             totalSpots={event.eventMaxGuest ?? event.spotsInfo?.totalSpots ?? 0}
             onClose={handleCloseMembersModal}
           />
