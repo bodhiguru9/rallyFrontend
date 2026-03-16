@@ -13,6 +13,7 @@ import { TextDs, FlexView, ImageDs } from '@components';
 import { Dropdown } from '@designSystem/molecules/dropdown';
 import { ImageUpload } from './components/ImageUpload';
 import { DateTimePickerModal } from './components/DateTimePickerModal';
+import { frequencyToFormValue } from './components/DateTimePickerModal/frequencyUtils';
 import { RegistrationDateTimeModal } from './components/RegistrationDateTimeModal';
 import { RestrictionsModal } from './components/RestrictionsModal';
 import { CompleteProfileModal } from './components/CompleteProfileModal';
@@ -636,15 +637,14 @@ export const CreateEventContent: React.FC = () => {
             onClose={() => setShowDateTimePicker(false)}
             onConfirm={(date, frequency) => {
               updateFormData('dateTime', date);
-
-              if (!frequency || frequency === 'never') {
+              if (!frequency) {
                 updateFormData('frequency', []);
               } else {
-                updateFormData('frequency', [frequency]);
+                updateFormData('frequency', frequencyToFormValue(frequency));
               }
             }}
             initialDate={formData.dateTime || undefined}
-            initialFrequency={formData.frequency?.[0]}
+            initialFrequency={formData.frequency}
           />
 
           {/* Registration Start & End Modal (two-step: start then end) */}

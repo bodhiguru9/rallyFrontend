@@ -12,7 +12,7 @@ const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
-const PICKER_MINUTES = [0, 10, 20, 30, 40, 50];
+const PICKER_MINUTES = [0, 15, 30, 45];
 
 const getStartOfDay = (d: Date): Date =>
   new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);

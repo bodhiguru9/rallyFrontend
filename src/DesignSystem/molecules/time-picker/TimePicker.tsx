@@ -9,7 +9,10 @@ const ITEM_HEIGHT = 40;
 // Generate values
 const hourValues12 = Array.from({ length: 12 }, (_, i) => i + 1); // 1-12
 const hourValues24 = Array.from({ length: 24 }, (_, i) => i); // 0-23
-const minuteValues = [0, 10, 20, 30, 40, 50]; // 10-minute intervals
+const minuteValuesByInterval: Record<15 | 10, number[]> = {
+  15: [0, 15, 30, 45],
+  10: [0, 10, 20, 30, 40, 50],
+};
 const periodValues: Array<'AM' | 'PM'> = ['AM', 'PM'];
 
 export const TimePicker: React.FC<TimePickerProps> = ({
@@ -18,7 +21,9 @@ export const TimePicker: React.FC<TimePickerProps> = ({
   containerStyle,
   disabled = false,
   use24Hour = false,
+  minuteInterval = 15,
 }) => {
+  const minuteValues = minuteValuesByInterval[minuteInterval];
   const hourScrollRef = useRef<ScrollView>(null);
   const minuteScrollRef = useRef<ScrollView>(null);
   const periodScrollRef = useRef<ScrollView>(null);
