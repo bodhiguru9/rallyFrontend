@@ -37,9 +37,9 @@ export const PackageCard: React.FC<PackageCardProps> = ({
     >
       <Card>
         <FlexView isFullWidth row justifyContent='space-between' mb={spacing.xs}>
-          <TextDs size={14} weight="regular">{title}</TextDs>
+          <TextDs size={12} weight="bold">{title}</TextDs>
           <FlexView px={spacing.sm} py={spacing.xs} rounded glassBg borderWhite>
-            <TextDs color='blueGray' size={14} weight="regular">Validity: {validity}</TextDs>
+            <TextDs color='blueGray' size={12} weight="regular">Validity: {validity}</TextDs>
           </FlexView>
         </FlexView>
 
@@ -54,20 +54,20 @@ export const PackageCard: React.FC<PackageCardProps> = ({
             <FlexView alignItems='flex-start' gap={spacing.xs} justifyContent='center'>
               {/* Optional: You may also want to change the label align to 'left' for consistency */}
               <TextDs align='left' size={10} weight="regular" color='secondary'>Event Type</TextDs>
-              <TextDs align='left' size={14} weight="bold">{eventType}</TextDs>
+              <TextDs align='left' size={12} weight="bold">{eventType}</TextDs>
             </FlexView>
 
             {/* Block 2: Changed alignItems to 'flex-start' */}
             <FlexView alignItems='flex-start' gap={spacing.xs} justifyContent='center'>
               <TextDs align='left' size={10} weight="regular" color='secondary'>No of Events</TextDs>
-              <TextDs align='left' size={14} weight="bold">{numberOfEvents}</TextDs>
+              <TextDs align='left' size={12} weight="bold">{numberOfEvents}</TextDs>
             </FlexView>
 
           </FlexView>
 
           <FlexView row alignItems='center' gap={spacing.sm}>
             <ImageDs image="DhiramIcon" size={12} />
-            <TextDs size={14} weight="regular" color="blueGray">
+            <TextDs size={16} weight="bold" color="blueGray">
               {price}
             </TextDs>
           </FlexView>
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: borderRadius.md,
     padding: spacing.md,
-    marginHorizontal: spacing.base,
+    // marginHorizontal: spacing.base,
     marginBottom: spacing.md,
   },
   header: {

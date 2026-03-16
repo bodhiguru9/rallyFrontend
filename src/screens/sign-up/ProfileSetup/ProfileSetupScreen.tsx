@@ -116,7 +116,7 @@ const ProfileSetupScreenContent: React.FC = () => {
 
     const backendSports = filterOptions?.sports || [];
     const combinedSports = [...PRIMARY_SPORTS];
-    
+
     backendSports.forEach(bs => {
       if (!combinedSports.some(cs => cs.toLowerCase() === bs.toLowerCase())) {
         combinedSports.push(bs);
@@ -128,7 +128,7 @@ const ProfileSetupScreenContent: React.FC = () => {
       // Normalize value for icon lookup
       const lookupKey = sportValue === 'table-tennis' ? 'table-tennis' : sportValue;
       const iconKey = sportIconLookup[lookupKey] || sportIconLookup[sport.toLowerCase()];
-      
+
       return {
         label: sport,
         value: sportValue,

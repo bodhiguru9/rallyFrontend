@@ -81,9 +81,9 @@ export const InstagramTag: React.FC<InstagramTagProps> = ({
       disabled={disabled}
     >
       {showIcon && (
-        <ImageDs image="InstaIcon" size={16} />
+        <ImageDs image="InstaIcon" size={10} />
       )}
-      <TextDs size={14} weight="regular">
+      <TextDs size={10} weight="regular">
         {displayUsername}
       </TextDs>
     </TouchableOpacity>
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.base,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     gap: spacing.xs,
     backgroundColor: "#FFFDEF80",

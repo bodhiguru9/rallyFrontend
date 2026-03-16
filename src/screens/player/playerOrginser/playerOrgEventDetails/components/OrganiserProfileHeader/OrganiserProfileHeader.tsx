@@ -292,13 +292,13 @@ export const OrganiserProfileHeader: React.FC<OrganiserProfileHeaderProps> = ({
   };
 
   return (
-    <FlexView px={spacing.base} py={spacing.lg}>
+    <FlexView px={spacing.md} py={spacing.lg}>
       <FlexView flexDirection="row" alignItems="center" mb={spacing.md} gap={spacing.sm}>
         <Image source={{ uri: resolveImageUri(profileImage) }} style={styles.profileImage} resizeMode="cover" />
         <FlexView flex={1} justifyContent="center">
-          <FlexView flexDirection="row" alignItems="center" mb={spacing.xs} gap={spacing.base}>
-            <TextDs size={16} weight="bold">{name}</TextDs>
-            {isVerified && <ImageDs image="VerifiedIcon" size={20} />}
+          <FlexView flexDirection="row" alignItems="center" mb={spacing.xs}>
+            <TextDs size={20} weight="bold">{name}</TextDs>
+            {isVerified && <ImageDs style={{ marginLeft: 4 }} image="VerifiedIcon" size={20} />}
           </FlexView>
           <FlexView flexDirection='row' alignItems='center' gap={spacing.sm}>
             {!hideCreatorName && (
@@ -314,22 +314,22 @@ export const OrganiserProfileHeader: React.FC<OrganiserProfileHeaderProps> = ({
 
           {/* Stats */}
           <FlexView
-            mt={spacing.lg}
+            mt={spacing.md}
             flexDirection="row"
             justifyContent="space-between"
             pr={spacing.base}
           >
             <FlexView alignItems="center" gap={spacing.xs / 2}>
-              <TextDs size={14} weight="bold">{hostedCount}</TextDs>
-              <TextDs size={14} weight="regular">Hosted</TextDs>
+              <TextDs size={16} weight="bold">{hostedCount}</TextDs>
+              <TextDs size={10} weight="regular">Hosted</TextDs>
             </FlexView>
             <FlexView alignItems="center" gap={spacing.xs / 2}>
-              <TextDs size={14} weight="bold">{formatCount(followersCount)}</TextDs>
-              <TextDs size={14} weight="regular">Attendees</TextDs>
+              <TextDs size={16} weight="bold">{formatCount(followersCount)}</TextDs>
+              <TextDs size={10} weight="regular">Attendees</TextDs>
             </FlexView>
             <FlexView alignItems="center" gap={spacing.xs / 2}>
-              <TextDs size={14} weight="bold">{formatCount(subscribersCount)}</TextDs>
-              <TextDs size={14} weight="regular">Subscribers</TextDs>
+              <TextDs size={16} weight="bold">{formatCount(subscribersCount)}</TextDs>
+              <TextDs size={10} weight="regular">Subscribers</TextDs>
             </FlexView>
           </FlexView>
         </FlexView>
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: borderRadius.full,
-    marginRight: spacing.md,
+    marginRight: spacing.sm,
     boxShadow: colors.boxShadow.midRaised,
   },
   subscribeButton: {

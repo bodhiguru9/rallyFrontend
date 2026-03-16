@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -22,7 +22,11 @@ import { PACKAGES } from './data/organiserEventDetails.data';
 import { colors, spacing, getFontStyle, borderRadius } from '@theme';
 import { logger } from '@dev-tools';
 import { userService } from '@services/user-service';
-import { useFilterOptions } from '@hooks';
+import {
+  useEvent,
+  useFilterOptions,
+  useOrganiserEventsByUserId,
+} from '@hooks/use-events';
 import { getDateFilters } from '@screens/home/context/Home.data';
 import { useHome } from '@screens/home/context/Home.context';
 
@@ -254,11 +258,11 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
   const [resolvedCommunityName, setResolvedCommunityName] = useState<string | undefined>(communityName);
   const organiserIdNum = useMemo(() => organiserId ? parseInt(organiserId.toString(), 10) : null, [organiserId]);
 
-  // First fetch user data by organiserId to get communityName if not provided
+  // Always fetch full user data by organiserId if available to get high-fidelity profile info (like instagramLink)
   const { data: userData, isLoading: isLoadingUser } = useQuery({
     queryKey: ['organiser-user', organiserId],
     queryFn: () => userService.getUserById(organiserId as string),
-    enabled: !!organiserId && !communityName,
+    enabled: !!organiserId,
     staleTime: 0, // Always fetch fresh data
   });
 
@@ -294,33 +298,76 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
 
   const organiserData = useMemo(() => {
     const org = communityDetailsResponse?.data?.organiser;
-    if (!org) { return null; }
+    const user = userData?.data?.user;
 
-    console.log('[PlayerOrgEventDetailsScreen] Organiser API Response:', {
-      org
-    });
+    if (!org && !user) { return null; }
 
     return {
-      name: org.communityName,
-      creatorName: org.fullName,
-      isVerified: org.isVerified || false,
-      profileImage: org.profilePic,
-      hostedCount: org.totalEventsHosted || 0,
-      followersCount: org.totalAttendees || 0,
-      subscribersCount: org.totalSubscribers || 0,
-      description: org.bio || '',
-      tags: org.sports || [],
-      userId: org.userId,
-      instagramLink: org.instagramLink, // ADD THIS LINE
+      name: org?.communityName || user?.communityName || '',
+      creatorName: org?.fullName || user?.fullName || '',
+      isVerified: org?.isVerified || user?.isMobileVerified || user?.isEmailVerified || false,
+      profileImage: org?.profilePic || user?.profilePic || '',
+      hostedCount: org?.totalEventsHosted || user?.eventsCreated || 0,
+      followersCount: org?.totalAttendees || user?.totalAttendees || 0,
+      subscribersCount: org?.totalSubscribers || user?.followingCount || 0,
+      description: org?.bio || user?.bio || '',
+      tags: org?.sports || user?.sports || [],
+      userId: org?.userId || user?.userId,
+      instagramLink: user?.instagramLink || org?.instagramLink || (org as any)?.instagram_link || (org as any)?.social_link,
     };
-  }, [communityDetailsResponse]);
+  }, [communityDetailsResponse, userData]);
+
+  const { data: organiserEventsResponse, isLoading: isEventsLoading } = useOrganiserEventsByUserId(
+    organiserIdNum,
+    !!organiserIdNum,
+  );
+
+
 
   const allEvents = useMemo(() => {
-    return (communityDetailsResponse?.data?.events || []).map(event => ({
-      ...event,
-      eventType: event.eventType, // Ensure eventType is explicitly mapped
-    })) as unknown as EventData[];
-  }, [communityDetailsResponse]);
+    const orgPic = communityDetailsResponse?.data?.organiser?.profilePic;
+    const orgName = communityDetailsResponse?.data?.organiser?.fullName;
+
+    return (organiserEventsResponse?.events || []).map(event => {
+      const e = event as any;
+
+      // Normalize price
+      const price = e.eventPricePerGuest ?? e.price ?? 0;
+
+      // Ensure eventType is string and lowercase
+      const eventType = String(e.eventType || '').toLowerCase();
+
+      // Normalize spots info
+      const participantsCount = e.participantsCount ?? e.eventTotalAttendNumber ?? 0;
+      const totalSpots = e.eventMaxGuest ?? 0;
+      const spotsLeft = Math.max(0, totalSpots - participantsCount);
+      const spotsFull = spotsLeft === 0;
+
+      return {
+        ...event,
+        id: e.eventId || e.id,
+        eventPricePerGuest: price,
+        eventType,
+        spotsInfo: e.spotsInfo || {
+          totalSpots,
+          spotsBooked: participantsCount,
+          spotsLeft,
+          spotsFull,
+        },
+        eventImages: (e.eventImages && e.eventImages.length > 0)
+          ? e.eventImages
+          : (e.eventImage ? [e.eventImage] : (e.gameImages && e.gameImages.length > 0 ? e.gameImages : [])),
+        // INJECT FALLBACKS FROM TOP-LEVEL ORG
+        eventCreatorProfilePic: e.eventCreatorProfilePic || e.creator?.profilePic || orgPic,
+        eventCreatorName: e.eventCreatorName || e.creator?.fullName || orgName,
+        creator: e.creator || (orgPic || orgName ? {
+          userId: organiserIdNum,
+          fullName: orgName || '',
+          profilePic: orgPic || null,
+        } : null),
+      } as unknown as EventData;
+    });
+  }, [organiserEventsResponse, communityDetailsResponse, organiserIdNum]);
 
   const selectedSportsValues = useMemo(
     () => sportsFilters.filter(f => f.isActive && f.id !== 'all-sports').map(f => f.value.toLowerCase()),
@@ -454,7 +501,7 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
       >
         <OrganiserProfileHeader
           {...organiserData}
-          organiserId={organiserData.userId.toString()}
+          organiserId={organiserData.userId!.toString()}
           isPrivateCommunity={isPrivateCommunity}
         />
 
@@ -462,19 +509,21 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
           <>
             {/* 1. TAB TOGGLE BUTTONS */}
             <FlexView style={styles.tabToggleWrapper}>
-              <TouchableOpacity
-                onPress={() => setActiveTab('events')}
-                style={[styles.tabBtn, activeTab === 'events' && styles.tabBtnActive]}
-              >
-                <TextDs style={[styles.tabBtnText, activeTab === 'events' && styles.tabBtnTextActive]}>Events</TextDs>
-              </TouchableOpacity>
+              <FlexView style={styles.pillContainer}>
+                <TouchableOpacity
+                  onPress={() => setActiveTab('events')}
+                  style={[styles.pillBtn, activeTab === 'events' && styles.pillBtnActive]}
+                >
+                  <TextDs style={[styles.pillBtnText, activeTab === 'events' && styles.pillBtnTextActive]}>Events</TextDs>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={() => setActiveTab('packages')}
-                style={[styles.tabBtn, activeTab === 'packages' && styles.tabBtnActive]}
-              >
-                <TextDs style={[styles.tabBtnText, activeTab === 'packages' && styles.tabBtnTextActive]}>Packages</TextDs>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setActiveTab('packages')}
+                  style={[styles.pillBtn, activeTab === 'packages' && styles.pillBtnActive]}
+                >
+                  <TextDs style={[styles.pillBtnText, activeTab === 'packages' && styles.pillBtnTextActive]}>Packages</TextDs>
+                </TouchableOpacity>
+              </FlexView>
             </FlexView>
 
             {/* 2. FILTER NAVIGATION (Reacts to Toggle) */}
@@ -534,30 +583,32 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   tabToggleWrapper: {
-    flexDirection: 'row',
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.md,
-    gap: spacing.sm,
-    zIndex: 10, // Ensure toggle is above list
+    zIndex: 10,
   },
-  tabBtn: {
+  pillContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.glass.background.white,
+    borderRadius: borderRadius.full,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: colors.border.white,
+  },
+  pillBtn: {
     flex: 1,
     paddingVertical: spacing.sm,
     alignItems: 'center',
     borderRadius: borderRadius.full,
-    backgroundColor: colors.glass.background.white,
-    borderWidth: 1,
-    borderColor: colors.border.white,
   },
-  tabBtnActive: {
+  pillBtnActive: {
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
-  tabBtnText: {
+  pillBtnText: {
     ...getFontStyle(14, 'medium'),
     color: colors.text.secondary,
   },
-  tabBtnTextActive: {
+  pillBtnTextActive: {
     color: colors.text.white,
   },
   contentZIndex: {

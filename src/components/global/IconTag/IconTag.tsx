@@ -122,6 +122,9 @@ const valueToVariantMap: Record<string, IconTagVariant> = {
   training: 'green',
   group: 'orange',
   private: 'gray',
+  competitive: 'purple',
+  competitivesocial: 'teal',
+  tournamentcompetitive: 'purple',
 };
 
 // Add your specific sport mapping here.
@@ -129,8 +132,7 @@ const valueToVariantMap: Record<string, IconTagVariant> = {
 const valueToIconMap: Record<string, string | LucideIcon> = {
   volleyball: 'volleyball',
   basketball: 'basketballYellow',
-  football: 'footballIcon',
-  soccer: 'footballIcon',
+  football: 'footballYellow',
   tennis: 'tennisYellow',
   running: 'sport-running',
   yoga: 'sport-yoga',
@@ -149,6 +151,9 @@ const valueToIconMap: Record<string, string | LucideIcon> = {
   training: 'trainingColor',
   group: 'groupIcon',
   private: 'privateIcon',
+  competitive: 'tournamentColor',
+  competitivesocial: 'socialColor',
+  tournamentcompetitive: 'tournamentColor',
 };
 
 const variantStyles: Record<IconTagVariant, { background: string; text: string; icon: string }> = {
@@ -199,6 +204,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.xxl,
+    borderWidth: 1,
+    borderColor: colors.border.white,
     gap: spacing.xs,
     alignSelf: 'flex-start',
     boxShadow: colors.glass.boxShadow.light,

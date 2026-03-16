@@ -151,19 +151,23 @@ export const EventCard: React.FC<EventCardProps> = ({
     tournament: 'tournamentColor',
     training: 'trainingColor',
     class: 'classColor',
+    competitive: 'tournamentColor',
+    'competitive-social': 'socialColor',
+    'tournament-competitive': 'tournamentColor',
     private: 'privateIcon',
   };
 
   const sportKey = (event.eventSports?.[0] ?? '').toString().toLowerCase().replace(/\s+/g, '');
   const eventTypeKey = String(event.eventType ?? '').toLowerCase().replace(/\s+/g, '');
 
-  const EventTypeIcon = (eventTypeIconMap[eventTypeKey] ?? 'socialIcon') as any;
+  const EventTypeIcon = (eventTypeIconMap[eventTypeKey] ?? 'socialColor') as any;
   // Get event image: eventImages, gameImages, eventImage (singular), then organizer profile
   const rawEventImage =
     event.eventImages?.[0] ??
     (event as EventData).gameImages?.[0] ??
     (event as any).eventImage;
   const organizerProfilePic = (event as EventData).eventCreatorProfilePic || event.creator?.profilePic;
+  
   const displayImage =
     resolveImageUri(rawEventImage) ??
     resolveImageUri(organizerProfilePic) ??
@@ -281,7 +285,10 @@ export const EventCard: React.FC<EventCardProps> = ({
                 const spotsLeft = eventData.spotsInfo?.spotsLeft ??
                   eventData.availableSpots ??
                   ((playerBooking.eventMaxGuest ?? 0) - (playerBooking.eventTotalAttendNumber ?? 0));
-                if (spotsFull) {
+
+                const isPastEvent = new Date(event.eventDateTime) < new Date();
+
+                if (spotsFull && !isPastEvent) {
                   return (
                     <TextDs size={12} weight="regular" color="error">
                       Waitlist Open
@@ -300,7 +307,7 @@ export const EventCard: React.FC<EventCardProps> = ({
           </FlexView>
           {!hidePrice && (
             <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
-              <ImageDs image="DhiramIcon" size={14} />
+              <ImageDs image="dhiramIcon" size={14} />
               <TextDs size={18} weight="semibold" color="blueGray">
                 {showRevenue
                   ? (() => {
