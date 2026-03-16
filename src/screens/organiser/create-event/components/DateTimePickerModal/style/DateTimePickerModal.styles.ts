@@ -53,6 +53,7 @@ export const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
     height: 160,
+    marginBottom: spacing.lg,
   },
   dayCell: {
     width: '14.28%',
@@ -148,6 +149,26 @@ export const styles = StyleSheet.create({
     ...getFontStyle(14, 'semibold'),
     color: colors.text.primary,
     marginBottom: spacing.md,
+  },
+  frequencyTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.glass.background.white,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border.white,
+    boxShadow: colors.glass.boxShadow.light,
+  },
+  frequencyTriggerText: {
+    ...getFontStyle(16, 'regular'),
+    color: colors.text.primary,
+    flex: 1,
+  },
+  frequencyPlaceholderText: {
+    color: colors.text.secondary,
   },
   frequencySelector: {
     flexDirection: 'row',

@@ -5,6 +5,8 @@ export interface TimePickerProps {
   disabled?: boolean;
   /** When true, hour is 0-23 and AM/PM column is hidden */
   use24Hour?: boolean;
+  /** Minute interval for the picker (e.g. 15 for 00, 15, 30, 45). Defaults to 15. */
+  minuteInterval?: 15 | 10;
 }
 
 export interface TimeValue {

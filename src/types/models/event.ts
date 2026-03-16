@@ -24,6 +24,18 @@ export interface EventParticipant {
   joinedAt?: string;
   /** Join request id (for private events); used when removing participant via reject API */
   joinRequestId?: string;
+  /** Number of additional guests (+1, +2, etc.). When backend sends this, display "Name +1" */
+  guestCount?: number;
+  /** Per-participant booking status. When 'cancelled', exclude from joined list */
+  bookingStatus?: 'upcoming' | 'ongoing' | 'past' | 'cancelled' | string;
+  /** Per-player booking slot start (ISO string). When backend sends this, show "Booked: D MMM, h:mm - h:mm A" */
+  slotStartTime?: string;
+  /** Per-player booking slot end (ISO string). Used with slotStartTime for range display */
+  slotEndTime?: string;
+  /** Amount paid by this participant. When backend sends this, show price (e.g. "₹ 120") */
+  amountPaid?: number;
+  /** Per-participant payment status. When 'pending', show "Pending Payment" tag (approval-required events) */
+  paymentStatus?: 'pending' | 'paid' | 'unpaid' | string | null;
 }
 
 export interface TimeUntilStart {

@@ -8,6 +8,7 @@ import type { FilterOption, DateFilter as DateFilterType } from '@screens/home/H
 import { styles } from '../style/PlayerHomeContent.styles';
 import { FlexView } from '@designSystem/atoms/FlexView';
 import { EventData } from '@app-types';
+import { useLocationStore } from '@store/location-store';
 
 const isSameCalendarDay = (iso1: string, iso2: string): boolean => {
   const d1 = new Date(iso1);
@@ -17,6 +18,30 @@ const isSameCalendarDay = (iso1: string, iso2: string): boolean => {
     d1.getMonth() === d2.getMonth() &&
     d1.getDate() === d2.getDate()
   );
+};
+
+const EARTH_RADIUS_KM = 6371;
+
+const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
+
+const getDistanceKm = (
+  fromLat: number,
+  fromLng: number,
+  toLat: number,
+  toLng: number,
+): number => {
+  const dLat = toRadians(toLat - fromLat);
+  const dLng = toRadians(toLng - fromLng);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(fromLat)) *
+      Math.cos(toRadians(toLat)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return EARTH_RADIUS_KM * c;
 };
 
 interface PickedEventsSectionProps {
@@ -54,6 +79,8 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
   onEventPress,
   onBookmark,
 }) => {
+  const { lastCoordinates } = useLocationStore();
+
   // Get selected IDs for each filter type (for UI display)
   const selectedSportsIds = useMemo(
     () => sportsFilters.filter((f) => f.isActive).map((f) => f.id),
@@ -81,10 +108,15 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
     () => eventTypeFilters.filter((f) => f.isActive && f.id !== 'all-event-types').map((f) => f.value.toLowerCase()),
     [eventTypeFilters],
   );
-  const selectedLocationValues = useMemo(
-    () => locationFilters.filter((f) => f.isActive && f.id !== 'all-locations').map((f) => f.value.toLowerCase()),
-    [locationFilters],
-  );
+  const selectedDistanceKm = useMemo(() => {
+    const activeLocationFilter = locationFilters.find((f) => f.isActive);
+    if (!activeLocationFilter || activeLocationFilter.value === 'everywhere') {
+      return null;
+    }
+
+    const parsed = Number(activeLocationFilter.value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [locationFilters]);
   const selectedPriceValues = useMemo(
     () => priceFilters.filter((f) => f.isActive).map((f) => Number(f.value)),
     [priceFilters],
@@ -139,13 +171,26 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
       });
     }
 
-    // Filter by location (if any selected)
-    if (selectedLocationValues.length > 0) {
+    // Filter by distance radius from user's last known coordinates.
+    // If coordinates are unavailable, we skip distance filtering and show all.
+    if (
+      selectedDistanceKm != null &&
+      lastCoordinates?.latitude != null &&
+      lastCoordinates?.longitude != null
+    ) {
       filtered = filtered.filter((event) => {
-        const eventLocationLower = event.eventLocation.toLowerCase();
-        return selectedLocationValues.some((selectedLocation) =>
-          eventLocationLower.includes(selectedLocation),
+        if (event.eventLatitude == null || event.eventLongitude == null) {
+          return false;
+        }
+
+        const distanceKm = getDistanceKm(
+          lastCoordinates.latitude,
+          lastCoordinates.longitude,
+          event.eventLatitude,
+          event.eventLongitude,
         );
+
+        return distanceKm <= selectedDistanceKm;
       });
     }
 
@@ -162,8 +207,10 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
     selectedDateFullDate,
     selectedSportsValues,
     selectedEventTypeValues,
-    selectedLocationValues,
+    selectedDistanceKm,
     selectedPriceValues,
+    lastCoordinates?.latitude,
+    lastCoordinates?.longitude,
   ]);
 
   // Group events by date
@@ -257,6 +304,8 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
             selectedIds={selectedLocationIds}
             onToggle={toggleLocationFilter}
             align='right'
+            isMultiSelect={false}
+            alwaysShowLabel
           />
         )}
         {priceFilters.length > 0 && (

@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useMemo, useRef, startTransition } from 'react';
+import React, { useState, useEffect, useRef, startTransition } from 'react';
 import { Modal, TouchableOpacity } from 'react-native';
 import { colors } from '@theme';
-import { Dropdown } from '@designSystem/molecules/dropdown';
 import { TimePicker, type TimeValue } from '@designSystem/molecules/time-picker';
-import type {
-  DateTimePickerModalProps,
-  TimeSelection,
-  FrequencyOption,
-} from './DateTimePickerModal.types';
+import { FrequencyModal } from '../FrequencyModal';
+import { formValueToFrequency, getFrequencyDisplayLabel } from './frequencyUtils';
+import type { DateTimePickerModalProps, TimeSelection } from './DateTimePickerModal.types';
 import { styles } from './style/DateTimePickerModal.styles';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react-native';
 import { FlexView, TextDs } from '@components';
+import type { FrequencySelection } from '../FrequencyModal';
 
 const DAYS_OF_WEEK = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTHS = [
@@ -28,9 +26,7 @@ const MONTHS = [
   'December',
 ];
 
-const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-const PICKER_MINUTES = [0, 10, 20, 30, 40, 50];
+const PICKER_MINUTES = [0, 15, 30, 45];
 
 const getDefaultTimes = (): { start: TimeSelection; end: TimeSelection } => {
   const now = new Date();
@@ -91,20 +87,11 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
   const handleEndTimeChange = (value: TimeValue) => {
     setEndTime({ hour: value.hour, minute: value.minute });
   };
-  const [frequency, setFrequency] = useState<string>(initialFrequency || 'never');
-
-  const frequencyOptions = useMemo<FrequencyOption[]>(() => {
-    const selectedWeekday = WEEKDAY_NAMES[selectedDate.getDay()];
-    const weeklyValue = `weekly-${selectedWeekday.toLowerCase()}`;
-
-    return [
-      { label: 'Daily', value: 'daily' },
-      { label: `Weekly on ${selectedWeekday}`, value: weeklyValue },
-      { label: 'Monthly', value: 'monthly' },
-      { label: 'Yearly', value: 'yearly' },
-      { label: 'Never', value: 'never' },
-    ];
-  }, [selectedDate]);
+  const parsedFrequency = formValueToFrequency(initialFrequency);
+  const [frequency, setFrequency] = useState<FrequencySelection>(
+    parsedFrequency ?? { type: 'never', ends: 'never' },
+  );
+  const [showFrequencyModal, setShowFrequencyModal] = useState(false);
 
   // Track previous initialDate to sync only when it actually changes
   const prevInitialDateRef = useRef<Date | undefined>(initialDate);
@@ -128,11 +115,9 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
   }, [visible, initialDate]);
 
   useEffect(() => {
-    if (!visible) {
-      return;
-    }
-
-    setFrequency(initialFrequency || 'never');
+    if (!visible) return;
+    const parsed = formValueToFrequency(initialFrequency);
+    setFrequency(parsed ?? { type: 'never', ends: 'never' });
   }, [visible, initialFrequency]);
 
   const getDaysInMonth = (month: number, year: number) => {
@@ -170,7 +155,7 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
     const startDateTime = new Date(selectedDate);
     startDateTime.setHours(startTime.hour, startTime.minute, 0, 0);
 
-    onConfirm(startDateTime, frequency);
+    onConfirm(startDateTime, frequency.type === 'never' ? undefined : frequency);
     onClose();
   };
 
@@ -268,10 +253,7 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
 
             {/* Start & End Time Section */}
             <FlexView style={styles.timeSection}>
-              <TextDs style={styles.timeSectionTitle}> </TextDs>
-              <TextDs size={14} weight="regular">
-                Start & End Time
-              </TextDs>
+              <TextDs style={styles.timeSectionTitle}>Start & End Time</TextDs>
               <FlexView style={styles.timeInputContainer}>
                 <TimePicker
                   value={startTimeValue}
@@ -294,14 +276,29 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
             {/* Frequency Section */}
             <FlexView style={styles.frequencySection}>
               <TextDs style={styles.frequencyTitle}>Frequency</TextDs>
-              <Dropdown
-                placeholder="Select Frequency"
-                options={frequencyOptions}
-                value={frequency}
-                onSelect={setFrequency}
-                position='top'
-              />
+              <TouchableOpacity
+                style={styles.frequencyTrigger}
+                onPress={() => setShowFrequencyModal(true)}
+                activeOpacity={0.7}
+              >
+                <TextDs
+                  style={[
+                    styles.frequencyTriggerText,
+                    frequency.type === 'never' && styles.frequencyPlaceholderText,
+                  ]}
+                >
+                  {getFrequencyDisplayLabel(frequency)}
+                </TextDs>
+                <ChevronDown size={20} color={colors.text.secondary} />
+              </TouchableOpacity>
             </FlexView>
+
+            <FrequencyModal
+              visible={showFrequencyModal}
+              onClose={() => setShowFrequencyModal(false)}
+              onConfirm={(selection) => setFrequency(selection)}
+              initialFrequency={frequency}
+            />
 
             {/* Action Buttons */}
             <FlexView style={styles.buttonContainer}>

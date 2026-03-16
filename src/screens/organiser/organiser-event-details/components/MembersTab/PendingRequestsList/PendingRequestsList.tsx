@@ -12,9 +12,20 @@ import { usePendingRequestMutations } from '../use-pending-request-mutations';
 
 interface PendingRequestsListProps {
   eventId: string;
+  /** User IDs already in Joined list - filter these out from Requests (paid users should only show in Joined) */
+  joinedUserIds?: number[];
 }
 
-export const PendingRequestsList: React.FC<PendingRequestsListProps> = ({ eventId }) => {
+function isRequestPaid(request: PendingRequest): boolean {
+  const status = request.paymentStatus ?? request.payment_status ?? '';
+  const s = String(status).toLowerCase();
+  return s === 'paid' || s.includes('paid');
+}
+
+export const PendingRequestsList: React.FC<PendingRequestsListProps> = ({
+  eventId,
+  joinedUserIds = [],
+}) => {
   const { data: pendingRequestsData } = useQuery({
     queryKey: ['event-pending-requests', eventId],
     queryFn: () => eventService.getEventPendingRequests(eventId, 1),
@@ -24,13 +35,26 @@ export const PendingRequestsList: React.FC<PendingRequestsListProps> = ({ eventI
   const { acceptPendingRequestMutation, declinePendingRequestMutation } =
     usePendingRequestMutations(eventId);
 
-  const pendingRequests = pendingRequestsData?.data?.pendingRequests ?? [];
+  const allRequests = pendingRequestsData?.data?.pendingRequests ?? [];
+  const joinedSet = new Set(joinedUserIds);
+  const pendingRequests = allRequests.filter(
+    (r) => !joinedSet.has(r.user.userId) && !isRequestPaid(r)
+  );
   const isActionPending =
     acceptPendingRequestMutation.isPending || declinePendingRequestMutation.isPending;
 
   return (
     <FlexView style={[styles.requestsList, { marginTop: spacing.lg }]}>
-      {pendingRequests.map((request: PendingRequest) => (
+      {pendingRequests.map((request: PendingRequest) => {
+        const guestCount = request.guestCount ?? request.guest_count ?? 0;
+        const guestSuffix = guestCount > 0 ? ` +${guestCount}` : '';
+        const paymentStatus = request.paymentStatus ?? request.payment_status ?? null;
+        const isAcceptedPendingPayment =
+          request.status?.toLowerCase() === 'accepted' &&
+          (paymentStatus === 'pending' ||
+            String(paymentStatus || '').toLowerCase().includes('pending'));
+
+        return (
         <FlexView key={request.joinRequestId} style={styles.requestCard} row alignItems="center">
           <FlexView style={styles.requestAvatar}>
             <Avatar
@@ -39,48 +63,59 @@ export const PendingRequestsList: React.FC<PendingRequestsListProps> = ({ eventI
               size="lg"
             />
           </FlexView>
-          <TextDs
-            size={14}
-            weight="semibold"
-            color="primary"
-            style={styles.requestName}
-            numberOfLines={1}
-          >
-            {request.user.fullName}
-          </TextDs>
-          <FlexView row gap={spacing.sm} style={styles.requestActions}>
-            <Button
-              variant="secondary"
-              bg={colors.button.cancel.background}
-              rounded
-              minHeight={24}
-              style={styles.actionButton}
-              disabled={isActionPending}
-              onPress={() =>
-                declinePendingRequestMutation.mutate({ joinRequestId: request.joinRequestId })
-              }
+          <FlexView flex={1} style={styles.requestNameContainer}>
+            <TextDs
+              size={14}
+              weight="semibold"
+              color="primary"
+              style={styles.requestName}
+              numberOfLines={1}
             >
-              <TextDs size={12} weight="medium" style={styles.declineButtonText}>
-                Decline
-              </TextDs>
-            </Button>
-            <Button
-              variant="primary"
-              rounded
-              minHeight={24}
-              style={styles.actionButton}
-              disabled={isActionPending}
-              onPress={() =>
-                acceptPendingRequestMutation.mutate({ joinRequestId: request.joinRequestId })
-              }
-            >
-              <TextDs size={12} weight="medium" color="white">
-                Accept
-              </TextDs>
-            </Button>
+              {request.user.fullName}{guestSuffix}
+            </TextDs>
           </FlexView>
+          {isAcceptedPendingPayment ? (
+            <FlexView style={styles.pendingPaymentBadge}>
+              <TextDs size={12} weight="medium" color="blueGray">
+                Payment Pending
+              </TextDs>
+            </FlexView>
+          ) : (
+            <FlexView row gap={spacing.sm} style={styles.requestActions}>
+              <Button
+                variant="secondary"
+                bg={colors.button.cancel.background}
+                rounded
+                minHeight={24}
+                style={styles.actionButton}
+                disabled={isActionPending}
+                onPress={() =>
+                  declinePendingRequestMutation.mutate({ joinRequestId: request.joinRequestId })
+                }
+              >
+                <TextDs size={12} weight="medium" style={styles.declineButtonText}>
+                  Decline
+                </TextDs>
+              </Button>
+              <Button
+                variant="primary"
+                rounded
+                minHeight={24}
+                style={styles.actionButton}
+                disabled={isActionPending}
+                onPress={() =>
+                  acceptPendingRequestMutation.mutate({ joinRequestId: request.joinRequestId })
+                }
+              >
+                <TextDs size={12} weight="medium" color="white">
+                  Accept
+                </TextDs>
+              </Button>
+            </FlexView>
+          )}
         </FlexView>
-      ))}
+        );
+      })}
     </FlexView>
   );
 };
@@ -98,8 +133,17 @@ const styles = StyleSheet.create({
   requestAvatar: {
     marginRight: spacing.base,
   },
-  requestName: {
+  requestNameContainer: {
     flex: 1,
+  },
+  requestName: {
+  },
+  pendingPaymentBadge: {
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    marginLeft: spacing.sm,
   },
   requestActions: {
     marginLeft: spacing.sm,
