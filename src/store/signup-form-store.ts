@@ -24,6 +24,8 @@ interface SignupFormState {
   communityName: string;
   yourCity: string;
   additionalSports: string[];
+  additionalSportText: string;
+  showAdditionalSport: boolean;
   bio: string;
   instagramLink: string;
   profileVisibility: 'public' | 'private';
@@ -51,6 +53,8 @@ interface SignupFormState {
   setCommunityName: (value: string) => void;
   setYourCity: (value: string) => void;
   setAdditionalSports: (value: string[]) => void;
+  setAdditionalSportText: (value: string) => void;
+  setShowAdditionalSport: (value: boolean) => void;
   setBio: (value: string) => void;
   setInstagramLink: (value: string) => void;
   setProfileVisibility: (value: 'public' | 'private') => void;
@@ -83,6 +87,8 @@ const initialState = {
   communityName: '',
   yourCity: '',
   additionalSports: [] as string[],
+  additionalSportText: '',
+  showAdditionalSport: false,
   bio: '',
   instagramLink: '',
   profileVisibility: 'private' as const,
@@ -114,6 +120,8 @@ export const useSignupFormStore = create<SignupFormState>()((set) => ({
   setCommunityName: (value) => set({ communityName: value }),
   setYourCity: (value) => set({ yourCity: value }),
   setAdditionalSports: (value) => set({ additionalSports: value }),
+  setAdditionalSportText: (value) => set({ additionalSportText: value }),
+  setShowAdditionalSport: (value) => set({ showAdditionalSport: value }),
   setBio: (value) => set({ bio: value }),
   setInstagramLink: (value) => set({ instagramLink: value }),
   setProfileVisibility: (value) => set({ profileVisibility: value }),

@@ -10,6 +10,7 @@ import {
     TextInput,
     Animated,
     Platform,
+    Dimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Check, ChevronDown, ChevronUp, Search } from 'lucide-react-native';
@@ -47,7 +48,12 @@ export const Dropdown: React.FC<DropdownProps> = (props) => {
 
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+    const [dropdownPosition, setDropdownPosition] = useState<{
+        top?: number;
+        bottom?: number;
+        left: number;
+        width: number;
+    }>({ left: 0, width: 0 });
     const triggerRef = useRef<View>(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const fadeAnim = useMemo(() => new Animated.Value(0), []);
@@ -80,9 +86,19 @@ export const Dropdown: React.FC<DropdownProps> = (props) => {
         }
 
         triggerRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
-            const topPosition = position === 'bottom' ? y + height + 8 : y - maxHeight - 8;
+            const screenHeight = Dimensions.get('window').height;
+            const spaceBelow = screenHeight - (y + height);
+            const spaceAbove = y;
+
+            let finalPosition = position;
+            // If space below is tighter than maxHeight + small buffer, flip to top if space exists.
+            if (position === 'bottom' && spaceBelow < maxHeight + 40 && spaceAbove > spaceBelow) {
+                finalPosition = 'top';
+            }
+
             setDropdownPosition({
-                top: topPosition,
+                top: finalPosition === 'bottom' ? y + height + 8 : undefined,
+                bottom: finalPosition === 'top' ? screenHeight - y + 8 : undefined,
                 left: x,
                 width,
             });
@@ -146,7 +162,7 @@ export const Dropdown: React.FC<DropdownProps> = (props) => {
                 disabled={optionDisabled}
             >
                 {item.icon && (
-                    <ImageDs image={item.icon as any} size={20} style={styles.optionIcon} />
+                    <ImageDs image={item.icon as any} size={16} style={styles.optionIcon} />
                 )}
                 <TextDs
                     style={[
@@ -183,7 +199,15 @@ export const Dropdown: React.FC<DropdownProps> = (props) => {
                 activeOpacity={0.7}
             >
                 <View ref={triggerRef} collapsable={false} style={StyleSheet.absoluteFill} pointerEvents="none" />
-                {leftIcon && <FlexView style={styles.leftIconContainer}>{leftIcon}</FlexView>}
+                {leftIcon ? (
+                    <FlexView style={styles.leftIconContainer}>{leftIcon}</FlexView>
+                ) : (
+                    !isMulti && selectedOption?.icon && (
+                        <FlexView style={styles.leftIconContainer}>
+                            <ImageDs image={selectedOption.icon as any} size={20} />
+                        </FlexView>
+                    )
+                )}
                 <TextDs
                     style={[
                         styles.triggerText,
@@ -212,11 +236,13 @@ export const Dropdown: React.FC<DropdownProps> = (props) => {
                 <View style={styles.modalOverlay} pointerEvents="box-none">
                     <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
                     <Animated.View
+                        pointerEvents="auto"
                         style={[
                             styles.dropdownMenu,
                             dropdownStyle,
                             {
                                 top: dropdownPosition.top,
+                                bottom: dropdownPosition.bottom,
                                 left: dropdownPosition.left,
                                 width: dropdownPosition.width,
                                 maxHeight,
@@ -257,7 +283,7 @@ export const Dropdown: React.FC<DropdownProps> = (props) => {
                                     renderItem={renderOption}
                                     keyExtractor={(item) => item.value}
                                     showsVerticalScrollIndicator={true}
-                                    nestedScrollEnabled
+                                    style={{ maxHeight }}
                                     ListEmptyComponent={
                                         <FlexView style={styles.emptyContainer}>
                                             <TextDs style={styles.emptyText}>No options found</TextDs>
@@ -290,7 +316,7 @@ export const Dropdown: React.FC<DropdownProps> = (props) => {
                                     renderItem={renderOption}
                                     keyExtractor={(item) => item.value}
                                     showsVerticalScrollIndicator={true}
-                                    nestedScrollEnabled
+                                    style={{ maxHeight }}
                                     ListEmptyComponent={
                                         <FlexView style={styles.emptyContainer}>
                                             <TextDs style={styles.emptyText}>No options found</TextDs>
@@ -335,7 +361,7 @@ const styles = StyleSheet.create({
         opacity: 0.5,
     },
     triggerText: {
-        ...getFontStyle(16, 'regular'),
+        ...getFontStyle(12, 'regular'),
         color: colors.text.primary,
         flex: 1,
     },
@@ -400,12 +426,12 @@ const styles = StyleSheet.create({
         opacity: 0.5,
     },
     optionText: {
-        ...getFontStyle(16, 'regular'),
+        ...getFontStyle(12, 'regular'),
         color: colors.text.primary,
         flex: 1,
     },
     selectedOptionText: {
-        ...getFontStyle(16, 'medium'),
+        ...getFontStyle(14, 'medium'),
         color: colors.primary,
     },
     disabledOptionText: {

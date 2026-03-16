@@ -58,6 +58,10 @@ const getColorValue = (color: string): string => {
   if (color in colors.status) {
     return colors.status[color as keyof typeof colors.status];
   }
+  // @ts-ignore - Handle direct color keys like 'red'
+  if (color in colors) {
+    return (colors as any)[color];
+  }
   if (color === 'primary') {
     return colors.primary;
   }
@@ -72,6 +76,10 @@ const getColorValue = (color: string): string => {
   }
   if (color === 'black') {
     return '#000000';
+  }
+  // Handle hex colors directly
+  if (color.startsWith('#')) {
+    return color;
   }
   return colors.text.primary;
 };

@@ -9,7 +9,7 @@ const baseColors = {
   primary: '#5B7C99', // Blue-gray (used in header, active states)
   primaryLight: 'rgba(61, 111, 146, 0.5)',
   primaryDark: 'rgba(61, 111, 146, 0.7)',
-
+  red: '#FF0000',
   buttonBackground: 'rgba(61, 111, 146, 0.50)',
   greenbutton: 'rgba(40, 161, 44, 0.50)',
 
