@@ -108,7 +108,9 @@ export const paymentService: {
     const query = params.toString();
     const url = query ? `/api/bookings/book-event/${eventId}?${query}` : `/api/bookings/book-event/${eventId}`;
 
+    console.log('DEBUG: paymentService.createBookingWithPayment url:', url);
     const { data } = await apiClient.post<BookEventPaymentResponse>(url);
+    console.log('DEBUG: paymentService.createBookingWithPayment response data:', JSON.stringify(data, null, 2));
     return data;
   },
 

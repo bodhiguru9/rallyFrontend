@@ -146,6 +146,7 @@ export interface EventData extends BaseEntity {
   isJoined?: boolean;
   isPending?: boolean;
   isLeave?: boolean;
+  isRejected?: boolean;
   /** From event-details / player-bookings API when user has joined. */
   booking?: {
     bookingId: string | null;

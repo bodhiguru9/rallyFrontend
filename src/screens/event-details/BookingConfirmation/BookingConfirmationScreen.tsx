@@ -263,6 +263,11 @@ export const BookingConfirmationScreen: React.FC = () => {
                   {currency} {amountPaid.toFixed(2)}
                 </TextDs>
               )}
+              {route.params.guestsCount !== undefined && (
+                <TextDs size={14} weight="regular" color="secondary" style={{ marginLeft: spacing.md }}>
+                  • {route.params.guestsCount} {route.params.guestsCount === 1 ? 'Person' : 'People'}
+                </TextDs>
+              )}
               <TouchableOpacity
                 style={styles.addToCalendarButton}
                 onPress={handleAddToCalendar}

@@ -94,6 +94,7 @@ export interface PlayerBooking {
     isPast: boolean;
     isOngoing: boolean;
     isUpcoming: boolean;
+    guestsCount?: number;
   };
   payment?: {
     paymentStatus: string;
@@ -107,6 +108,8 @@ export interface PlayerBooking {
   isJoined?: boolean;
   isPending?: boolean;
   isLeave?: boolean;
+  approvalStatus?: string;
+  isRejected?: boolean;
 }
 
 export interface PlayerBookingsSummary {

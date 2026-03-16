@@ -20,17 +20,29 @@ import type { EventData } from '@app-types';
 import type { PlayerBooking } from '@services/booking-service';
 import { ENV } from '@config/env';
 import { resolveImageUri } from '@utils/image-utils';
+import { useEvent } from '@hooks/use-events';
+import { useAuthStore } from '@store/auth-store';
 
 
 function getStatusBadgeVariant(event: EventData | PlayerBooking): EventStatusBadgeVariant {
   const booking = 'booking' in event ? event.booking : undefined;
+  const now = new Date();
+  const eventDate = new Date(event.eventDateTime);
+  const isPastEvent = eventDate < now;
 
   // 1. Cancelled (booking-level or event-level)
   if (booking?.bookingStatus === 'cancelled' || event.eventStatus === 'cancelled') {
     return 'cancelled';
   }
 
-  // 2. Payment pending
+  // 2. Request Rejected
+  const approvalStatus = event.approvalStatus;
+  const isRejected = event.isRejected;
+  if (approvalStatus === 'rejected' || isRejected === true) {
+    return 'request-rejected';
+  }
+
+  // 3. Payment pending
   const paymentStatus =
     'payment' in event && event.payment && 'paymentStatus' in event.payment
       ? String((event.payment as { paymentStatus: string }).paymentStatus).toLowerCase()
@@ -39,16 +51,18 @@ function getStatusBadgeVariant(event: EventData | PlayerBooking): EventStatusBad
     return 'payment-pending';
   }
 
-  // 3. Pending approval (private-event join request awaiting host)
-  if ('isPending' in event && event.isPending) {
+  // 4. Pending approval (private-event join request awaiting host)
+  if (('isPending' in event && event.isPending) || approvalStatus === 'pending') {
     return 'pending-approval';
   }
 
-  // 4. Registration window checks
-  const regEnd = event.eventRegistrationEndTime;
-  const regStart = event.eventRegistrationStartTime;
-  const now = new Date();
+  // 5. Ongoing
+  if (event.eventStatus === 'ongoing' || booking?.isOngoing) {
+    return 'ongoing';
+  }
 
+  // 6. Registration window checks
+  const regEnd = event.eventRegistrationEndTime;
   if (regEnd) {
     try {
       if (now > new Date(regEnd)) {
@@ -57,17 +71,18 @@ function getStatusBadgeVariant(event: EventData | PlayerBooking): EventStatusBad
     } catch { /* ignore parse errors */ }
   }
 
+  // If it's a past event and we haven't returned a specific status, it's ended
+  if (isPastEvent || booking?.isPast) {
+    return 'registration-ended';
+  }
+
+  const regStart = event.eventRegistrationStartTime;
   if (regStart) {
     try {
       if (now < new Date(regStart)) {
         return 'registration-soon';
       }
     } catch { /* ignore parse errors */ }
-  }
-
-  // 5. Ongoing
-  if (event.eventStatus === 'ongoing') {
-    return 'ongoing';
   }
 
   // 6. Default
@@ -86,7 +101,20 @@ export const EventCard: React.FC<EventCardProps> = ({
   showRevenue = false,
   displayTimeZone,
 }) => {
+  const user = useAuthStore((state) => state.user);
   const [isMembersModalVisible, setIsMembersModalVisible] = useState(false);
+
+  const isPlayerBooking = 'booking' in event;
+  const hasParticipants = (event as EventData).participants && (event as EventData).participants!.length > 0;
+
+  const { data: fullEvent } = useEvent(id, {
+    enabled: isMembersModalVisible && isPlayerBooking && !hasParticipants,
+    forPlayer: true,
+    allowPrivate: true,
+  });
+
+  const displayEvent = (fullEvent || event) as EventData | PlayerBooking;
+  const eventToDisplay = displayEvent as EventData; // Cast for easier access to participants/spotsInfo
 
   const handlePress = () => {
     onPress(id);
@@ -101,7 +129,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   };
 
   // Format date for display: "Sat 24 Oct, 1:00 - 2:00 PM"
-  const formattedDateTime = formatDate(event.eventDateTime, 'display-range', {
+  const formattedDateTime = formatDate(displayEvent.eventDateTime, 'display-range', {
     timeZone: displayTimeZone,
   });
 
@@ -158,7 +186,8 @@ export const EventCard: React.FC<EventCardProps> = ({
   };
 
   const sportKey = (event.eventSports?.[0] ?? '').toString().toLowerCase().replace(/\s+/g, '');
-  const eventTypeKey = String(event.eventType ?? '').toLowerCase().replace(/\s+/g, '');
+  const isPrivate = (event as any).IsPrivateEvent === true || String(event.eventType).toLowerCase() === 'private';
+  const eventTypeKey = isPrivate ? 'private' : String(event.eventType ?? '').toLowerCase().replace(/\s+/g, '');
 
   const EventTypeIcon = (eventTypeIconMap[eventTypeKey] ?? 'socialColor') as any;
   // Get event image: eventImages, gameImages, eventImage (singular), then organizer profile
@@ -190,10 +219,10 @@ export const EventCard: React.FC<EventCardProps> = ({
             {/* Header with Title, Organizer, and Share Button */}
             <FlexView flexDirection="row" justifyContent="space-between" alignItems="flex-start">
               <FlexView flex={1} gap={spacing.xs}>
-                <Title variant="cardTitle" numberOfLines={1}>{event.eventName}</Title>
-                {!hideCreator && ((event as EventData).eventCreatorName || event.creator?.fullName) &&
+                <Title variant="cardTitle" numberOfLines={1}>{displayEvent.eventName}</Title>
+                {!hideCreator && (eventToDisplay.eventCreatorName || displayEvent.creator?.fullName) &&
                   <Subtitle variant="small">
-                    by {(event as EventData).eventCreatorName || event.creator?.fullName}
+                    by {eventToDisplay.eventCreatorName || displayEvent.creator?.fullName}
                   </Subtitle>}
               </FlexView>
 
@@ -207,17 +236,17 @@ export const EventCard: React.FC<EventCardProps> = ({
 
             {/* Tags */}
             <FlexView flexDirection="row" gap={spacing.sm} marginTop={spacing.sm} flexWrap="wrap">
-              {event.eventSports?.[0] && (
+              {displayEvent.eventSports?.[0] && (
                 <IconTag
-                  title={event.eventSports[0]}
+                  title={displayEvent.eventSports[0]}
                   variant="orange"
                   searchType="sport"
                   size="small"
                 />
               )}
-              {event.eventType && (
+              {(displayEvent.eventType || isPrivate) && (
                 <IconTag
-                  title={event.eventType}
+                  title={isPrivate ? 'Private' : displayEvent.eventType}
                   icon={EventTypeIcon}
                   searchType="eventType"
                   size="small"
@@ -254,7 +283,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                 numberOfLines={1}
                 style={styles.infoText}
               >
-                {event.eventLocation || 'Location TBD'}
+                {displayEvent.eventLocation || 'Location TBD'}
               </TextDs>
             </FlexView>
           </FlexView>
@@ -268,7 +297,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         >
           <FlexView flexDirection="row" mt={spacing.sm} gap={spacing.base} alignItems="center">
             <ParticipantProfiles
-              participants={(event as EventData).participants ?? []}
+              participants={eventToDisplay.participants ?? []}
               onViewAllPress={handleOpenMembersModal}
             />
             {/* spots info */}
@@ -325,36 +354,47 @@ export const EventCard: React.FC<EventCardProps> = ({
       {/* Members Modal – shown when user taps "View All" on participant avatars */}
       <MembersModal
         visible={isMembersModalVisible}
-        eventTitle={event.eventName ?? 'Event'}
+        eventTitle={displayEvent.eventName ?? 'Event'}
         organizerName={
-          (event as EventData).creator?.fullName ||
-          (event as EventData).eventCreatorName ||
-          (event as PlayerBooking).creator?.fullName ||
+          eventToDisplay.creator?.fullName ||
+          eventToDisplay.eventCreatorName ||
           'Unknown Organizer'
         }
-        participants={
-          (event as EventData).participants?.map((p) => ({
-            userId: p.userId,
-            userType: p.userType || 'player',
-            email: p.email || '',
-            mobileNumber: p.mobileNumber || '',
-            profilePic: p.profilePic,
-            fullName: p.fullName,
-            dob: p.dob,
-            gender: p.gender,
-            sport1: p.sport1,
-            sport2: p.sport2,
-            joinedAt: p.joinedAt,
-          })) ?? []
-        }
+        participants={(() => {
+          const bookedGuests = 
+            (eventToDisplay as any).eventTotalAttendNumber ?? 
+            (eventToDisplay as any).booking?.guestsCount ?? 
+            (eventToDisplay as any).booking?.guests ?? 
+            (eventToDisplay as any).guestsCount ?? 
+            (eventToDisplay as any).guests ?? 
+            1;
+
+
+          return (
+            eventToDisplay.participants?.map((p) => ({
+              userId: p.userId,
+              userType: p.userType || 'player',
+              email: p.email || '',
+              mobileNumber: p.mobileNumber || '',
+              profilePic: p.profilePic,
+              fullName: p.fullName,
+              dob: p.dob,
+              gender: p.gender,
+              sport1: p.sport1,
+              sport2: p.sport2,
+              joinedAt: p.joinedAt,
+              guestsCount: p.userId === user?.userId ? Math.max(0, bookedGuests - 1) : undefined,
+            })) ?? []
+          );
+        })()}
         spotsFilled={
-          (event as EventData).spotsInfo?.spotsBooked ??
-          (event as PlayerBooking).eventTotalAttendNumber ??
+          (displayEvent as any).eventTotalAttendNumber ??
+          eventToDisplay.spotsInfo?.spotsBooked ??
           0
         }
         totalSpots={
-          (event as EventData).spotsInfo?.totalSpots ??
-          (event as PlayerBooking).eventMaxGuest ??
+          eventToDisplay.spotsInfo?.totalSpots ??
+          (displayEvent as PlayerBooking).eventMaxGuest ??
           0
         }
         onClose={handleCloseMembersModal}

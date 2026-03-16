@@ -249,6 +249,13 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
                     <FlexView style={styles.memberInfo}>
                       <TextDs size={14} weight="regular" color="primary">
                         {participant.fullName}
+                        {(() => {
+                          const p = participant as any;
+                          const hasTotalField = typeof p.eventTotalAttendNumber === 'number';
+                          const gCount = p.guestsCount ?? p.guests ?? p.guestCount ?? p.eventTotalAttendNumber ?? 0;
+                          const displayCount = hasTotalField ? gCount - 1 : gCount;
+                          return displayCount > 0 ? ` (+${displayCount})` : '';
+                        })()}
                       </TextDs>
                       <TextDs size={14} weight="regular" color="secondary">
                         Joined

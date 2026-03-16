@@ -100,10 +100,40 @@ export const useEventDetails = () => {
     
     // Check if user is already joined and has a booking
     const joinedBooking = playerBookingsData?.data?.bookings?.find(b => b.eventId === eventId);
-    if (joinedBooking && (joinedBooking as any).guestsCount !== undefined) {
-      if (guestsCount !== (joinedBooking as any).guestsCount) {
+    
+    if (playerBookingsData) {
+      logger.info('useEventDetails: playerBookingsData found', { 
+        count: playerBookingsData?.data?.bookings?.length,
+        eventId,
+        found: !!joinedBooking 
+      });
+      if (joinedBooking) {
+        logger.info('useEventDetails: joinedBooking raw data', JSON.stringify(joinedBooking, null, 2));
+      }
+    }
+
+    if (joinedBooking) {
+      // Look for current user in participants to see if guestsCount is there
+      const currentUserParticipant = event?.participants?.find(p => p.userId === user?.userId);
+
+      // Find guestsCount in possible locations. 
+      // Based on logs, eventTotalAttendNumber seems to be the total count (User + Guests) for the booking.
+      const bookedGuests = 
+        (joinedBooking as any)?.eventTotalAttendNumber ?? 
+        joinedBooking.booking?.guestsCount ?? 
+        (joinedBooking.booking as any)?.guestsCount ?? 
+        (joinedBooking.booking as any)?.guests ?? 
+        (joinedBooking.booking as any)?.guestCount ?? 
+        (joinedBooking as any)?.guestsCount ?? 
+        (joinedBooking as any)?.guests ?? 
+        (joinedBooking as any)?.guestCount ??
+        (currentUserParticipant as any)?.guestsCount ??
+        (currentUserParticipant as any)?.guests ??
+        1;
+
+      if (guestsCount !== bookedGuests) {
         timeoutId = setTimeout(() => {
-          setGuestsCount((joinedBooking as any).guestsCount);
+          setGuestsCount(bookedGuests);
         }, 0);
         return () => { if (timeoutId) clearTimeout(timeoutId); };
       }
@@ -152,6 +182,23 @@ export const useEventDetails = () => {
       logger.error('Error parsing registration start time:', error);
       return true; // Default to true if parsing fails
     }
+  })();
+
+  const isRegistrationEnded = (() => {
+    if (!event) return false;
+    const now = new Date();
+    const eventTime = new Date(event.eventDateTime);
+    if (now > eventTime) return true;
+
+    if (event.eventRegistrationEndTime) {
+      try {
+        const registrationEndTime = new Date(event.eventRegistrationEndTime);
+        if (now > registrationEndTime) return true;
+      } catch (error) {
+        logger.error('Error parsing registration end time:', error);
+      }
+    }
+    return false;
   })();
 
   const handleShare = () => {
@@ -492,6 +539,10 @@ const handleApplePay = () => {
     }
 
     // Priority 4: Registration not open
+    if (isRegistrationEnded) {
+      return 'Registration Ended';
+    }
+
     if (!isRegistrationOpen) {
       return 'Add Reminder';
     }
@@ -556,6 +607,7 @@ return {
   isLoading,
   error,
   isAuthenticated,
+  user,
   isOrganiser,
   isRegistrationOpen,
   eventId,
@@ -596,6 +648,7 @@ return {
   handleApplePay, 
   showPayNow,
   handlePayNow,
+  isRegistrationEnded,
 
   // Cancel booking (refund / no-refund)
   canCancelBooking: !isPastCancellationTime(),

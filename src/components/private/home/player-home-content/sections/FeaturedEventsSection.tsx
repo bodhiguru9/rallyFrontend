@@ -47,7 +47,7 @@ export const FeaturedEventsSection: React.FC<FeaturedEventsSectionProps> = ({
         initialIndex={initialActiveIndex}
         onIndexChange={setActiveIndex}
         autoPlay={true}
-        autoPlayInterval={4000}
+        autoPlayInterval={2500}
         contentContainerStyle={[
           styles.horizontalScroll,
           { paddingHorizontal: sidePadding },
