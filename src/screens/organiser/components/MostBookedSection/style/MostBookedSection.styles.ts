@@ -4,6 +4,10 @@ import { colors, spacing, getFontStyle } from '@theme';
 export const styles = StyleSheet.create({
   container: {
     marginBottom: spacing.xl,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.border.white,
+    paddingVertical: spacing.lg,
   },
   headerRow: {
     flexDirection: 'row',

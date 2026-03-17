@@ -14,13 +14,13 @@ import { useOrganiserMembers } from '@hooks/organiser';
  */
 const getInitials = (name: string): string => {
   if (!name) return '?';
-  
+
   const parts = name.trim().split(/\s+/);
-  
+
   if (parts.length === 1) {
     return parts[0].charAt(0).toUpperCase();
   }
-  
+
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 };
 
@@ -127,7 +127,7 @@ export const MostBookedSection: React.FC<MostBookedSectionProps> = ({
                   </View>
                 )}
               </FlexView>
-              <TextDs style={styles.memberName} numberOfLines={1}>
+              <TextDs style={styles.memberName} numberOfLines={2}>
                 {member.name}
               </TextDs>
             </FlexView>

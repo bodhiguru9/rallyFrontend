@@ -328,90 +328,96 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
     }
 
     const { bookings } = playerBookingsData.data;
+    const allEvents = eventsData?.events ?? [];
 
     // Transform PlayerBooking[] to EventData[]
-    return bookings.map((booking: PlayerBooking): EventData => ({
-      // BaseEntity fields
-      id: booking.mongoId,
+    return bookings.map((booking: PlayerBooking): EventData => {
+      // Find matching event from allEvents to get participants
+      const matchingEvent = allEvents.find(e => e.eventId === booking.eventId || e.mongoId === booking.mongoId);
 
-      // Core event fields
-      eventId: booking.eventId,
-      mongoId: booking.mongoId,
-      eventName: booking.eventName,
-      eventImages: booking.eventImages,
-      eventVideo: booking.eventVideo,
-      gameImages: booking.eventImages, // Fallback
-      gameVideo: booking.eventVideo, // Fallback
-      eventType: booking.eventType,
-      eventSports: booking.eventSports,
-      eventDateTime: booking.eventDateTime,
-      eventLatitude: undefined,
-      eventLongitude: undefined,
-      eventFrequency: booking.eventFrequency,
-      eventLocation: booking.eventLocation,
-      eventDescription: booking.eventDescription,
-      eventGender: booking.eventGender,
-      eventSportsLevel: booking.eventSportsLevel,
-      eventMinAge: booking.eventMinAge,
-      eventMaxAge: booking.eventMaxAge,
-      eventLevelRestriction: booking.eventLevelRestriction,
-      eventMaxGuest: booking.eventMaxGuest,
-      eventPricePerGuest: booking.eventPricePerGuest,
-      IsPrivateEvent: booking.IsPrivateEvent,
-      eventOurGuestAllowed: booking.eventOurGuestAllowed,
-      eventApprovalReq: booking.eventApprovalReq,
-      eventRegistrationStartTime: booking.eventRegistrationStartTime,
-      eventRegistrationEndTime: booking.eventRegistrationEndTime,
-      eventStatus: booking.eventStatus,
-      eventTotalAttendNumber: booking.eventTotalAttendNumber,
-      createdAt: booking.createdAt,
-      updatedAt: booking.updatedAt,
-      timeUntilStart: booking.timeUntilStart,
+      return {
+        // BaseEntity fields
+        id: booking.mongoId,
 
-      // Creator fields from booking response
-      eventCreatorEmail: booking.creator?.email || '',
-      eventCreatorName: booking.creator?.fullName || '',
-      eventCreatorProfilePic: booking.creator?.profilePic ?? null,
-      creator: booking.creator
-        ? {
-          userId: booking.creator.userId,
-          fullName: booking.creator.fullName,
-          email: booking.creator.email || '',
-          profilePic: booking.creator.profilePic ?? null,
-          communityName: '',
-          eventsCreated: 0,
-          totalAttendees: 0,
-        }
-        : null,
+        // Core event fields
+        eventId: booking.eventId,
+        mongoId: booking.mongoId,
+        eventName: booking.eventName,
+        eventImages: booking.eventImages,
+        eventVideo: booking.eventVideo,
+        gameImages: booking.eventImages, // Fallback
+        gameVideo: booking.eventVideo, // Fallback
+        eventType: booking.eventType,
+        eventSports: booking.eventSports,
+        eventDateTime: booking.eventDateTime,
+        eventLatitude: matchingEvent?.eventLatitude,
+        eventLongitude: matchingEvent?.eventLongitude,
+        eventFrequency: booking.eventFrequency,
+        eventLocation: booking.eventLocation,
+        eventDescription: booking.eventDescription,
+        eventGender: booking.eventGender,
+        eventSportsLevel: booking.eventSportsLevel,
+        eventMinAge: booking.eventMinAge,
+        eventMaxAge: booking.eventMaxAge,
+        eventLevelRestriction: booking.eventLevelRestriction,
+        eventMaxGuest: booking.eventMaxGuest,
+        eventPricePerGuest: booking.eventPricePerGuest,
+        IsPrivateEvent: booking.IsPrivateEvent,
+        eventOurGuestAllowed: booking.eventOurGuestAllowed,
+        eventApprovalReq: booking.eventApprovalReq,
+        eventRegistrationStartTime: booking.eventRegistrationStartTime,
+        eventRegistrationEndTime: booking.eventRegistrationEndTime,
+        eventStatus: booking.eventStatus,
+        eventTotalAttendNumber: booking.eventTotalAttendNumber,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt,
+        timeUntilStart: booking.timeUntilStart,
 
-      // Participants (not available in booking response)
-      participants: [],
-      participantsCount: 0,
-      waitlist: [],
-      waitlistCount: 0,
+        // Creator fields from booking response
+        eventCreatorEmail: booking.creator?.email || '',
+        eventCreatorName: booking.creator?.fullName || '',
+        eventCreatorProfilePic: booking.creator?.profilePic ?? null,
+        creator: booking.creator
+          ? {
+            userId: booking.creator.userId,
+            fullName: booking.creator.fullName,
+            email: booking.creator.email || '',
+            profilePic: booking.creator.profilePic ?? null,
+            communityName: '',
+            eventsCreated: 0,
+            totalAttendees: 0,
+          }
+          : null,
 
-      // Spots info (calculated from eventMaxGuest and eventTotalAttendNumber)
-      spotsInfo: {
-        totalSpots: booking.eventMaxGuest,
-        spotsBooked: booking.eventTotalAttendNumber,
-        spotsLeft: booking.eventMaxGuest - booking.eventTotalAttendNumber,
-        spotsFull: booking.eventTotalAttendNumber >= booking.eventMaxGuest,
-      },
+        // Participants (Enriched from matchingEvent if available)
+        participants: matchingEvent?.participants ?? [],
+        participantsCount: matchingEvent?.participantsCount ?? matchingEvent?.participants?.length ?? 0,
+        waitlist: matchingEvent?.waitlist ?? [],
+        waitlistCount: matchingEvent?.waitlistCount ?? matchingEvent?.waitlist?.length ?? 0,
 
-      // Additional fields
-      counts: null,
-      userJoinStatus: {
-        action: 'joined',
-        requiresAuth: false,
-      },
-      availableSpots: booking.eventMaxGuest - booking.eventTotalAttendNumber,
-      isFull: booking.eventTotalAttendNumber >= booking.eventMaxGuest,
-      // Booking implies payment completed (or free) => treat as joined
-      isJoined: true,
-      isPending: false,
-      isLeave: false,
-    }));
-  }, [isAuthenticated, playerBookingsData]);
+        // Spots info (calculated from eventMaxGuest and eventTotalAttendNumber)
+        spotsInfo: {
+          totalSpots: booking.eventMaxGuest,
+          spotsBooked: booking.eventTotalAttendNumber,
+          spotsLeft: booking.eventMaxGuest - booking.eventTotalAttendNumber,
+          spotsFull: booking.eventTotalAttendNumber >= booking.eventMaxGuest,
+        },
+
+        // Additional fields
+        counts: null,
+        userJoinStatus: {
+          action: 'joined',
+          requiresAuth: false,
+        },
+        availableSpots: booking.eventMaxGuest - booking.eventTotalAttendNumber,
+        isFull: booking.eventTotalAttendNumber >= booking.eventMaxGuest,
+        // Booking implies payment completed (or free) => treat as joined
+        isJoined: true,
+        isPending: false,
+        isLeave: false,
+      };
+    });
+  }, [isAuthenticated, playerBookingsData, eventsData]);
 
   const topOrganisers = useMemo(() => {
     const organisers = topOrganisersData?.data?.organisers ?? [];
