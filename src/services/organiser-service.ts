@@ -40,8 +40,14 @@ export interface OrganiserAnalyticsResponse {
     transactions: Array<{
       id?: string;
       transactionId?: string;
+      paymentId?: string;
       memberName?: string;
       memberAvatar?: string;
+      payer?: {
+        userId?: number;
+        fullName?: string;
+        profilePic?: string | null;
+      };
       bookedDate?: string;
       bookedTime?: string;
       amount?: number;
@@ -403,9 +409,10 @@ const formatNumber = (num: number): string => {
 const mapTransaction = (
   apiTransaction: OrganiserAnalyticsResponse['data']['transactions'][0],
 ): Transaction => {
-  const id = apiTransaction.id || apiTransaction.transactionId || '';
+  const id = apiTransaction.id || apiTransaction.transactionId || apiTransaction.paymentId || '';
   const amount = apiTransaction.amount || 0;
-  const currency = apiTransaction.currency || '₹';
+  // Use symbol if available or default to AED
+  const currency = apiTransaction.currency || 'AED';
 
   // Parse date and time from eventDateTime or createdAt
   let bookedDate = '';
@@ -422,10 +429,14 @@ const mapTransaction = (
     bookedTime = apiTransaction.bookedTime;
   }
 
+  // Handle nested payer object or top-level fields
+  const memberName = apiTransaction.payer?.fullName || apiTransaction.memberName || 'Unknown';
+  const memberAvatar = apiTransaction.payer?.profilePic || apiTransaction.memberAvatar;
+
   return {
     id,
-    memberName: apiTransaction.memberName || 'Unknown',
-    memberAvatar: apiTransaction.memberAvatar,
+    memberName,
+    memberAvatar,
     bookedDate,
     bookedTime,
     amount,

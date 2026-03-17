@@ -20,14 +20,14 @@ export const OrganiserTransactionsScreen: React.FC = () => {
 
   const sportsOptions = [
     { id: 'all-sports', label: 'All Sports', value: 'all-sports' },
-    { id: 'football', label: 'Football', value: 'football' },
-    { id: 'basketball', label: 'Basketball', value: 'basketball' },
-    { id: 'cricket', label: 'Cricket', value: 'cricket' },
-    { id: 'tennis', label: 'Tennis', value: 'tennis' },
-    { id: 'badminton', label: 'Badminton', value: 'badminton' },
-    { id: 'volleyball', label: 'Volleyball', value: 'volleyball' },
-    { id: 'swimming', label: 'Swimming', value: 'swimming' },
-    { id: 'running', label: 'Running', value: 'running' },
+    { id: 'football', label: 'Football', value: 'football', icon: 'footballIcon' },
+    { id: 'basketball', label: 'Basketball', value: 'basketball', icon: 'basketballIcon' },
+    { id: 'cricket', label: 'Cricket', value: 'cricket', icon: 'cricketIcon' },
+    { id: 'tennis', label: 'Tennis', value: 'tennis', icon: 'tennisIcon' },
+    { id: 'badminton', label: 'Badminton', value: 'badminton', icon: 'badmintonIcon' },
+    { id: 'volleyball', label: 'Volleyball', value: 'volleyball', icon: 'sportIcon' },
+    { id: 'swimming', label: 'Swimming', value: 'swimming', icon: 'sportIcon' },
+    { id: 'running', label: 'Running', value: 'running', icon: 'runningIcon' },
   ];
 
   const sortOptions = [
@@ -38,7 +38,16 @@ export const OrganiserTransactionsScreen: React.FC = () => {
   ];
 
   const handleSportToggle = (sportId: string) => {
-    setSelectedSports([sportId]);
+    setSelectedSports((prev) => {
+      if (sportId === 'all-sports') {
+        return ['all-sports'];
+      }
+      const newSelected = prev.includes(sportId)
+        ? prev.filter((id) => id !== sportId)
+        : [...prev.filter((id) => id !== 'all-sports'), sportId];
+
+      return newSelected.length === 0 ? ['all-sports'] : newSelected;
+    });
   };
 
   const handleSortToggle = (sortId: string) => {
@@ -108,7 +117,7 @@ export const OrganiserTransactionsScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <TextDs size={14} weight="regular" color="primary" style={styles.title}>
+          <TextDs size={16} weight="bold" color="primary" style={styles.title}>
             Transactions
           </TextDs>
 
@@ -119,7 +128,7 @@ export const OrganiserTransactionsScreen: React.FC = () => {
               selectedIds={selectedSports}
               onToggle={handleSportToggle}
               align="left"
-              isMultiSelect={false}
+              isMultiSelect={true}
             />
             <FilterDropdown
               label="Sort By"
