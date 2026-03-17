@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ChevronDown } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation';
@@ -43,8 +44,16 @@ export const OrganiserMembersScreen: React.FC = () => {
     return id && id !== 'all' ? sportsOptions.find((o) => o.id === id)?.value : undefined;
   }, [selectedSports]);
 
+  const periodToApiMap: Record<string, string> = {
+    'all-time': 'lifetime',
+    'today': 'today',
+    'this-week': 'lastWeek',
+    'this-month': 'thisMonth',
+    'last-6-months': '6months',
+  };
+
   const { data, isLoading } = useOrganiserMembers(1, 50, {
-    period: selectedPeriod,
+    period: periodToApiMap[selectedPeriod] || 'lifetime',
     sport: activeSport,
   });
 
@@ -75,6 +84,40 @@ export const OrganiserMembersScreen: React.FC = () => {
 
   const filteredMembers = useMemo(() => {
     let filtered = [...members];
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+    // Filter by period (Ranges)
+    if (selectedPeriod !== 'all-time') {
+      let startDate: Date = todayStart;
+      let endDate: Date = todayEnd;
+      
+      if (selectedPeriod === 'today') {
+        startDate = todayStart;
+        endDate = todayEnd;
+      } else if (selectedPeriod === 'this-week') {
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday
+        startDate = new Date(now.getFullYear(), now.getMonth(), diff);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = todayEnd;
+      } else if (selectedPeriod === 'this-month') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = todayEnd;
+      } else if (selectedPeriod === 'last-6-months') {
+        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        endDate = todayEnd;
+      }
+
+      filtered = filtered.filter(m => {
+        const lastBookedAt = m.lastBookedAt ?? (m as any).last_booked_at;
+        if (!lastBookedAt) return false;
+        const bookingDate = new Date(lastBookedAt);
+        return bookingDate >= startDate && bookingDate <= endDate;
+      });
+    }
 
     // Sports filter is applied via API (period + sport params)
     // Client-side filter by member.sports if API returns it
@@ -110,7 +153,7 @@ export const OrganiserMembersScreen: React.FC = () => {
     }
 
     return filtered;
-  }, [members, selectedSortBy, selectedSports, sportsOptions]);
+  }, [members, selectedSortBy, selectedSports, sportsOptions, selectedPeriod]);
 
   const totalCount = filteredMembers.length;
 
@@ -128,7 +171,7 @@ export const OrganiserMembersScreen: React.FC = () => {
         >
           <Card style={styles.headerCard}>
             <FlexView flexDirection="row" alignItems="center" justifyContent="space-between">
-              <TextDs size={14} weight="regular" color="black">
+              <TextDs size={14} weight="bold" color="black">
                 Total Members
               </TextDs>
               <TouchableOpacity
@@ -136,12 +179,13 @@ export const OrganiserMembersScreen: React.FC = () => {
                 onPress={() => setIsPeriodPickerVisible(true)}
                 activeOpacity={0.8}
               >
-                <TextDs size={14} weight="regular" color="black">
+                <TextDs size={12} weight="regular" color="blueGray">
                   {periodOptions.find((opt) => opt.value === selectedPeriod)?.label || 'All Time'}
                 </TextDs>
+                <ChevronDown size={14} color={colors.text.blueGray} />
               </TouchableOpacity>
             </FlexView>
-            <TextDs size={14} weight="regular" color="blueGray">
+            <TextDs size={20} weight="bold" color="blueGray">
               {totalCount}
             </TextDs>
           </Card>

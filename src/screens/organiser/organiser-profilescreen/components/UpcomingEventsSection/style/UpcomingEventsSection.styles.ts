@@ -13,6 +13,16 @@ export const styles = StyleSheet.create({
   },
   eventsList: {
     gap: spacing.base,
+    marginTop: spacing.sm,
+  },
+  dateGroup: {
+    marginBottom: spacing.lg,
+  },
+  dateLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
 });
 

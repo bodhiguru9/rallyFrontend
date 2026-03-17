@@ -64,14 +64,19 @@ export const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   emiratesUpdateButton: {
-    backgroundColor: '#64B5F6',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    backgroundColor: '#F5f5f5',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emiratesUpdateButtonText: {
     ...getFontStyle(12, 'semibold'),
-    color: colors.text.white,
+    color: 'blueGray',
   },
   emiratesRow: {
     flexDirection: 'row',

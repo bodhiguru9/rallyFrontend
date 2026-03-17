@@ -112,19 +112,24 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
   }, [filterOptionsData]);
 
   const eventTypeOptions = useMemo(() => {
-    const defaultTypes = ['Social', 'Competitive', 'Training', 'Tournament'];
     const backendTypes = filterOptionsData?.eventTypes || [];
-    const combinedTypes = [...defaultTypes];
-    backendTypes.forEach(bt => {
-      if (!combinedTypes.some(ct => ct.toLowerCase() === bt.toLowerCase())) {
-        combinedTypes.push(bt);
-      }
-    });
 
-    const mappedTypes = combinedTypes.map((type, index) => ({
+    const getEventIcon = (eventType: string): string | undefined => {
+      const eventTypeLower = eventType.toLowerCase().replace(/\s+/g, '');
+      const iconMap: Record<string, string> = {
+        'tournament': 'tournamentIcon',
+        'social': 'socialIcon',
+        'class': 'classIcon',
+        'training': 'trainingIcon',
+      };
+      return iconMap[eventTypeLower];
+    };
+
+    const mappedTypes = backendTypes.map((type, index) => ({
       id: `event-type-${index}`,
       label: type,
       value: type.toLowerCase(),
+      icon: getEventIcon(type),
     }));
 
     return [
@@ -182,6 +187,39 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
   const filteredEvents = useMemo(() => {
     let filtered = [...events];
 
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+    // Filter by period
+    if (selectedPeriod !== 'all-time') {
+      let startDate: Date = todayStart;
+      let endDate: Date = todayEnd;
+      
+      if (selectedPeriod === 'today') {
+        startDate = todayStart;
+        endDate = todayEnd;
+      } else if (selectedPeriod === 'this-week') {
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday
+        startDate = new Date(now.getFullYear(), now.getMonth(), diff);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = todayEnd;
+      } else if (selectedPeriod === 'this-month') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = todayEnd;
+      } else if (selectedPeriod === 'last-6-months') {
+        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        endDate = todayEnd;
+      }
+
+      filtered = filtered.filter(event => {
+        if (!event.eventDateTime) return false;
+        const eventDate = new Date(event.eventDateTime);
+        return eventDate >= startDate && eventDate <= endDate;
+      });
+    }
+
     // Filter by sports
     const activeSports = selectedSports.filter(id => id !== 'all-sports');
     if (activeSports.length > 0) {
@@ -191,23 +229,24 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
         ),
       );
     }
- 
+
     // Filter by event type
     const activeEventTypes = selectedEventTypes.filter(id => id !== 'all-event-types');
     if (activeEventTypes.length > 0) {
       filtered = filtered.filter((event) => {
         const eventTypeLower = event.eventType?.toLowerCase() || '';
-        return eventTypeOptions.some(opt => 
+        return eventTypeOptions.some(opt =>
           activeEventTypes.includes(opt.id) && opt.label.toLowerCase() === eventTypeLower
         );
       });
     }
 
     // Filter by date (include recurring events that occur on the selected date)
+    // Only apply date filter if not showing "All Time" or if a date is explicitly selected
     const selectedDate = dateFilters.find((f) => f.isSelected)?.fullDate;
-    if (selectedDate) {
+    if (selectedDate && (selectedPeriod === 'all-time' || selectedPeriod === 'today')) {
       const selectedDateObj = /^\d{4}-\d{2}-\d{2}$/.test(selectedDate)
-        ? (() => { const [y,m,d]=selectedDate.split('-').map(Number); return new Date(y,m-1,d); })()
+        ? (() => { const [y, m, d] = selectedDate.split('-').map(Number); return new Date(y, m - 1, d); })()
         : new Date(selectedDate);
       filtered = filtered
         .filter((event) => {
@@ -216,10 +255,10 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
           if (isRecurring) {
             return isRecurringEventOnDate(event, selectedDateObj);
           }
-        const eventDate = new Date(event.eventDateTime);
-        const eDateStr = `${eventDate.getFullYear()}-${String(eventDate.getMonth()+1).padStart(2,'0')}-${String(eventDate.getDate()).padStart(2,'0')}`;
-        const selDateStr = selectedDate.startsWith('2') ? selectedDate.split('T')[0].split(' ')[0] : selectedDate;
-        return eDateStr === selDateStr;
+          const eventDate = new Date(event.eventDateTime);
+          const eDateStr = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
+          const selDateStr = selectedDate.startsWith('2') ? selectedDate.split('T')[0].split(' ')[0] : selectedDate;
+          return eDateStr === selDateStr;
         })
         .map((event) => {
           const isRecurring = event.eventFrequency && event.eventFrequency.length > 0 && event.eventFrequency[0] !== 'custom';
@@ -250,7 +289,7 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
     }
 
     return filtered;
-  }, [events, selectedSports, selectedEventTypes, selectedSortBy, dateFilters]);
+  }, [events, selectedSports, selectedEventTypes, selectedSortBy, dateFilters, selectedPeriod]);
 
   const handleEventPress = (eventId: string) => {
     navigation.navigate('OrganiserAnalyticsEventDetails', { eventId });
@@ -271,7 +310,7 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
           >
             <Card style={styles.headerCard}>
               <FlexView flexDirection="row" alignItems="center" justifyContent="space-between">
-                <TextDs size={14} weight="semibold" color="black">
+                <TextDs size={14} weight="bold" color="black">
                   Events Hosted
                 </TextDs>
                 <TouchableOpacity
@@ -285,7 +324,7 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
                   <ChevronDown size={14} color={colors.text.blueGray} />
                 </TouchableOpacity>
               </FlexView>
-              <TextDs size={14} weight="regular" color="blueGray">
+              <TextDs size={20} weight="bold" color="blueGray">
                 {totalCount}
               </TextDs>
             </Card>
@@ -333,7 +372,7 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
                     id={event.eventId}
                     event={event as any}
                     onPress={handleEventPress}
-                    onBookmark={() => {}}
+                    onBookmark={() => { }}
                     showRevenue
                   />
                 ))
@@ -370,6 +409,9 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
                 onPress={() => {
                   setSelectedPeriod(option.value);
                   setIsPeriodPickerVisible(false);
+                  if (option.value === 'all-time') {
+                    setDateFilters(prev => prev.map(f => ({ ...f, isSelected: false })));
+                  }
                 }}
                 activeOpacity={0.7}
               >

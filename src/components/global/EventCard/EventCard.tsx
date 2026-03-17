@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { TouchableOpacity, Image, StyleSheet, View } from 'react-native';
 import { Users } from 'lucide-react-native';
 import { colors, spacing, borderRadius, avatarSize } from '@theme';
@@ -16,19 +16,18 @@ import { Subtitle } from '../Subtitle';
 import { ParticipantProfiles } from '@designSystem/materials';
 import { MembersModal } from '@screens/event-details/MembersModal';
 import type { EventStatusBadgeVariant } from '@components/global/event-status-badge/EventStatusBadge.types';
-import type { EventData } from '@app-types';
+import type { EventData, EventParticipant } from '@app-types';
 import type { PlayerBooking } from '@services/booking-service';
-import { ENV } from '@config/env';
 import { resolveImageUri } from '@utils/image-utils';
 import { useEvent } from '@hooks/use-events';
 import { useAuthStore } from '@store/auth-store';
-
-
+import { images } from '@assets/images';
+import { logger } from '@dev-tools/logger';
 function getStatusBadgeVariant(event: EventData | PlayerBooking): EventStatusBadgeVariant {
   const booking = 'booking' in event ? event.booking : undefined;
   const now = new Date();
-  const eventDate = new Date(event.eventDateTime);
-  const isPastEvent = eventDate < now;
+  const eventDateTime = event.eventDateTime ? new Date(event.eventDateTime) : null;
+  const isPastEvent = eventDateTime ? eventDateTime < now : false;
 
   // 1. Cancelled (booking-level or event-level)
   if (booking?.bookingStatus === 'cancelled' || event.eventStatus === 'cancelled') {
@@ -37,12 +36,12 @@ function getStatusBadgeVariant(event: EventData | PlayerBooking): EventStatusBad
 
   // 2. Request Rejected
   const approvalStatus = event.approvalStatus;
-  const isRejected = event.isRejected;
+  const isRejected = (event as any).isRejected;
   if (approvalStatus === 'rejected' || isRejected === true) {
     return 'request-rejected';
   }
 
-  // 3. Payment pending
+  // 3. Payment pending (if applicable)
   const paymentStatus =
     'payment' in event && event.payment && 'paymentStatus' in event.payment
       ? String((event.payment as { paymentStatus: string }).paymentStatus).toLowerCase()
@@ -51,8 +50,8 @@ function getStatusBadgeVariant(event: EventData | PlayerBooking): EventStatusBad
     return 'payment-pending';
   }
 
-  // 4. Pending approval (private-event join request awaiting host)
-  if (('isPending' in event && event.isPending) || approvalStatus === 'pending') {
+  // 4. Pending approval
+  if (('isPending' in event && (event as any).isPending) || approvalStatus === 'pending') {
     return 'pending-approval';
   }
 
@@ -85,9 +84,11 @@ function getStatusBadgeVariant(event: EventData | PlayerBooking): EventStatusBad
     } catch { /* ignore parse errors */ }
   }
 
-  // 6. Default
+  // 7. Default
   return 'going';
 }
+
+// Removed hardcoded EVENT_FALLBACK_IMAGE
 
 export const EventCard: React.FC<EventCardProps> = ({
   id,
@@ -103,12 +104,13 @@ export const EventCard: React.FC<EventCardProps> = ({
 }) => {
   const user = useAuthStore((state) => state.user);
   const [isMembersModalVisible, setIsMembersModalVisible] = useState(false);
+  const [imageSource, setImageSource] = useState<any>(null);
 
   const isPlayerBooking = 'booking' in event;
   const hasParticipants = (event as EventData).participants && (event as EventData).participants!.length > 0;
 
   const { data: fullEvent } = useEvent(id, {
-    enabled: isMembersModalVisible && isPlayerBooking && !hasParticipants,
+    enabled: isMembersModalVisible && (!hasParticipants || (event as EventData).eventMaxGuest == null),
     forPlayer: true,
     allowPrivate: true,
   });
@@ -191,16 +193,93 @@ export const EventCard: React.FC<EventCardProps> = ({
 
   const EventTypeIcon = (eventTypeIconMap[eventTypeKey] ?? 'socialColor') as any;
   // Get event image: eventImages, gameImages, eventImage (singular), then organizer profile
+  const isOrganiserUser = user?.userType === 'organiser';
+
   const rawEventImage =
     event.eventImages?.[0] ??
     (event as EventData).gameImages?.[0] ??
     (event as any).eventImage;
-  const organizerProfilePic = (event as EventData).eventCreatorProfilePic || event.creator?.profilePic;
-  
-  const displayImage =
-    resolveImageUri(rawEventImage) ??
-    resolveImageUri(organizerProfilePic) ??
-    'https://via.placeholder.com/150?text=Event';
+
+  // Find organiser in participants if creator is missing (common in lists)
+  const creatorFromParticipants = useMemo(() => {
+    if (event.creator) return null;
+    const participants = (event as any).participants as EventParticipant[] | undefined;
+    return participants?.find((p: EventParticipant) => 
+      p.userType === 'organiser' || 
+      (p as any).isOrganiser || 
+      p.userId === (event as any).organiserId
+    );
+  }, [event, event.creator]);
+
+  const organizerProfilePic = useMemo(() => {
+    // 1. If current user is organiser, use THEIR profile pic (user request)
+    if (isOrganiserUser && user?.profilePic) {
+      return user.profilePic;
+    }
+
+    // 2. Otherwise use event creator/organiser pic
+    return (
+      (event as EventData).eventCreatorProfilePic || 
+      event.creator?.profilePic || 
+      creatorFromParticipants?.profilePic ||
+      (event as any).organiser_profile_pic ||
+      (event as any).creator_pic ||
+      (event as any).organizerProfilePic
+    );
+  }, [isOrganiserUser, user?.profilePic, event, creatorFromParticipants]);
+
+  const eventImageUri = resolveImageUri(rawEventImage);
+  const organizerImageUri = resolveImageUri(organizerProfilePic);
+
+  // Cascading fallback logic: Event Image -> Organiser Profile Pic -> Rally Logo
+  useEffect(() => {
+    console.log('🖼️ [EventCard] DEBUG DATA', {
+      id,
+      eventName: event.eventName,
+      isOrganiserUser,
+      userProfilePic: user?.profilePic,
+      hasEventImages: !!event.eventImages?.length,
+      rawEventImage,
+      organizerProfilePic,
+      eventImageUri,
+      organizerImageUri,
+      hasCreator: !!event.creator,
+      hasParticipants: !!(event as any).participants?.length,
+      foundCreatorInParts: !!creatorFromParticipants,
+    });
+    
+    if (eventImageUri) {
+      setImageSource({ uri: eventImageUri });
+    } else if (organizerImageUri) {
+      setImageSource({ uri: organizerImageUri });
+    } else {
+      setImageSource(images.blackLogo);
+    }
+  }, [id, eventImageUri, organizerImageUri]);
+
+  const handleImageError = () => {
+    const currentUri = (imageSource as any)?.uri;
+    logger.warn('❌ [EventCard] Image load failed', {
+      eventId: id,
+      eventName: event.eventName,
+      failedUri: currentUri,
+      isEventImage: currentUri === eventImageUri,
+      isOrganizerImage: currentUri === organizerImageUri,
+    });
+
+    // If event image failed, try organiser pic
+    if (currentUri === eventImageUri) {
+      if (organizerImageUri && organizerImageUri !== eventImageUri) {
+        setImageSource({ uri: organizerImageUri });
+      } else {
+        setImageSource(images.blackLogo);
+      }
+    }
+    // If organiser pic failed (or was already being used), fallback to Rally logo
+    else if (currentUri === organizerImageUri) {
+      setImageSource(images.blackLogo);
+    }
+  };
 
   return (
     <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.9}>
@@ -208,7 +287,12 @@ export const EventCard: React.FC<EventCardProps> = ({
         <FlexView flexDirection="row" width="100%" gap={spacing.sm}>
           {/* Left Section - Event Image */}
           <FlexView style={styles.imageContainer}>
-            <Image source={{ uri: displayImage }} style={styles.image} resizeMode="cover" />
+            <Image
+              source={imageSource || images.blackLogo}
+              style={styles.image}
+              resizeMode="cover"
+              onError={handleImageError}
+            />
             {showStatus && (
               <EventStatusBadge variant={getStatusBadgeVariant(event)} />
             )}
@@ -361,12 +445,12 @@ export const EventCard: React.FC<EventCardProps> = ({
           'Unknown Organizer'
         }
         participants={(() => {
-          const bookedGuests = 
-            (eventToDisplay as any).eventTotalAttendNumber ?? 
-            (eventToDisplay as any).booking?.guestsCount ?? 
-            (eventToDisplay as any).booking?.guests ?? 
-            (eventToDisplay as any).guestsCount ?? 
-            (eventToDisplay as any).guests ?? 
+          const bookedGuests =
+            (eventToDisplay as any).eventTotalAttendNumber ??
+            (eventToDisplay as any).booking?.guestsCount ??
+            (eventToDisplay as any).booking?.guests ??
+            (eventToDisplay as any).guestsCount ??
+            (eventToDisplay as any).guests ??
             1;
 
 

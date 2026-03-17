@@ -48,10 +48,11 @@ export const calculateSpotsFilled = (
   currentUserId?: number,
   guestsCountState?: number
 ): number => {
-  const rawParticipants = event.participants || [];
+  const participants = event.participants || [];
+  const aggregateCount = event.eventTotalAttendNumber ?? event.spotsInfo?.spotsBooked ?? 0;
 
-  if (rawParticipants.length > 0) {
-    return rawParticipants.reduce((sum, p) => {
+  if (participants.length > 0) {
+    const participantsListCount = participants.reduce((sum, p) => {
       if (isCancelled(p)) return sum;
       if (hasPaymentPending(p)) return sum;
 
@@ -62,7 +63,8 @@ export const calculateSpotsFilled = (
       }
       return sum + pCount;
     }, 0);
+    return Math.max(participantsListCount, aggregateCount);
   }
 
-  return event.eventTotalAttendNumber ?? event.spotsInfo?.spotsBooked ?? 0;
+  return aggregateCount;
 };

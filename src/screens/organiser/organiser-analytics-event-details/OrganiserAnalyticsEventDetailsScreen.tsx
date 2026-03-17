@@ -12,9 +12,9 @@ import { useEvent } from '@hooks/use-events';
 import { colors, spacing } from '@theme';
 import { formatDate, formatBookingSlot, shareEvent, calculateSpotsFilled } from '@utils';
 import { eventService } from '@services/event-service';
-import { Map } from 'lucide-react-native';
 import { styles } from './style/OrganiserAnalyticsEventDetailsScreen.styles';
 import { styles as eventStyles } from '@screens/event-details/style/EventDetailsScreen.styles';
+import { EventDetailsMap } from '@screens/event-details/components/event-details-map/EventDetailsMap';
 
 type ScreenRouteProp = NativeStackScreenProps<
   RootStackParamList,
@@ -144,10 +144,12 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
                 <TextDs style={eventStyles.infoText}>{event.eventLocation ?? ''}</TextDs>
               </FlexView>
               <FlexView style={eventStyles.mapContainer}>
-                <FlexView style={eventStyles.mapPlaceholder}>
-                  <Map size={40} color={colors.text.tertiary} />
-                  <TextDs style={eventStyles.mapText}>Map View</TextDs>
-                </FlexView>
+                <EventDetailsMap
+                  style={eventStyles.mapContainer}
+                  latitude={event.eventLatitude}
+                  longitude={event.eventLongitude}
+                  address={event.eventLocation}
+                />
               </FlexView>
             </FlexView>
           </>
