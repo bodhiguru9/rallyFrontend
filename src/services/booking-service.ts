@@ -67,6 +67,7 @@ export interface PlayerBooking {
   eventDateTime: string;
   eventEndDateTime?: string | null;
   eventFrequency: string[];
+  eventFrequencyEndDate?: string | null;
   eventLocation: string;
   eventDescription: string;
   eventGender: EventGender;

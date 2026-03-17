@@ -29,6 +29,8 @@ import {
 } from '@hooks/use-events';
 import { getDateFilters } from '@screens/home/context/Home.data';
 import { useHome } from '@screens/home/context/Home.context';
+import { expandRecurringEvents } from '@utils/recurrence-utils';
+import { parseLocalDate } from '@utils/date-utils';
 
 // Types
 import type { DateFilter as DateFilterType } from '@screens/home/Home.types';
@@ -390,13 +392,19 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
     [dateFilters],
   );
 
+  const dateRangeStrings = useMemo(
+    () => dateFilters.map(f => f.fullDate).filter((d): d is string => !!d),
+    [dateFilters],
+  );
+
   const filteredEvents = useMemo(() => {
-    let filtered = allEvents;
+    const expanded = expandRecurringEvents(allEvents, dateRangeStrings);
+    let filtered = expanded;
 
     if (selectedDateFullDate) {
+      const d2 = parseLocalDate(selectedDateFullDate);
       filtered = filtered.filter(event => {
         const d1 = new Date(event.eventDateTime);
-        const d2 = new Date(selectedDateFullDate);
         return (
           d1.getFullYear() === d2.getFullYear() &&
           d1.getMonth() === d2.getMonth() &&
@@ -431,7 +439,7 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
     }
 
     return filtered;
-  }, [allEvents, selectedDateFullDate, selectedSportsValues, selectedEventTypeValues, selectedLocationValues, selectedPriceValues]);
+  }, [allEvents, dateRangeStrings, selectedDateFullDate, selectedSportsValues, selectedEventTypeValues, selectedLocationValues, selectedPriceValues]);
 
   const eventsByDate = useMemo(() => {
     const grouped: Record<string, EventData[]> = {};

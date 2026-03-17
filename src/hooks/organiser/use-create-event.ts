@@ -38,6 +38,7 @@ export const useCreateOrganiserEvent = () => {
     registrationPolicy: '',
     saveToDrafts: false,
     frequency: [],
+    frequencyEndDate: null,
     eventDisallow: undefined,
     eventApprovalRequired: undefined,
   });
@@ -87,6 +88,7 @@ export const useCreateOrganiserEvent = () => {
       registrationPolicy: '',
       saveToDrafts: false,
       frequency: [],
+      frequencyEndDate: null,
       eventDisallow: undefined,
       eventApprovalRequired: undefined,
       restrictions: undefined,
@@ -196,7 +198,10 @@ export const useCreateOrganiserEvent = () => {
       eventApprovalReq: formData.approvalRequired,
       eventRegistrationStartTime: formatDateForAPI(formData.registrationStartTime),
       eventRegistrationEndTime: formatDateForAPI(formData.registrationEndTime),
-      eventFrequency: formData.frequency || [],
+      eventFrequency: (formData.frequency || []).filter(
+        (f) => f !== 'ends' && !/^\d{4}-\d{2}-\d{2}$/.test(f),
+      ),
+      eventFrequencyEndDate: formData.frequencyEndDate || undefined,
       eventDisallow: formData.eventDisallow,
       eventApprovalRequired: formData.eventApprovalRequired,
       policyJoind: formData.registrationPolicy || undefined,

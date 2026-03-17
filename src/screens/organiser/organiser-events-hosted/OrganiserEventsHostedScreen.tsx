@@ -16,9 +16,10 @@ import { useAuthStore } from '@store/auth-store';
 import { useFilterOptions } from '@hooks';
 import { colors, spacing } from '@theme';
 import { styles } from './style/OrganiserEventsHostedScreen.styles';
-import { getDateFilters } from '@screens/home/context/Home.data';
+import { generateDateFilters } from '@utils/date-utils';
 import type { DateFilter as DateFilterType } from '@screens/home/Home.types';
 import { ChevronDown } from 'lucide-react-native';
+import { isRecurringEventOnDate, getRecurringEventInstanceDateTime } from '@utils/recurrence-utils';
 
 type TNavigation = NativeStackNavigationProp<RootStackParamList, 'OrganiserEventsHosted'>;
 
@@ -33,7 +34,10 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
   const [selectedSports, setSelectedSports] = useState<string[]>(['all-sports']);
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>(['all-event-types']);
   const [selectedSortBy, setSelectedSortBy] = useState<string[]>(['most-recent']);
-  const [dateFilters, setDateFilters] = useState<DateFilterType[]>(getDateFilters());
+  const [dateFilters, setDateFilters] = useState<DateFilterType[]>(() => {
+    const today = new Date();
+    return generateDateFilters(today, 30);
+  });
 
   const periodOptions = [
     { label: 'All Time', value: 'all-time' },
@@ -199,14 +203,31 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
       });
     }
 
-    // Filter by date
+    // Filter by date (include recurring events that occur on the selected date)
     const selectedDate = dateFilters.find((f) => f.isSelected)?.fullDate;
     if (selectedDate) {
-      filtered = filtered.filter((event) => {
-        if (!event.eventDateTime) return false;
-        const eDate = event.eventDateTime.split('T')[0];
-        return eDate === selectedDate;
-      });
+      const selectedDateObj = /^\d{4}-\d{2}-\d{2}$/.test(selectedDate)
+        ? (() => { const [y,m,d]=selectedDate.split('-').map(Number); return new Date(y,m-1,d); })()
+        : new Date(selectedDate);
+      filtered = filtered
+        .filter((event) => {
+          if (!event.eventDateTime) return false;
+          const isRecurring = event.eventFrequency && event.eventFrequency.length > 0 && event.eventFrequency[0] !== 'custom';
+          if (isRecurring) {
+            return isRecurringEventOnDate(event, selectedDateObj);
+          }
+        const eventDate = new Date(event.eventDateTime);
+        const eDateStr = `${eventDate.getFullYear()}-${String(eventDate.getMonth()+1).padStart(2,'0')}-${String(eventDate.getDate()).padStart(2,'0')}`;
+        const selDateStr = selectedDate.startsWith('2') ? selectedDate.split('T')[0].split(' ')[0] : selectedDate;
+        return eDateStr === selDateStr;
+        })
+        .map((event) => {
+          const isRecurring = event.eventFrequency && event.eventFrequency.length > 0 && event.eventFrequency[0] !== 'custom';
+          if (isRecurring && isRecurringEventOnDate(event, selectedDateObj)) {
+            return { ...event, eventDateTime: getRecurringEventInstanceDateTime(event, selectedDateObj) };
+          }
+          return event;
+        });
     }
 
     // Sort events

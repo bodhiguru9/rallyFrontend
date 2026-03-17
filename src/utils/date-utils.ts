@@ -415,6 +415,31 @@ export const getDateDifference = (
 };
 
 // ============================================================================
+// LOCAL DATE HELPERS (Timezone-safe for recurring events)
+// ============================================================================
+
+/**
+ * Get YYYY-MM-DD from a date in local timezone (avoids UTC shift issues).
+ */
+export const toLocalDateString = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+/**
+ * Parse a date string to local Date. Handles YYYY-MM-DD as local date (not UTC midnight).
+ */
+export const parseLocalDate = (str: string): Date => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  return new Date(str);
+};
+
+// ============================================================================
 // DATE FILTER GENERATION (For DateFilter component)
 // ============================================================================
 
@@ -459,7 +484,7 @@ export const generateDateFilters = (
       day: date.toLocaleDateString('en-US', { weekday: 'short' }),
       month: date.toLocaleDateString('en-US', { month: 'short' }),
       isSelected: selectedDate !== undefined ? dateNum === selectedDate : false,
-      fullDate: date.toISOString(),
+      fullDate: toLocalDateString(date),
     });
   }
 

@@ -105,6 +105,8 @@ export interface EventData extends BaseEntity {
   eventDateTime: string;
   eventEndDateTime?: string | null;
   eventFrequency: string[];
+  /** Recurrence end date (YYYY-MM-DD) when "Ends On" is selected; undefined = never ends */
+  eventFrequencyEndDate?: string | null;
   eventLocation: string;
   eventDescription: string;
   eventGender: EventGender;

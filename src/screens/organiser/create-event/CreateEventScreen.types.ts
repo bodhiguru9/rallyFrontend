@@ -21,6 +21,8 @@ export interface CreateEventFormData {
   registrationPolicy: string;
   saveToDrafts: boolean;
   frequency?: string[];
+  /** Recurrence end date (YYYY-MM-DD) when "Ends On" is selected; null when "Never" */
+  frequencyEndDate?: string | null;
   /** Sent as eventDisallow in create event API */
   eventDisallow?: boolean;
   /** Sent as eventApprovalRequired in create event API */

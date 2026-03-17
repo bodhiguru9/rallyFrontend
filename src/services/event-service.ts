@@ -178,6 +178,8 @@ export const eventService = {
     eventRegistrationStartTime?: string;
     eventRegistrationEndTime?: string;
     eventFrequency?: string[];
+    /** Recurrence end date (YYYY-MM-DD) when "Ends On" is selected */
+    eventFrequencyEndDate?: string;
     eventDisallow?: boolean;
     eventApprovalRequired?: boolean;
     /** Registration policy option value (e.g. before-event, until-start, no-restrictions) */
@@ -221,7 +223,13 @@ export const eventService = {
       formData.append('eventRegistrationEndTime', eventData.eventRegistrationEndTime);
     }
     if (eventData.eventFrequency != null && eventData.eventFrequency.length > 0) {
-      formData.append('eventFrequency', JSON.stringify(eventData.eventFrequency));
+      // Append each element separately so backend receives an array. FormData sends strings;
+      // JSON.stringify produces a string that fails "must be array" validation. Use repeated
+      // keys (or eventFrequency[]) so the backend parser builds a string[].
+      eventData.eventFrequency.forEach((f) => formData.append('eventFrequency[]', f));
+    }
+    if (eventData.eventFrequencyEndDate != null && eventData.eventFrequencyEndDate !== '') {
+      formData.append('eventFrequencyEndDate', eventData.eventFrequencyEndDate);
     }
     if (eventData.eventDisallow != null) {
       formData.append('eventDisallow', String(eventData.eventDisallow));

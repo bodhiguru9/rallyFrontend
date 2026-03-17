@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Modal, TouchableOpacity, ScrollView, TextInput } from 'react-native';
-import { Calendar, Check } from 'lucide-react-native';
+import { Calendar, Check, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { FlexView, TextDs } from '@components';
 import type { FrequencyModalProps, FrequencySelection } from './FrequencyModal.types';
 import { styles } from './FrequencyModal.styles';
+import { colors } from '@theme';
 
 /** Day labels per Figma: S=Sun, M=Mon, T=Tue, W=Wed, T=Thu, F=Fri, S=Sat */
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const DAYS_OF_WEEK = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
 
 export const FrequencyModal: React.FC<FrequencyModalProps> = ({
   visible,
@@ -29,18 +35,31 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
   const [customValue, setCustomValue] = useState(
     initialFrequency?.customValue ?? '',
   );
+  const [showEndDateCalendar, setShowEndDateCalendar] = useState(false);
+  const [endDateCalendarMonth, setEndDateCalendarMonth] = useState(
+    () => (initialFrequency?.ends !== 'never' && typeof initialFrequency?.ends === 'object'
+      ? initialFrequency.ends.on.getMonth()
+      : new Date().getMonth()),
+  );
+  const [endDateCalendarYear, setEndDateCalendarYear] = useState(
+    () => (initialFrequency?.ends !== 'never' && typeof initialFrequency?.ends === 'object'
+      ? initialFrequency.ends.on.getFullYear()
+      : new Date().getFullYear()),
+  );
 
   useEffect(() => {
     if (visible && initialFrequency) {
       setWeeklyDays(initialFrequency.weeklyDays ?? []);
       setEndsNever(initialFrequency.ends === 'never');
-      setEndsOnDate(
-        initialFrequency.ends !== 'never' && typeof initialFrequency.ends === 'object'
-          ? initialFrequency.ends.on
-          : new Date(),
-      );
+      const onDate = initialFrequency.ends !== 'never' && typeof initialFrequency.ends === 'object'
+        ? initialFrequency.ends.on
+        : new Date();
+      setEndsOnDate(onDate);
+      setEndDateCalendarMonth(onDate.getMonth());
+      setEndDateCalendarYear(onDate.getFullYear());
       setShowCustom(!!initialFrequency.customValue);
       setCustomValue(initialFrequency.customValue ?? '');
+      setShowEndDateCalendar(false);
     }
   }, [visible, initialFrequency]);
 
@@ -51,6 +70,49 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
         : [...prev, dayIndex].sort((a, b) => a - b),
     );
   };
+
+  const getDaysInMonth = (month: number, year: number) =>
+    new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (month: number, year: number) =>
+    new Date(year, month, 1).getDay();
+
+  const handleEndDatePrevMonth = () => {
+    if (endDateCalendarMonth === 0) {
+      setEndDateCalendarMonth(11);
+      setEndDateCalendarYear((y) => y - 1);
+    } else {
+      setEndDateCalendarMonth((m) => m - 1);
+    }
+  };
+
+  const handleEndDateNextMonth = () => {
+    if (endDateCalendarMonth === 11) {
+      setEndDateCalendarMonth(0);
+      setEndDateCalendarYear((y) => y + 1);
+    } else {
+      setEndDateCalendarMonth((m) => m + 1);
+    }
+  };
+
+  const handleEndDateSelect = (day: number) => {
+    const newDate = new Date(endDateCalendarYear, endDateCalendarMonth, day);
+    setEndsOnDate(newDate);
+    setShowEndDateCalendar(false);
+  };
+
+  const endDateCalendarDays = useMemo(() => {
+    const daysInMonth = getDaysInMonth(endDateCalendarMonth, endDateCalendarYear);
+    const firstDay = getFirstDayOfMonth(endDateCalendarMonth, endDateCalendarYear);
+    const days: (number | null)[] = [];
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let d = 1; d <= daysInMonth; d++) days.push(d);
+    return days;
+  }, [endDateCalendarMonth, endDateCalendarYear]);
+
+  const isEndDateDaySelected = (day: number) =>
+    endsOnDate.getDate() === day &&
+    endsOnDate.getMonth() === endDateCalendarMonth &&
+    endsOnDate.getFullYear() === endDateCalendarYear;
 
   const handleDone = () => {
     const selection: FrequencySelection = {
@@ -151,18 +213,73 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
                 </TouchableOpacity>
               </FlexView>
               {!endsNever && (
-                <TouchableOpacity
-                  style={styles.endsDateRow}
-                  onPress={() => {}}
-                  activeOpacity={0.7}
-                >
-                  <FlexView style={styles.endsDateButton}>
+                <FlexView style={styles.endsDateRow}>
+                  <TouchableOpacity
+                    style={styles.endsDateButton}
+                    onPress={() => setShowEndDateCalendar((v) => !v)}
+                    activeOpacity={0.7}
+                  >
                     <Calendar size={18} color="#3D6F92" />
                     <TextDs style={styles.endsDateText}>
                       {formatEndDate(endsOnDate)}
                     </TextDs>
-                  </FlexView>
-                </TouchableOpacity>
+                  </TouchableOpacity>
+                  {showEndDateCalendar && (
+                    <FlexView style={styles.endsDateCalendar}>
+                      <FlexView style={styles.endsDateCalendarHeader}>
+                        <TextDs size={14} weight="medium">
+                          {MONTHS[endDateCalendarMonth]} {endDateCalendarYear}
+                        </TextDs>
+                        <FlexView flexDirection="row" alignItems="center" style={styles.endsDateCalendarNav}>
+                          <TouchableOpacity
+                            onPress={handleEndDatePrevMonth}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <ChevronLeft size={22} color={colors.text.blueGray} />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={handleEndDateNextMonth}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <ChevronRight size={22} color={colors.text.blueGray} />
+                          </TouchableOpacity>
+                        </FlexView>
+                      </FlexView>
+                      <FlexView style={styles.endsDateCalendarDaysRow}>
+                        {DAYS_OF_WEEK.map((d) => (
+                          <FlexView key={d} style={styles.endsDateCalendarDayHeader}>
+                            <TextDs size={12} weight="regular" color="secondary">{d[0]}</TextDs>
+                          </FlexView>
+                        ))}
+                      </FlexView>
+                      <FlexView style={styles.endsDateCalendarGrid}>
+                        {endDateCalendarDays.map((day, idx) =>
+                          day === null ? (
+                            <FlexView key={idx} style={styles.endsDateCalendarCell} />
+                          ) : (
+                            <TouchableOpacity
+                              key={idx}
+                              style={[
+                                styles.endsDateCalendarCell,
+                                isEndDateDaySelected(day) && styles.endsDateCalendarCellSelected,
+                              ]}
+                              onPress={() => handleEndDateSelect(day)}
+                              activeOpacity={0.7}
+                            >
+                              <TextDs
+                                size={14}
+                                weight={isEndDateDaySelected(day) ? 'semibold' : 'regular'}
+                                color={isEndDateDaySelected(day) ? 'white' : 'primary'}
+                              >
+                                {day}
+                              </TextDs>
+                            </TouchableOpacity>
+                          ),
+                        )}
+                      </FlexView>
+                    </FlexView>
+                  )}
+                </FlexView>
               )}
             </FlexView>
 

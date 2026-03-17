@@ -96,9 +96,6 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.text.white,
   },
   endsDateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
     marginTop: spacing.md,
   },
   endsDateButton: {
@@ -115,6 +112,47 @@ export const styles = StyleSheet.create({
   endsDateText: {
     ...getFontStyle(14, 'regular'),
     color: colors.text.primary,
+  },
+  endsDateCalendar: {
+    marginTop: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.background.secondary,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  endsDateCalendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  endsDateCalendarNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  endsDateCalendarDaysRow: {
+    flexDirection: 'row',
+    marginBottom: spacing.xs,
+  },
+  endsDateCalendarDayHeader: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  endsDateCalendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  endsDateCalendarCell: {
+    width: '14.28%',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  endsDateCalendarCellSelected: {
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.full,
   },
   customToggle: {
     paddingVertical: spacing.md,

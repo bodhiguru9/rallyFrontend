@@ -164,6 +164,7 @@ export interface ApiEvent {
   eventSports: string[];
   eventDateTime: string;
   eventFrequency: string[];
+  eventFrequencyEndDate?: string | null;
   eventLocation: string;
   eventDescription: string;
   eventGender: string | null;
