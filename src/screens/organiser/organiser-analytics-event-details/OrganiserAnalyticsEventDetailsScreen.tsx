@@ -4,12 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation';
+import { useQuery } from '@tanstack/react-query';
 import { IconTag } from '@components/global/IconTag';
 import { Card } from '@components/global/Card';
 import { FlexView, ImageDs, TextDs, Avatar } from '@components';
 import { useEvent } from '@hooks/use-events';
 import { colors, spacing } from '@theme';
-import { formatDate, shareEvent, calculateSpotsFilled } from '@utils';
+import { formatDate, formatBookingSlot, shareEvent, calculateSpotsFilled } from '@utils';
+import { eventService } from '@services/event-service';
 import { Map } from 'lucide-react-native';
 import { styles } from './style/OrganiserAnalyticsEventDetailsScreen.styles';
 import { styles as eventStyles } from '@screens/event-details/style/EventDetailsScreen.styles';
@@ -188,6 +190,36 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
             </Card>
           </>
         ) : (
+          <OrganiserAnalyticsMembersContent event={event} eventId={eventId} />
+        )}
+      </ScrollView>
+    </SafeAreaView >
+  );
+};
+
+const OrganiserAnalyticsMembersContent: React.FC<{ event: NonNullable<ReturnType<typeof useEvent>['data']>; eventId: string }> = ({ event, eventId }) => {
+  const eventStart = event.eventDateTime ?? (event as any).event_date_time ?? (event as any).dateTime;
+  const eventEnd = event.eventEndDateTime ?? (event as any).event_end_date_time ?? eventStart;
+  const eventBookingText = eventStart
+    ? (formatBookingSlot(eventStart, eventEnd) || formatDate(eventStart, 'display-range', { endTime: eventEnd }))
+    : null;
+
+  const participants = event.participants ?? [];
+  const { data: participantsData } = useQuery({
+    queryKey: ['event-participants', eventId],
+    queryFn: () => eventService.getEventParticipants(eventId),
+    enabled: !!eventId && participants.length > 0,
+  });
+  const joinedAtByUserId = useMemo(() => {
+    const map: { [key: number]: string } = {};
+    for (const p of participantsData?.participants ?? []) {
+      const t = (p as any).joinedAt ?? (p as any).joined_at ?? (p as any).bookedAt ?? (p as any).createdAt;
+      if (t && p.userId) map[p.userId] = t;
+    }
+    return map;
+  }, [participantsData?.participants]);
+
+  return (
           <FlexView style={styles.membersSection}>
             <FlexView style={styles.statsRow}>
               <FlexView style={[styles.statCard, styles.statCardActive]}>
@@ -238,7 +270,16 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
               Joined Players
             </TextDs>
             <FlexView style={styles.membersList}>
-              {(event.participants ?? []).map((participant) => (
+              {(event.participants ?? []).map((participant) => {
+                const p = participant as any;
+                const joinedAt = joinedAtByUserId[participant.userId] ?? p.joinedAt ?? p.joined_at ?? p.bookedAt ?? p.booking?.joinedAt;
+                const hasSlot = !!(p.slotStartTime ?? p.slot_start_time ?? p.booking?.slotStartTime);
+                const bookingText = hasSlot
+                  ? formatBookingSlot(p.slotStartTime ?? p.slot_start_time, p.slotEndTime ?? p.slot_end_time)
+                  : joinedAt
+                    ? (formatBookingSlot(joinedAt, undefined) || formatDate(joinedAt, 'display-range'))
+                    : eventBookingText;
+                return (
                 <FlexView key={participant.userId} style={styles.memberCard}>
                   <FlexView style={styles.memberRow}>
                     <Avatar
@@ -250,15 +291,15 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
                       <TextDs size={14} weight="regular" color="primary">
                         {participant.fullName}
                         {(() => {
-                          const p = participant as any;
-                          const hasTotalField = typeof p.eventTotalAttendNumber === 'number';
-                          const gCount = p.guestsCount ?? p.guests ?? p.guestCount ?? p.eventTotalAttendNumber ?? 0;
+                          const px = participant as any;
+                          const hasTotalField = typeof px.eventTotalAttendNumber === 'number';
+                          const gCount = px.guestsCount ?? px.guests ?? px.guestCount ?? px.eventTotalAttendNumber ?? 0;
                           const displayCount = hasTotalField ? gCount - 1 : gCount;
                           return displayCount > 0 ? ` (+${displayCount})` : '';
                         })()}
                       </TextDs>
                       <TextDs size={14} weight="regular" color="secondary">
-                        Joined
+                        Booked: {bookingText || eventBookingText || '—'}
                       </TextDs>
                     </FlexView>
                   </FlexView>
@@ -269,11 +310,9 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
                     </TextDs>
                   </FlexView>
                 </FlexView>
-              ))}
+                );
+              })}
             </FlexView>
           </FlexView>
-        )}
-      </ScrollView>
-    </SafeAreaView >
   );
 };

@@ -1,8 +1,46 @@
 import type { EventData, EventParticipant } from '@app-types';
 
+/** Extract guest count from participant (matches MembersTab allParticipants logic) */
+function getParticipantGuestCount(p: any): number {
+  const raw = p;
+  const flat = raw.user ? { ...raw.user, ...raw } : { ...raw };
+  const booking = raw.booking ?? raw.bookingDetails ?? {};
+  const guestCountRaw =
+    flat.guestCount ??
+    flat.guest_count ??
+    flat.guests ??
+    flat.guestsCount ??
+    flat.guests_count ??
+    booking.guestCount ??
+    booking.guest_count ??
+    booking.guests ??
+    booking.guestsCount ??
+    booking.guests_count;
+  if (typeof guestCountRaw === 'number') return guestCountRaw;
+  if (typeof flat.eventTotalAttendNumber === 'number' && flat.eventTotalAttendNumber > 1) {
+    return flat.eventTotalAttendNumber - 1;
+  }
+  if (typeof booking.eventTotalAttendNumber === 'number' && booking.eventTotalAttendNumber > 1) {
+    return booking.eventTotalAttendNumber - 1;
+  }
+  return 0;
+}
+
+/** Check if participant is cancelled (exclude from spots count) */
+function isCancelled(p: any): boolean {
+  const status = p?.bookingStatus ?? p?.booking_status ?? '';
+  return String(status).toLowerCase() === 'cancelled';
+}
+
+/** Check if participant has explicit payment pending (exclude from joined spots) */
+function hasPaymentPending(p: any): boolean {
+  const ps = String(p?.paymentStatus ?? p?.payment_status ?? '').toLowerCase();
+  return ps === 'pending' || ps.includes('pending');
+}
+
 /**
- * Calculates the total number of spots filled for an event, including guests.
- * Sums (1 + guestCount) for each participant.
+ * Calculates the total number of spots filled for an event, including guests (+1).
+ * Sums (1 + guestCount) for each joined participant. Excludes cancelled and payment-pending.
  * Fallbacks to eventTotalAttendNumber or spotsBooked if participants list is missing.
  */
 export const calculateSpotsFilled = (
@@ -10,26 +48,21 @@ export const calculateSpotsFilled = (
   currentUserId?: number,
   guestsCountState?: number
 ): number => {
-  const participants = event.participants || [];
+  const rawParticipants = event.participants || [];
 
-  if (participants.length > 0) {
-    return participants.reduce((sum, p) => {
-      // Determine guest count from possible fields
-      const gCount = (p as any).guestCount ?? (p as any).guest_count ?? 0;
+  if (rawParticipants.length > 0) {
+    return rawParticipants.reduce((sum, p) => {
+      if (isCancelled(p)) return sum;
+      if (hasPaymentPending(p)) return sum;
 
-      // If this is the current user and they have joined, we can use the local guestsCount state 
-      // if it's more up-to-date than the participant list (useful during/immediately after booking)
+      const gCount = getParticipantGuestCount(p);
       let pCount = 1 + gCount;
       if (currentUserId && p.userId === currentUserId && guestsCountState !== undefined) {
-        // If user is joined, their total group size in spots is guestsCountState
-        // (Note: in EventDetailsScreen, guestsCountState represents total people for the booking)
         pCount = Math.max(pCount, guestsCountState);
       }
-
       return sum + pCount;
     }, 0);
   }
 
-  // Fallback to aggregate fields if no participant list is available
   return event.eventTotalAttendNumber ?? event.spotsInfo?.spotsBooked ?? 0;
 };

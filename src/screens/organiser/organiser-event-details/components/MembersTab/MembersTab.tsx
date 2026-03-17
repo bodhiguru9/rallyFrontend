@@ -3,7 +3,7 @@ import { ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@components/global/Card';
 import { ProgressBar } from '@components/global/ProgressBar';
-import { colors, spacing, borderRadius } from '@theme';
+import { colors, spacing, borderRadius, withOpaqueForAndroid } from '@theme';
 import type { EventData, WaitlistEntry, EventParticipant } from '@app-types';
 import { FlexView } from '@designSystem/atoms/FlexView';
 import { TextDs } from '@designSystem/atoms/TextDs';
@@ -36,17 +36,79 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
   const [selectedWaitlistPlayer, setSelectedWaitlistPlayer] = useState<WaitlistEntry | null>(null);
   const [isWaitlistModalVisible, setIsWaitlistModalVisible] = useState(false);
 
-  // Filter out cancelled players and normalize guest count + payment status (API may send snake_case)
+  // Filter out cancelled players and normalize fields from API (handles snake_case, nested user, various field names)
   const allParticipants = (event.participants || [])
     .filter((p) => {
       const status = (p as EventParticipant & { bookingStatus?: string }).bookingStatus ?? (p as any).booking_status;
       return status !== 'cancelled';
     })
-    .map((p) => ({
-      ...p,
-      guestCount: p.guestCount ?? (p as any).guest_count ?? 0,
-      paymentStatus: p.paymentStatus ?? (p as any).payment_status ?? null,
-    }));
+    .map((p) => {
+      const raw = p as any;
+      // Handle nested user: API may return { user: { userId, fullName, profilePic, ... }, guestCount, ... }
+      const flat = raw.user
+        ? { ...raw.user, ...raw, userId: raw.user.userId ?? raw.userId, fullName: raw.user.fullName ?? raw.fullName, profilePic: raw.user.profilePic ?? raw.profilePic }
+        : { ...raw };
+      const booking = raw.booking ?? raw.bookingDetails ?? {};
+      const bookingSlots = Array.isArray(booking?.bookingSlots) ? booking.bookingSlots : [];
+      const slots = Array.isArray(booking?.slots) ? booking.slots : [];
+      const firstSlot = bookingSlots[0] ?? slots[0] ?? null;
+      const slotFromNested = firstSlot
+        ? { start: firstSlot.startTime ?? firstSlot.start_time ?? firstSlot.start, end: firstSlot.endTime ?? firstSlot.end_time ?? firstSlot.end }
+        : null;
+      // Guest count: guestCount, guest_count, guests, guestsCount, guests_count, eventTotalAttendNumber-1
+      const guestCountRaw =
+        flat.guestCount ??
+        flat.guest_count ??
+        flat.guests ??
+        flat.guestsCount ??
+        flat.guests_count ??
+        booking.guestCount ??
+        booking.guest_count ??
+        booking.guests ??
+        booking.guestsCount ??
+        booking.guests_count;
+      const guestCount =
+        typeof guestCountRaw === 'number'
+          ? guestCountRaw
+          : typeof flat.eventTotalAttendNumber === 'number' && flat.eventTotalAttendNumber > 1
+            ? flat.eventTotalAttendNumber - 1
+            : typeof booking.eventTotalAttendNumber === 'number' && booking.eventTotalAttendNumber > 1
+              ? booking.eventTotalAttendNumber - 1
+              : 0;
+
+      return {
+        ...flat,
+        guestCount,
+        paymentStatus: flat.paymentStatus ?? flat.payment_status ?? null,
+        slotStartTime:
+          flat.slotStartTime ??
+          flat.slot_start_time ??
+          flat.startTime ??
+          flat.start_time ??
+          flat.bookingStartTime ??
+          flat.booking_start_time ??
+          booking.slotStartTime ??
+          booking.slot_start_time ??
+          booking.startTime ??
+          booking.start_time ??
+          slotFromNested?.start ??
+          undefined,
+        slotEndTime:
+          flat.slotEndTime ??
+          flat.slot_end_time ??
+          flat.endTime ??
+          flat.end_time ??
+          flat.bookingEndTime ??
+          flat.booking_end_time ??
+          booking.slotEndTime ??
+          booking.slot_end_time ??
+          booking.endTime ??
+          booking.end_time ??
+          slotFromNested?.end ??
+          undefined,
+        amountPaid: flat.amountPaid ?? flat.amount_paid ?? booking.amountPaid ?? booking.amount_paid ?? undefined,
+      };
+    });
 
   // Joined = participants from API, excluding only those with explicit paymentStatus='pending'.
   // If backend doesn't send paymentStatus, treat as joined (backend is source of truth).
@@ -57,7 +119,28 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
   const participants = allParticipants.filter((p) => !hasExplicitPaymentPending(p));
   const spotsBooked = calculateSpotsFilled(event);
   const totalSpots = event.spotsInfo?.totalSpots || event.eventMaxGuest || 0;
+
+  // Event date for "Booked: ..." - Figma: "23 Oct, 4:00 - 6:30 PM". Use event.eventDateTime (same as About tab).
+  const eventStart = event.eventDateTime ?? (event as any).event_date_time ?? (event as any).dateTime;
+  const eventEnd = event.eventEndDateTime ?? (event as any).event_end_date_time ?? eventStart;
+  const eventBookingText = eventStart
+    ? (formatBookingSlot(eventStart, eventEnd) || formatDate(eventStart, 'display-range', { endTime: eventEnd }))
+    : null;
+
   const spotsAvailable = totalSpots - spotsBooked;
+
+  // Fetch participants with joinedAt (booking time) from GET /api/events/:eventId/participants
+  const { data: participantsData } = useQuery({
+    queryKey: ['event-participants', event.eventId],
+    queryFn: () => eventService.getEventParticipants(event.eventId),
+    enabled: !!event.eventId && participants.length > 0,
+  });
+  const participantsWithJoinedAt = participantsData?.participants ?? [];
+  const joinedAtByUserId = new Map<number, string>();
+  for (const p of participantsWithJoinedAt) {
+    const bookingTime = (p as any).joinedAt ?? (p as any).joined_at ?? (p as any).bookedAt ?? (p as any).booked_at ?? (p as any).createdAt ?? (p as any).created_at;
+    if (bookingTime && p.userId) joinedAtByUserId.set(p.userId, bookingTime);
+  }
 
   // Fetch waitlist data from API
   const { data: waitlistData, refetch: refetchWaitlist } = useQuery({
@@ -284,11 +367,11 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
         <FlexView row justifyContent="space-between" alignItems="center" mb={spacing.xs}>
           {activeView === 'joined' || activeView === 'requests' ? (
             <>
-              <TextDs size={14} weight="regular" color={spotsBooked >= totalSpots ? 'error' : 'primary'}>
+              <TextDs size={14} weight="regular" color={spotsBooked >= totalSpots ? 'primary' : 'primary'}>
                 {spotsBooked}/{totalSpots}
               </TextDs>
-              <TextDs size={14} weight="regular" color={spotsBooked >= totalSpots ? 'error' : 'success'}>
-                {spotsBooked >= totalSpots ? 'Fully Booked: Waitlist Open' : 'Spots Available'}
+              <TextDs size={14} weight="regular" color="success">
+                {spotsBooked >= totalSpots ? 'Waitlist Closed' : 'Spots Available'}
               </TextDs>
             </>
           ) : (
@@ -331,15 +414,31 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
 
           {participants.length > 0 ? (
             <FlexView style={styles.playersList}>
-              {participants.map((participant: EventParticipant) => {
-                const guestCount = participant.guestCount ?? (participant as any).guest_count ?? 0;
+              {participants.map((participant) => {
+                const p = participant as EventParticipant & { guestCount?: number; slotStartTime?: string; slotEndTime?: string; amountPaid?: number };
+                const guestCount = p.guestCount ?? (participant as any).guest_count ?? 0;
                 const hasGuest = guestCount > 0;
                 const guestSuffix = hasGuest ? ` +${guestCount}` : '';
-                const hasSlot = !!(participant.slotStartTime);
-                const bookingText = hasSlot
-                  ? formatBookingSlot(participant.slotStartTime!, participant.slotEndTime)
-                  : null;
-                const hasPrice = participant.amountPaid != null && participant.amountPaid > 0;
+                const hasSlot = !!(p.slotStartTime);
+                const joinedAt =
+                  joinedAtByUserId.get(participant.userId) ??
+                  (participant as any).joinedAt ??
+                  (participant as any).joined_at ??
+                  (participant as any).bookedAt ??
+                  (participant as any).booked_at ??
+                  (participant as any).booking?.joinedAt ??
+                  (participant as any).booking?.joined_at;
+                const bookingText =
+                  hasSlot
+                    ? formatBookingSlot(p.slotStartTime!, p.slotEndTime)
+                    : joinedAt
+                      ? (formatBookingSlot(joinedAt, undefined) || formatDate(joinedAt, 'display-range'))
+                      : eventBookingText;
+                const amountPaid = p.amountPaid ?? (participant as any).amount_paid;
+                const displayPrice =
+                  amountPaid != null && amountPaid > 0
+                    ? Math.round(amountPaid)
+                    : event.eventPricePerGuest ?? 0;
 
                 return (
                   <TouchableOpacity
@@ -369,32 +468,31 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
                         </TouchableOpacity>
                       </FlexView>
                     </FlexView>
-                    <FlexView flex={1} style={styles.playerContent}>
+                    <FlexView flex={1} style={styles.playerContent} minWidth={0}>
                       <TextDs
                         size={14}
-                        weight="medium"
+                        weight="semibold"
                         color="primary"
                         numberOfLines={1}
                       >
                         {participant.fullName}{guestSuffix}
                       </TextDs>
-                      {bookingText ? (
-                        <TextDs
-                          size={12}
-                          weight="regular"
-                          color="secondary"
-                          style={styles.bookingText}
-                          numberOfLines={1}
-                        >
-                          Booked: {bookingText}
-                        </TextDs>
-                      ) : null}
-                    </FlexView>
-                    {hasPrice ? (
-                      <TextDs size={14} weight="medium" color="primary">
-                        ₹ {Math.round(participant.amountPaid!)}
+                      <TextDs
+                        size={12}
+                        weight="regular"
+                        color="secondary"
+                        style={styles.bookingText}
+                        numberOfLines={1}
+                      >
+                        Booked: {bookingText || eventBookingText || '—'}
                       </TextDs>
-                    ) : null}
+                    </FlexView>
+                    <FlexView row alignItems="center" gap={spacing.xs} style={styles.playerPrice}>
+                      <ImageDs image="DhiramIcon" size={14} />
+                      <TextDs size={14} weight="medium" color="primary">
+                        {displayPrice}
+                      </TextDs>
+                    </FlexView>
                   </TouchableOpacity>
                 );
               })}
@@ -533,14 +631,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    backgroundColor: colors.background.secondary,
-    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.base,
+    backgroundColor: withOpaqueForAndroid('rgba(255, 255, 255, 0.7)'),
+    borderRadius: borderRadius.lg,
     marginBottom: spacing.sm,
     gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   playerContent: {
-    marginRight: 'auto',
+    marginRight: spacing.sm,
+  },
+  playerPrice: {
+    marginLeft: 'auto',
   },
   bookingText: {
     marginTop: 2,
