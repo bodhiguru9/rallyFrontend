@@ -405,6 +405,7 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
                     event={event as any}
                     onPress={handleEventPress}
                     onBookmark={() => { }}
+                    showRevenue={true}
                   />
                 ))
               ) : (
