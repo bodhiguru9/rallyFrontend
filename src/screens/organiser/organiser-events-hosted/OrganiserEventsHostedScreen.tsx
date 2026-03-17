@@ -27,7 +27,10 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
   const navigation = useNavigation<TNavigation>();
   const insets = useSafeAreaInsets();
   const userId = useAuthStore((state) => state.user?.userId || 0);
-  const { data, isLoading } = useOrganiserEvents(userId, 1, 20, { enabled: userId > 0 });
+  const { data, isLoading } = useOrganiserEvents(userId, 1, 20, {
+    enabled: userId > 0,
+    includePrivateEvents: true,
+  });
 
   const [isPeriodPickerVisible, setIsPeriodPickerVisible] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('all-time');

@@ -13,7 +13,8 @@ export type DateFormatVariant =
   | 'datetime-long' // e.g., "October 24, 2026 at 1:00 PM"
   | 'iso' // e.g., "2026-01-31T14:00:00.000Z"
   | 'display' // e.g., "Sat 21 Oct, 1:00 PM"
-  | 'display-range'; // e.g., "Sat 21 Oct, 1:00 - 2:00 PM"
+  | 'display-range' // e.g., "Sat 21 Oct, 1:00 - 2:00 PM"
+  | 'booking-slot'; // e.g., "23 Oct, 4:00 - 6:30 PM" (Figma: no weekday)
 
 /**
  * Universal date formatter - converts timestamp to various format variants
@@ -113,6 +114,10 @@ export const formatDate = (
         // e.g., "Sat 24 Oct, 1:00 - 2:00 PM"
         return formatDisplayRange(date, options?.endTime, locale, timeZone);
 
+      case 'booking-slot':
+        // e.g., "23 Oct, 4:00 - 6:30 PM" (Figma: day + month, no weekday)
+        return formatBookingSlotRange(date, options?.endTime);
+
       default:
         return formatDate(date, 'datetime', options);
     }
@@ -197,6 +202,19 @@ const formatDisplayRange = (
   const endDayPeriod = getPartValue(endParts, 'dayPeriod').toUpperCase();
 
   return `${weekday} ${day} ${month}, ${startHour}:${startMinute} - ${endHour}:${endMinute} ${endDayPeriod}`;
+};
+
+/** Format for booking slots: "23 Oct, 4:00 - 6:30 PM" (no weekday, per Figma) */
+const formatBookingSlotRange = (
+  startDate: Date,
+  endTime: string | Date | number | undefined
+): string => {
+  const start = moment(startDate);
+  const end = endTime ? moment(endTime) : moment(startDate).add(1, 'hour');
+  const datePart = start.format('D MMM');
+  const startTimeStr = start.format('h:mm');
+  const endTimeStr = end.format('h:mm A');
+  return `${datePart}, ${startTimeStr} - ${endTimeStr}`;
 };
 
 /**
@@ -415,31 +433,6 @@ export const getDateDifference = (
 };
 
 // ============================================================================
-// LOCAL DATE HELPERS (Timezone-safe for recurring events)
-// ============================================================================
-
-/**
- * Get YYYY-MM-DD from a date in local timezone (avoids UTC shift issues).
- */
-export const toLocalDateString = (date: Date): string => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
-
-/**
- * Parse a date string to local Date. Handles YYYY-MM-DD as local date (not UTC midnight).
- */
-export const parseLocalDate = (str: string): Date => {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-    const [y, m, d] = str.split('-').map(Number);
-    return new Date(y, m - 1, d);
-  }
-  return new Date(str);
-};
-
-// ============================================================================
 // DATE FILTER GENERATION (For DateFilter component)
 // ============================================================================
 
@@ -484,7 +477,7 @@ export const generateDateFilters = (
       day: date.toLocaleDateString('en-US', { weekday: 'short' }),
       month: date.toLocaleDateString('en-US', { month: 'short' }),
       isSelected: selectedDate !== undefined ? dateNum === selectedDate : false,
-      fullDate: toLocalDateString(date),
+      fullDate: date.toISOString(),
     });
   }
 
@@ -515,6 +508,19 @@ export const canLoadMoreDates = (currentEndDate: Date): boolean => {
 // ============================================================================
 
 /**
+ * Formats a booking slot for display (Figma: "23 Oct, 4:00 - 6:30 PM")
+ * @param startTime - ISO date string or timestamp for slot start
+ * @param endTime - Optional ISO date string or timestamp for slot end
+ * @returns Formatted string (e.g., "23 Oct, 4:00 - 6:30 PM")
+ */
+export const formatBookingSlot = (
+  startTime: string | Date | number,
+  endTime?: string | Date | number
+): string => {
+  return formatDate(startTime, 'booking-slot', { endTime });
+};
+
+/**
  * @deprecated Use formatDate(timestamp, 'display-range') instead
  * Transforms an ISO date string to a formatted date and time range
  * @param isoDateString - ISO 8601 date string (e.g., "2026-01-11T17:00:00.000Z")
@@ -522,26 +528,4 @@ export const canLoadMoreDates = (currentEndDate: Date): boolean => {
  */
 export const transformTime = (isoDateString: string): string => {
   return formatDate(isoDateString, 'display-range');
-};
-
-/**
- * Format per-player booking slot for Members tab (e.g., "23 Oct, 4:00 - 6:30 PM")
- * Use when backend sends slotStartTime/slotEndTime per participant
- * @param slotStartTime - ISO 8601 start time
- * @param slotEndTime - Optional ISO 8601 end time (falls back to start + 1hr if missing)
- */
-export const formatBookingSlot = (
-  slotStartTime: string | Date | number,
-  slotEndTime?: string | Date | number,
-): string => {
-  try {
-    const start = moment(slotStartTime);
-    const end = slotEndTime ? moment(slotEndTime) : moment(slotStartTime).add(1, 'hour');
-    const datePart = start.format('D MMM');
-    const startTimeStr = start.format('h:mm');
-    const endTimeStr = end.format('h:mm A');
-    return `${datePart}, ${startTimeStr} - ${endTimeStr}`;
-  } catch {
-    return '';
-  }
 };

@@ -359,6 +359,28 @@ export const eventService = {
   /**
    * Get waitlist for an event
    */
+  /**
+   * Get event participants with booking time (joinedAt, bookedAt, createdAt).
+   * GET /api/events/:eventId/participants returns joinedAt for all participants.
+   */
+  getEventParticipants: async (
+    eventId: string
+  ): Promise<{ participants: Array<{ userId: number; joinedAt?: string; joined_at?: string; bookedAt?: string; booked_at?: string; createdAt?: string; created_at?: string; [key: string]: unknown }> }> => {
+    try {
+      const { data } = await apiClient.get<{
+        success?: boolean;
+        data?: { participants?: Array<{ userId: number; joinedAt?: string; joined_at?: string; bookedAt?: string; booked_at?: string; createdAt?: string; created_at?: string; [key: string]: unknown }> };
+        participants?: Array<{ userId: number; joinedAt?: string; joined_at?: string; bookedAt?: string; booked_at?: string; createdAt?: string; created_at?: string; [key: string]: unknown }>;
+      }>(`/api/events/${eventId}/participants`);
+
+      const participants =
+        (data as any)?.data?.participants ?? (data as any)?.participants ?? [];
+      return { participants };
+    } catch {
+      return { participants: [] };
+    }
+  },
+
   getEventWaitlist: async (eventId: string): Promise<WaitlistResponse> => {
     const { data } = await apiClient.get<WaitlistResponse>(`/api/events/${eventId}/waitlist`);
     return data;
