@@ -929,6 +929,7 @@ export const organiserService = {
           profilePic: m.profilePic ?? m.profile_pic ?? null,
           totalBookedEvents: m.totalBookedEvents ?? m.total_booked_events ?? m.organiserBookedEvents ?? m.organiser_booked_events ?? 0,
           totalBookingAmount: m.totalBookingAmount ?? m.total_booking_amount ?? m.organiserBookingAmount ?? m.organiser_booking_amount ?? 0,
+          lastBookedAt: m.lastBookedAt ?? m.last_booked_at ?? m.organiserLastBookedAt ?? m.organiser_last_booked_at ?? null,
         }));
       }
       return data;

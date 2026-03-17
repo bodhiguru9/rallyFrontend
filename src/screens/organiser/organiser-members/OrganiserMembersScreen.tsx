@@ -112,7 +112,7 @@ export const OrganiserMembersScreen: React.FC = () => {
       }
 
       filtered = filtered.filter(m => {
-        const lastBookedAt = m.lastBookedAt ?? (m as any).last_booked_at;
+        const lastBookedAt = m.lastBookedAt;
         if (!lastBookedAt) return false;
         const bookingDate = new Date(lastBookedAt);
         return bookingDate >= startDate && bookingDate <= endDate;
@@ -145,8 +145,8 @@ export const OrganiserMembersScreen: React.FC = () => {
       case 'most-recent':
       default:
         filtered.sort((a, b) => {
-          const aDate = a.lastBookedAt ?? a.last_booked_at ?? '';
-          const bDate = b.lastBookedAt ?? b.last_booked_at ?? '';
+          const aDate = a.lastBookedAt ?? '';
+          const bDate = b.lastBookedAt ?? '';
           return new Date(bDate).getTime() - new Date(aDate).getTime();
         });
         break;
@@ -224,7 +224,7 @@ export const OrganiserMembersScreen: React.FC = () => {
                 >
                   <FlexView style={styles.memberRow}>
                     <Avatar
-                      imageUri={resolveImageUri(member.profilePic ?? (member as any).profile_pic) ?? undefined}
+                      imageUri={resolveImageUri(member.profilePic) ?? undefined}
                       fullName={member.fullName}
                       size="lg"
                     />
@@ -240,7 +240,7 @@ export const OrganiserMembersScreen: React.FC = () => {
                   <FlexView style={styles.memberPrice}>
                     <ImageDs image="DhiramIcon" style={styles.priceIcon} />
                     <TextDs size={14} weight="regular" color="primary">
-                      {member.totalBookingAmount ?? (member as any).organiserBookingAmount ?? (member as any).total_booking_amount ?? 0}
+                      {member.totalBookingAmount ?? 0}
                     </TextDs>
                   </FlexView>
                 </TouchableOpacity>

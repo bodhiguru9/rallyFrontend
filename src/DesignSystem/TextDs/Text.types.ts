@@ -8,7 +8,7 @@ type StatusColors = keyof ThemeColors['status'];
 type PrimaryColors = 'primary' | 'secondary' | 'accent';
 
 // All possible color values
-export type TextColor = TextColors | StatusColors | PrimaryColors | 'white' | 'black';
+export type TextColor = TextColors | StatusColors | PrimaryColors | 'white' | 'black' | string;
 
 // Numeric font size keys from theme (6, 8, 10, 12, 14, 16, 20)
 export type TextSize = keyof typeof typography.fontSize;

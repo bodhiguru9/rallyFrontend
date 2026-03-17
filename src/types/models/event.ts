@@ -93,6 +93,7 @@ export interface EventData extends BaseEntity {
   eventDateTime: string;
   eventEndDateTime?: string | null;
   eventFrequency: string[];
+  eventFrequencyEndDate?: string | null;
   eventLocation: string;
   eventDescription: string;
   eventGender: EventGender;

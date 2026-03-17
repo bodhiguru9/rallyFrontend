@@ -355,6 +355,37 @@ export const isFuture = (timestamp: string | Date | number): boolean => {
 };
 
 /**
+ * Returns a simple date string "YYYY-MM-DD" for a given date object.
+ * Useful for DateFilter.fullDate keys or comparison without time.
+ * @param date - Date object to format
+ * @returns Formatted date string "YYYY-MM-DD"
+ */
+export const toLocalDateString = (date: Date): string => {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/**
+ * Parses a date string into a local Date object, ensuring the YYYY-MM-DD
+ * part is respected regardless of timezone shifts.
+ * @param dateStr - ISO string or date string
+ * @returns Date object in local time
+ */
+export const parseLocalDate = (dateStr: string): Date => {
+  if (!dateStr) return new Date();
+  
+  // Extract YYYY, MM, DD to avoid UTC shifts
+  const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, y, m, d] = match;
+    return new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+  }
+  
+  const date = new Date(dateStr);
+  return isNaN(date.getTime()) ? new Date() : date;
+};
+
+/**
  * Add time to a date
  * @param timestamp - ISO 8601 string, Date object, or timestamp number
  * @param amount - Amount to add

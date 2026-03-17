@@ -73,6 +73,9 @@ const getColorValue = (color: string): string => {
   if (color === 'black') {
     return '#000000';
   }
+  if (color.startsWith('#')) {
+    return color;
+  }
   return colors.text.primary;
 };
 

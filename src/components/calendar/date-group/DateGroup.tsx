@@ -62,7 +62,7 @@ export const DateGroup: React.FC<DateGroupProps> = ({
           <FlexView style={styles.verticalTextContainer}>
             {hasOngoing ? (
               // <EventStatusBadge variant="ongoing" style={styles.badgeOverride} />
-              <TextDs size={10} weight="medium" color="red" style={styles.verticalDateText}>
+              <TextDs size={10} weight="medium" color="#ff0000" style={styles.verticalDateText}>
                 {`• Ongoing`}
               </TextDs>
             ) : (
