@@ -35,17 +35,19 @@ export const styles = StyleSheet.create({
     borderColor: colors.border.light,
   },
   updateButton: {
-    backgroundColor: '#64B5F6',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.base,
+    backgroundColor: '#F5f5f5',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
     borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border.light,
     minWidth: 80,
     alignItems: 'center',
     justifyContent: 'center',
   },
   updateButtonText: {
     ...getFontStyle(12, 'semibold'),
-    color: colors.text.white,
+    color: 'blueGray',
   },
 });
 

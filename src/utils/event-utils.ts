@@ -11,25 +11,21 @@ export const calculateSpotsFilled = (
   guestsCountState?: number
 ): number => {
   const participants = event.participants || [];
-
+  // Fallback to aggregate fields if no participant list is available
+  const aggregateCount = event.eventTotalAttendNumber ?? event.spotsInfo?.spotsBooked ?? 0;
+  
+  // If we have participants, use the higher of the two (in case list is incomplete from analytics)
   if (participants.length > 0) {
-    return participants.reduce((sum, p) => {
-      // Determine guest count from possible fields
+    const participantsListCount = participants.reduce((sum, p) => {
       const gCount = (p as any).guestCount ?? (p as any).guest_count ?? 0;
-
-      // If this is the current user and they have joined, we can use the local guestsCount state 
-      // if it's more up-to-date than the participant list (useful during/immediately after booking)
       let pCount = 1 + gCount;
       if (currentUserId && p.userId === currentUserId && guestsCountState !== undefined) {
-        // If user is joined, their total group size in spots is guestsCountState
-        // (Note: in EventDetailsScreen, guestsCountState represents total people for the booking)
         pCount = Math.max(pCount, guestsCountState);
       }
-
       return sum + pCount;
     }, 0);
+    return Math.max(participantsListCount, aggregateCount);
   }
 
-  // Fallback to aggregate fields if no participant list is available
-  return event.eventTotalAttendNumber ?? event.spotsInfo?.spotsBooked ?? 0;
+  return aggregateCount;
 };

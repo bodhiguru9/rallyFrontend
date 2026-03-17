@@ -24,7 +24,7 @@ const mapBookingEventToEventCard = (event: OrganiserBookingsAnalyticsEvent) => (
   eventId: event.eventId,
   mongoId: event.eventId,
   eventName: event.title,
-  eventImages: [event.eventImage || 'https://via.placeholder.com/150'],
+  eventImages: event.eventImage ? [event.eventImage] : [],
   eventVideo: null,
   eventType: (event.eventType || 'social').toLowerCase(),
   eventSports: event.sports || [],
@@ -37,7 +37,7 @@ const mapBookingEventToEventCard = (event: OrganiserBookingsAnalyticsEvent) => (
   eventMinAge: null,
   eventMaxAge: null,
   eventLevelRestriction: null,
-  eventMaxGuest: event.participantsCount || 0,
+  eventMaxGuest: ((event as any).eventMaxGuest ?? (event as any).totalSpots ?? event.participantsCount) || 0,
   eventPricePerGuest: event.price || 0,
   IsPrivateEvent: false,
   eventOurGuestAllowed: false,
@@ -52,27 +52,30 @@ const mapBookingEventToEventCard = (event: OrganiserBookingsAnalyticsEvent) => (
   createdAt: '',
   updatedAt: '',
   creator: null,
-  participants: (event.participants || []).map((participant) => ({
-    userId: participant.userId,
-    userType: 'player',
-    email: '',
+  participants: (event as any).participants?.map((participant: any) => ({
+    userId: participant.userId ?? 0,
+    userType: participant.userType || 'player',
+    email: participant.email || '',
     mobileNumber: '',
     profilePic: participant.profilePic || null,
     fullName: participant.fullName,
   })),
+  address: (event as any).address || (event as any).eventLocation || '',
+  price: event.price || 0,
+  eventImage: (event as any).eventImage || ((event as any).eventImages && (event as any).eventImages[0]) || '',
   participantsCount: event.participantsCount || 0,
   waitlist: [],
   waitlistCount: 0,
   spotsInfo: {
-    totalSpots: event.participantsCount || 0,
+    totalSpots: ((event as any).eventMaxGuest ?? (event as any).totalSpots ?? event.participantsCount) || 0,
     spotsBooked: event.bookedCount || 0,
-    spotsLeft: Math.max(0, (event.participantsCount || 0) - (event.bookedCount || 0)),
-    spotsFull: (event.participantsCount || 0) - (event.bookedCount || 0) <= 0,
+    spotsLeft: Math.max(0, (((event as any).eventMaxGuest ?? (event as any).totalSpots ?? event.participantsCount) || 0) - (event.bookedCount || 0)),
+    spotsFull: (((event as any).eventMaxGuest ?? (event as any).totalSpots ?? event.participantsCount) || 0) - (event.bookedCount || 0) <= 0,
   },
   counts: null,
   userJoinStatus: null,
-  availableSpots: Math.max(0, (event.participantsCount || 0) - (event.bookedCount || 0)),
-  isFull: (event.participantsCount || 0) - (event.bookedCount || 0) <= 0,
+  availableSpots: Math.max(0, (((event as any).eventMaxGuest ?? (event as any).totalSpots ?? event.participantsCount) || 0) - (event.bookedCount || 0)),
+  isFull: (((event as any).eventMaxGuest ?? (event as any).totalSpots ?? event.participantsCount) || 0) - (event.bookedCount || 0) <= 0,
 });
 
 export const OrganiserAnalyticsScreen: React.FC = () => {
@@ -99,7 +102,8 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
   const primarySelectedSport = selectedSports.find((id) => id !== 'all-sports');
 
   const analyticsFilters = useMemo(() => {
-    const startDate = selectedDate ? new Date(selectedDate).toISOString().split('T')[0] : undefined;
+    const isAllTime = selectedPeriod === 'all-time';
+    const startDate = !isAllTime && selectedDate ? new Date(selectedDate).toISOString().split('T')[0] : undefined;
 
     return {
       revenuePeriod: periodToApiMap[selectedPeriod] || 'lifetime',
@@ -184,19 +188,24 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
   }, [filterOptionsData]);
 
   const eventTypeOptions = useMemo(() => {
-    const defaultTypes = ['Social', 'Competitive', 'Training', 'Tournament'];
     const backendTypes = filterOptionsData?.eventTypes || [];
-    const combinedTypes = [...defaultTypes];
-    backendTypes.forEach(bt => {
-      if (!combinedTypes.some(ct => ct.toLowerCase() === bt.toLowerCase())) {
-        combinedTypes.push(bt);
-      }
-    });
+    
+    const getEventIcon = (eventType: string): string | undefined => {
+      const eventTypeLower = eventType.toLowerCase().replace(/\s+/g, '');
+      const iconMap: Record<string, string> = {
+        'tournament': 'tournamentIcon',
+        'social': 'socialIcon',
+        'class': 'classIcon',
+        'training': 'trainingIcon',
+      };
+      return iconMap[eventTypeLower];
+    };
 
-    const mappedTypes = combinedTypes.map((type, index) => ({
+    const mappedTypes = backendTypes.map((type, index) => ({
       id: `event-type-${index}`,
       label: type,
       value: type.toLowerCase(),
+      icon: getEventIcon(type),
     }));
 
     return [
@@ -249,6 +258,39 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
   const filteredEvents = useMemo(() => {
     let filtered = [...events];
 
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+    // Filter by period
+    if (selectedPeriod !== 'all-time') {
+      let startDate: Date = todayStart;
+      let endDate: Date = todayEnd;
+      
+      if (selectedPeriod === 'today') {
+        startDate = todayStart;
+        endDate = todayEnd;
+      } else if (selectedPeriod === 'this-week') {
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday
+        startDate = new Date(now.getFullYear(), now.getMonth(), diff);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = todayEnd;
+      } else if (selectedPeriod === 'this-month') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = todayEnd;
+      } else if (selectedPeriod === 'last-6-months') {
+        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        endDate = todayEnd;
+      }
+
+      filtered = filtered.filter(event => {
+        if (!event.eventDateTime) return false;
+        const eventDate = new Date(event.eventDateTime);
+        return eventDate >= startDate && eventDate <= endDate;
+      });
+    }
+
     const normalizeForCompare = (value: string) =>
       value.toLowerCase().replace(/[_\s]+/g, '-').trim();
 
@@ -278,7 +320,7 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
     }
 
     // Filter by date
-    if (selectedDate) {
+    if (selectedDate && selectedPeriod !== 'all-time') {
       const selectedDateOnly = new Date(selectedDate).toISOString().split('T')[0];
       filtered = filtered.filter((event) => {
         if (!event.eventDateTime) return false;
@@ -293,7 +335,7 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
     );
 
     return filtered;
-  }, [events, selectedSports, selectedEventTypes, selectedDate, eventTypeOptions]);
+  }, [events, selectedSports, selectedEventTypes, selectedDate, eventTypeOptions, selectedPeriod]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -398,6 +440,9 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
                 onPress={() => {
                   setSelectedPeriod(option.value);
                   setIsPeriodPickerVisible(false);
+                  if (option.value === 'all-time') {
+                    setDateFilters(prev => prev.map(f => ({ ...f, isSelected: false })));
+                  }
                 }}
                 activeOpacity={0.7}
               >

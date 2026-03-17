@@ -9,7 +9,7 @@ import { TextDs } from '@designSystem/atoms/TextDs';
 import { ArrowIcon } from '@components/global/ArrowIcon';
 import { EventCard } from '@components/global/EventCard';
 import { FlexView, Seperator } from '@components';
-import { usePlayerEvents } from '@hooks/use-events';
+import { usePlayerEvents, useTagSearchEvents } from '@hooks/use-events';
 import { FeaturedEventsSection } from '@components/private/home/player-home-content/sections/FeaturedEventsSection';
 import { PickedEventsSection } from '@components/private/home/player-home-content/sections/PickedEventsSection';
 import { TopOrganisersSection } from '@components/private/home/player-home-content/sections/TopOrganisersSection';
@@ -28,7 +28,8 @@ export const TagSearchScreen: React.FC = () => {
     const route = useRoute<TagSearchScreenRouteProp>();
     const navigation = useNavigation<TagSearchScreenNavigationProp>();
     const { searchType, value } = route.params ?? { searchType: undefined, value: undefined };
-    const { isAuthenticated } = useAuthStore();
+    const { isAuthenticated, user } = useAuthStore();
+    const isOrganiser = isAuthenticated && user?.userType === 'organiser';
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const params =
         searchType === 'sport'
@@ -36,8 +37,17 @@ export const TagSearchScreen: React.FC = () => {
             : searchType === 'eventType'
                 ? { eventType: value }
                 : {};
-    const { data, isLoading, isError } = usePlayerEvents();
-    const allEvents = data?.events ?? [];
+    const { data: searchData, isLoading: isSearchLoading, isError: isSearchError } = useTagSearchEvents({
+        eventSports: searchType === 'sport' ? value : undefined,
+        eventType: searchType === 'eventType' ? value : undefined,
+    });
+    
+    const { data: dashboardData, isLoading: isDashboardLoading, isError: isDashboardError } = usePlayerEvents();
+    
+    // Use search results if available, otherwise fallback to dashboard data (e.g. while loading search)
+    const allEvents = searchData?.events ?? dashboardData?.events ?? [];
+    const isLoading = isSearchLoading && isDashboardLoading;
+    const isError = isSearchError && isDashboardError;
 
     const featuredEvents = useMemo(() => {
         return allEvents.slice(0, 3);
@@ -145,11 +155,13 @@ export const TagSearchScreen: React.FC = () => {
                         onBookmark={handleBookmark}
                     />
 
-                    <TopOrganisersSection
-                        topOrganisers={topOrganisers}
-                        onOrganiserPress={handleOrganiserPress}
-                        isAuthenticated={isAuthenticated}
-                    />
+                    {!isOrganiser && (
+                        <TopOrganisersSection
+                            topOrganisers={topOrganisers}
+                            onOrganiserPress={handleOrganiserPress}
+                            isAuthenticated={isAuthenticated}
+                        />
+                    )}
                 </ScrollView>
             )}
         </SafeAreaView>
