@@ -1,7 +1,6 @@
 import React from 'react';
 import { TextDs, FlexView, ImageDs } from '@components';
 import { TouchableOpacity } from 'react-native';
-import { Pencil } from 'lucide-react-native';
 import { colors } from '@theme';
 import { Avatar } from '@components';
 import type { ProfileHeaderProps } from './ProfileHeader.types';
@@ -26,7 +25,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             onPress={onEditProfile}
             activeOpacity={0.7}
           >
-            <Pencil color={colors.text.blueGray} size={10} />
+            <ImageDs image="pencil" size={14} />
           </TouchableOpacity>
         </FlexView>
         <FlexView style={styles.infoContainer}>

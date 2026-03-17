@@ -40,11 +40,11 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   upgradeTitle: {
-    ...getFontStyle(12, 'bold'),
+    ...getFontStyle(14, 'bold'),
     color: colors.text.primary,
   },
   upgradeSubtitle: {
-    ...getFontStyle(8, 'regular'),
+    ...getFontStyle(10, 'regular'),
     color: colors.text.secondary,
     marginTop: spacing.xxs,
   },

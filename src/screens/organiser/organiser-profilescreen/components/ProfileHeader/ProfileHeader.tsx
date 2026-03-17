@@ -3,7 +3,6 @@ import { TouchableOpacity, Image, Platform, View } from 'react-native';
 import { colors, spacing } from '@theme';
 import type { ProfileHeaderProps } from './ProfileHeader.types';
 import { styles } from './style/ProfileHeader.styles';
-import { Pencil } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { InstagramTag } from '@designSystem/molecules/instagram-tag';
 import { FlexView, TextDs, ImageDs } from '@components';
@@ -56,11 +55,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             >
               {Platform.OS === 'android' ? (
                 <View style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.glass.background.white }}>
-                  <Pencil size={12} color={colors.text.blueGray} />
+                  <ImageDs image="pencil" size={14} />
                 </View>
               ) : (
                 <BlurView intensity={50} tint='default' style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Pencil size={12} color={colors.text.blueGray} />
+                  <ImageDs image="pencil" size={14} />
                 </BlurView>
               )}
             </TouchableOpacity>

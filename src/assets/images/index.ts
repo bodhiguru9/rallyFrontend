@@ -4,6 +4,8 @@
  * Then use: <Image source={images.blackLogo} />
  */
 
+import { Pencil } from "lucide-react-native";
+
 /* eslint-disable @typescript-eslint/no-require-imports */
 export const images = {
   blackLogo: require('./files/black_logo.png'),
@@ -66,7 +68,8 @@ export const images = {
   paddleIcon: require('./files/paddle-icon.png'),
   genderIcon: require('./files/ph_gender-intersex-bold.png'),
   userGroupIcon: require('./files/hugeicons_user-group-03.png'),
-
+  premium: require('./icons/premium.png'),
+  pencil: require('./icons/pencil.png'),
 
   // Individual Sport Icons
   pilatesIcon: require('./icons/whiteIcons/pilates.png'),

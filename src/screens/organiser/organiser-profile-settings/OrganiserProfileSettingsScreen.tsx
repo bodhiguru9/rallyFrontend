@@ -13,6 +13,7 @@ import { DeleteAccountModal } from './components/DeleteAccountModal';
 import { ChangePasswordModal } from '../organiser-settings/components/ChangePasswordModal';
 import { useUpdateProfile } from '@hooks/use-update-profile';
 import { styles } from './style/OrganiserProfileSettingsScreen.styles';
+import { ImageDs } from '@designSystem/atoms/image';
 
 type OrganiserProfileSettingsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -78,7 +79,7 @@ export const OrganiserProfileSettingsScreen: React.FC = () => {
 
         <Pressable style={styles.upgradeCard} onPress={() => navigation.navigate('OrganiserSubscription')}>
           <FlexView style={styles.upgradeIcon}>
-            <TextDs style={styles.upgradeIconText}>★</TextDs>
+            <ImageDs image='premium' size={20} />
           </FlexView>
           <FlexView style={styles.upgradeContent}>
             <TextDs style={styles.upgradeTitle}>Upgrade to Premium</TextDs>
