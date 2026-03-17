@@ -330,31 +330,41 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
           </FlexView>
 
           {participants.length > 0 ? (
-            <FlexView style={styles.playersList}>
+            <FlexView style={styles.playersGrid}>
               {participants.map((participant: EventParticipant) => {
                 const guestCount = participant.guestCount ?? (participant as any).guest_count ?? 0;
+                // If guestCount is stored as total (self + guests), and we want "suffix", 
+                // typically backend sends guestCount as the number of extra guests.
+                // Looking at MembersModal logic: item.guestsCount? - 1. 
+                // Let's stick to the raw guestCount if it represents extra guests.
+                // In this app, guestCount usually means "additional guests".
                 const hasGuest = guestCount > 0;
-                const guestSuffix = hasGuest ? ` +${guestCount}` : '';
-                const hasSlot = !!(participant.slotStartTime);
-                const bookingText = hasSlot
-                  ? formatBookingSlot(participant.slotStartTime!, participant.slotEndTime)
-                  : null;
-                const hasPrice = participant.amountPaid != null && participant.amountPaid > 0;
 
                 return (
                   <TouchableOpacity
                     key={participant.userId}
-                    style={styles.playerRow}
+                    style={styles.playerItem}
                     activeOpacity={0.7}
                     onPress={() => handlePlayerPress(participant.userId, participant.fullName)}
                   >
-                    <FlexView width={48} height={48} position="relative">
+                    <FlexView position="relative">
                       <Avatar
                         imageUri={participant.profilePic}
                         fullName={participant.fullName}
-                        size="lg"
+                        size="xl"
                       />
-                      <FlexView position="absolute" bottom={-4} right={-4}>
+
+                      {/* Guest Count Badge */}
+                      {hasGuest && (
+                        <FlexView style={styles.guestCountBadge}>
+                          <TextDs style={styles.guestCountText}>
+                            +{guestCount}
+                          </TextDs>
+                        </FlexView>
+                      )}
+
+                      {/* Remove Button Badge */}
+                      <FlexView position="absolute" bottom={-2} right={-2}>
                         <TouchableOpacity
                           style={styles.glassMinusTouchable}
                           activeOpacity={0.7}
@@ -365,36 +375,19 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
                             }
                           }}
                         >
-                          <ImageDs image="glassMinus" size={18} />
+                          <ImageDs image="glassMinus" size={20} />
                         </TouchableOpacity>
                       </FlexView>
                     </FlexView>
-                    <FlexView flex={1} style={styles.playerContent}>
-                      <TextDs
-                        size={14}
-                        weight="medium"
-                        color="primary"
-                        numberOfLines={1}
-                      >
-                        {participant.fullName}{guestSuffix}
-                      </TextDs>
-                      {bookingText ? (
-                        <TextDs
-                          size={12}
-                          weight="regular"
-                          color="secondary"
-                          style={styles.bookingText}
-                          numberOfLines={1}
-                        >
-                          Booked: {bookingText}
-                        </TextDs>
-                      ) : null}
-                    </FlexView>
-                    {hasPrice ? (
-                      <TextDs size={14} weight="medium" color="primary">
-                        ₹ {Math.round(participant.amountPaid!)}
-                      </TextDs>
-                    ) : null}
+                    <TextDs
+                      size={12}
+                      weight="medium"
+                      color="primary"
+                      style={styles.playerName}
+                      numberOfLines={2}
+                    >
+                      {participant.fullName}
+                    </TextDs>
                   </TouchableOpacity>
                 );
               })}
@@ -512,7 +505,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.status.success,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -557,5 +549,25 @@ const styles = StyleSheet.create({
   },
   glassMinusTouchable: {
     padding: 0,
+  },
+  guestCountBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 4,
+    height: 18,
+    minWidth: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.text.white,
+    zIndex: 2,
+  },
+  guestCountText: {
+    color: colors.text.white,
+    fontSize: 9,
+    fontWeight: '700',
   },
 });
