@@ -733,11 +733,13 @@ export const organiserService = {
   /**
    * Get organiser events by user ID
    * Returns paginated list of events for a specific organiser
+   * @param includePrivateEvents - When true (organiser viewing own events), private events are included. When false (player viewing another organiser), private events are hidden.
    */
   getOrganiserEvents: async (
     userId: number,
     page: number = 1,
     perPage: number = 20,
+    includePrivateEvents: boolean = false,
   ): Promise<OrganiserEventsResponse> => {
     try {
       const { data } = await apiClient.get<OrganiserEventsResponse>(
@@ -747,10 +749,13 @@ export const organiserService = {
         },
       );
 
-      // Transform events to ensure they have all required fields; hide private events from players
+      // Transform events to ensure they have all required fields; hide private events when player views another organiser
       if (data.success && data.data.events) {
-        const transformed = data.data.events
-          .filter((event) => event.IsPrivateEvent !== true)
+        let eventsToTransform = data.data.events;
+        if (!includePrivateEvents) {
+          eventsToTransform = eventsToTransform.filter((event) => event.IsPrivateEvent !== true);
+        }
+        const transformed = eventsToTransform
           .map((event: any) => {
             // Calculate spotsInfo if not present
             const spotsBooked = event.participantsCount || 0;

@@ -50,6 +50,7 @@ export const OrganiserCalendarScreen: React.FC = () => {
   const userId = useAuthStore((state) => state.user?.userId ?? state.user?.id ?? 0);
   const { data: organiserEventsData, isLoading, error } = useOrganiserEvents(userId, 1, 20, {
     enabled: userId > 0,
+    includePrivateEvents: true,
   });
 
   const events = useMemo<PlayerBooking[]>(() => {
