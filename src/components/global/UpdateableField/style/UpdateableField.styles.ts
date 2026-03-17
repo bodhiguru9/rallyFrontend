@@ -25,9 +25,10 @@ export const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.background.light,
+    boxShadow: colors.glass.boxShadow.light,
     borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.base,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.base,
     ...getFontStyle(14, 'regular'),
     color: colors.text.primary,
@@ -35,7 +36,8 @@ export const styles = StyleSheet.create({
     borderColor: colors.border.light,
   },
   updateButton: {
-    backgroundColor: '#F5f5f5',
+    backgroundColor: colors.background.light,
+    boxShadow: colors.glass.boxShadow.light,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
     borderRadius: borderRadius.md,

@@ -18,4 +18,20 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     experimental_backgroundImage: colors.gradient.mainBackground,
   },
+  savePreviewButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelPreviewButton: {
+    backgroundColor: colors.background.secondary,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border.default,
+  },
 });

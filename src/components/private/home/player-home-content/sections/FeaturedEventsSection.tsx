@@ -53,7 +53,7 @@ export const FeaturedEventsSection: React.FC<FeaturedEventsSectionProps> = ({
           { paddingHorizontal: sidePadding },
         ]}
         renderItem={({ item, index, animatedIndex }) => (
-          <FlexView style={index === 0 ? undefined : { marginLeft: -overlapOffset }}>
+          <FlexView key={`${item.eventId}-${index}`} style={index === 0 ? undefined : { marginLeft: -overlapOffset }}>
             <FeaturedEventCard
               id={item.eventId}
               onPress={onEventPress}

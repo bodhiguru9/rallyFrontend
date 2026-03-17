@@ -1,6 +1,6 @@
-import React from 'react';
-import { FlexView } from '@components';
-import { ScrollView, Alert, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { TextDs, FlexView } from '@components';
+import { ScrollView, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
@@ -12,7 +12,7 @@ import { styles } from './style/OrganiserProfileScreen.styles';
 import { userService } from '@services/user-service';
 import { useOrganiserCreatedEvents } from '@hooks/organiser';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '@theme';
+import { colors, spacing } from '@theme';
 import { showImagePickerOptions } from '@utils/image-picker';
 import { useUpdateProfileImage } from '@hooks/use-update-profile-image';
 
@@ -25,6 +25,7 @@ export const OrganiserProfileScreen: React.FC = () => {
   const navigation = useNavigation<OrganiserProfileScreenNavigationProp>();
   const logout = useAuthStore((state) => state.logout);
   const userId = useAuthStore((state) => state.user?.userId || 0);
+  const [pendingProfileImage, setPendingProfileImage] = useState<string | null>(null);
 
   const { data: userResponse, isLoading: isLoadingUser } = useQuery({
     queryKey: ['user-profile', userId],
@@ -38,7 +39,7 @@ export const OrganiserProfileScreen: React.FC = () => {
     { enabled: userId > 0 },
   );
 
-  const { updateProfileImage } = useUpdateProfileImage();
+  const { updateProfileImage, isLoading: isUpdatingImage } = useUpdateProfileImage();
 
   const user = userResponse?.data?.user;
 
@@ -54,8 +55,21 @@ export const OrganiserProfileScreen: React.FC = () => {
   const handleEditPress = async () => {
     const imageResult = await showImagePickerOptions();
     if (imageResult && imageResult.uri) {
-      await updateProfileImage(imageResult.uri);
+      setPendingProfileImage(imageResult.uri);
     }
+  };
+
+  const handleSaveProfileImage = async () => {
+    if (pendingProfileImage) {
+      const success = await updateProfileImage(pendingProfileImage);
+      if (success) {
+        setPendingProfileImage(null);
+      }
+    }
+  };
+
+  const handleCancelProfileImagePreview = () => {
+    setPendingProfileImage(null);
   };
 
   const handleSettingsPress = () => {
@@ -138,7 +152,7 @@ export const OrganiserProfileScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <ProfileHeader
-          logoUri={user.profilePic || undefined}
+          logoUri={pendingProfileImage || user.profilePic || undefined}
           name={user.fullName}
           communityName={user.communityName || undefined}
           isVerified={user.isEmailVerified}
@@ -153,6 +167,29 @@ export const OrganiserProfileScreen: React.FC = () => {
           onAttendeesPress={handleAttendeesPress}
           onHostedPress={handleHostedPress}
         />
+
+        {pendingProfileImage && (
+          <FlexView row gap={spacing.md} px={spacing.xl} mb={spacing.lg}>
+            <TouchableOpacity
+              style={[styles.cancelPreviewButton, { flex: 1 }]}
+              onPress={handleCancelProfileImagePreview}
+              disabled={isUpdatingImage}
+            >
+              <TextDs weight="medium" color="secondary">Cancel</TextDs>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.savePreviewButton, { flex: 2 }]}
+              onPress={handleSaveProfileImage}
+              disabled={isUpdatingImage}
+            >
+              {isUpdatingImage ? (
+                <ActivityIndicator size="small" color={colors.text.white} />
+              ) : (
+                <TextDs weight="semibold" color="white">Save Changes</TextDs>
+              )}
+            </TouchableOpacity>
+          </FlexView>
+        )}
 
         <UpcomingEventsSection
           events={(createdEventsData?.data?.events || []).filter(e => e.eventStatus === 'upcoming' || (e.eventFrequency && e.eventFrequency.length > 0))}

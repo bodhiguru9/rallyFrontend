@@ -45,9 +45,12 @@ export const TagSearchScreen: React.FC = () => {
     const { data: dashboardData, isLoading: isDashboardLoading, isError: isDashboardError } = usePlayerEvents();
     
     // Use search results if available, otherwise fallback to dashboard data (e.g. while loading search)
+    // We only use searchData if it's not loading and has data or is an empty result
     const allEvents = searchData?.events ?? dashboardData?.events ?? [];
-    const isLoading = isSearchLoading && isDashboardLoading;
-    const isError = isSearchError && isDashboardError;
+    
+    // We are loading if the active data source is still loading
+    const isLoading = (!!(searchType && value) && isSearchLoading) || (!searchData && isDashboardLoading);
+    const isError = isSearchError || (isDashboardError && !searchData);
 
     const featuredEvents = useMemo(() => {
         return allEvents.slice(0, 3);
@@ -153,6 +156,7 @@ export const TagSearchScreen: React.FC = () => {
                         canLoadMore={canLoadMore}
                         onEventPress={handleEventPress}
                         onBookmark={handleBookmark}
+                        showPastEvents={true}
                     />
 
                     {!isOrganiser && (

@@ -204,9 +204,9 @@ export const EventCard: React.FC<EventCardProps> = ({
   const creatorFromParticipants = useMemo(() => {
     if (event.creator) return null;
     const participants = (event as any).participants as EventParticipant[] | undefined;
-    return participants?.find((p: EventParticipant) => 
-      p.userType === 'organiser' || 
-      (p as any).isOrganiser || 
+    return participants?.find((p: EventParticipant) =>
+      p.userType === 'organiser' ||
+      (p as any).isOrganiser ||
       p.userId === (event as any).organiserId
     );
   }, [event, event.creator]);
@@ -219,8 +219,8 @@ export const EventCard: React.FC<EventCardProps> = ({
 
     // 2. Otherwise use event creator/organiser pic
     return (
-      (event as EventData).eventCreatorProfilePic || 
-      event.creator?.profilePic || 
+      (event as EventData).eventCreatorProfilePic ||
+      event.creator?.profilePic ||
       creatorFromParticipants?.profilePic ||
       (event as any).organiser_profile_pic ||
       (event as any).creator_pic ||
@@ -247,7 +247,7 @@ export const EventCard: React.FC<EventCardProps> = ({
       hasParticipants: !!(event as any).participants?.length,
       foundCreatorInParts: !!creatorFromParticipants,
     });
-    
+
     if (eventImageUri) {
       setImageSource({ uri: eventImageUri });
     } else if (organizerImageUri) {
@@ -319,7 +319,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             </FlexView>
 
             {/* Tags */}
-            <FlexView flexDirection="row" gap={spacing.sm} marginTop={spacing.sm} flexWrap="wrap">
+            <FlexView flexDirection="row" gap={spacing.sm} flexWrap="wrap">
               {displayEvent.eventSports?.[0] && (
                 <IconTag
                   title={displayEvent.eventSports[0]}

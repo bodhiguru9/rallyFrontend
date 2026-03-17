@@ -27,10 +27,10 @@ export const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   saveButton: {
-    backgroundColor: '#64B5F6',
+    backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.xl,
   },
   saveButtonText: {
     ...getFontStyle(12, 'semibold'),
@@ -64,7 +64,8 @@ export const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   emiratesUpdateButton: {
-    backgroundColor: '#F5f5f5',
+    backgroundColor: colors.background.light,
+    boxShadow: colors.glass.boxShadow.light,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,

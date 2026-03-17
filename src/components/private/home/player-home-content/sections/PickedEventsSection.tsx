@@ -62,6 +62,7 @@ interface PickedEventsSectionProps {
   canLoadMore: boolean;
   onEventPress: (id: string) => void;
   onBookmark: (id: string) => void;
+  showPastEvents?: boolean;
 }
 
 export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
@@ -80,6 +81,7 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
   canLoadMore,
   onEventPress,
   onBookmark,
+  showPastEvents = false,
 }) => {
   const { lastCoordinates } = useLocationStore();
 
@@ -143,18 +145,20 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
 
     // Filter out past events - only show future and currently ongoing events
     const now = new Date();
-    filtered = filtered.filter((event) => {
-      const eventStartDate = new Date(event.eventDateTime);
-      const eventEndDate = event.eventEndDateTime ? new Date(event.eventEndDateTime) : null;
+    if (!showPastEvents) {
+      filtered = filtered.filter((event) => {
+        const eventStartDate = new Date(event.eventDateTime);
+        const eventEndDate = event.eventEndDateTime ? new Date(event.eventEndDateTime) : null;
 
-      // If event has an end date, check if it hasn't ended yet (includes ongoing and future events)
-      if (eventEndDate) {
-        return eventEndDate >= now;
-      }
+        // If event has an end date, check if it hasn't ended yet (includes ongoing and future events)
+        if (eventEndDate) {
+          return eventEndDate >= now;
+        }
 
-      // If event has no end date, check if start date is today or in the future
-      return eventStartDate >= now;
-    });
+        // If event has no end date, check if start date is today or in the future
+        return eventStartDate >= now;
+      });
+    }
 
     // Filter by date (when a date is selected)
     if (selectedDateFullDate) {
