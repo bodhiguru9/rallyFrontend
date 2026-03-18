@@ -47,7 +47,7 @@ export const styles = StyleSheet.create({
     paddingTop: spacing.lg,
   },
   inputContainer: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
   },
   bankLabel: {
     ...getFontStyle(12, 'medium'),

@@ -134,13 +134,14 @@ export const FeaturedOrganisersSection: React.FC<FeaturedOrganisersSectionProps>
         itemSpacing={-overlapOffset}
         initialIndex={initialActiveIndex}
         onIndexChange={setActiveIndex}
+        autoPlay={true}
+        autoPlayInterval={2500}
         contentContainerStyle={[
           styles.horizontalScroll,
           { paddingHorizontal: sidePadding },
         ]}
         renderItem={({ item, index, animatedIndex }) => {
           const pickedData = item as PickedOrganiserData;
-          // Find the original community data to pass to the card
           const communityData = communities.find(
             (c) => c.userId === parseInt(pickedData.id.replace('community-', ''))
           );

@@ -135,24 +135,35 @@ export const OrganiserBankDetailsScreen: React.FC = () => {
   const [accountHolderName, setAccountHolderName] = useState('');
   const [iban, setIban] = useState('');
   const [bankName, setBankName] = useState('');
+  const [otherBankName, setOtherBankName] = useState('');
 
   useEffect(() => {
     if (isEditMode && singleAccount) {
       setAccountHolderName(singleAccount.accountHolderName);
       setIban(singleAccount.iban);
-      setBankName(singleAccount.bankName);
+
+      const isKnownBank = BANK_OPTIONS.some(b => b.value === singleAccount.bankName);
+      if (isKnownBank) {
+        setBankName(singleAccount.bankName);
+        setOtherBankName('');
+      } else {
+        setBankName('Other');
+        setOtherBankName(singleAccount.bankName);
+      }
     }
   }, [isEditMode, singleAccount]);
 
   const handleSave = () => {
     const trimmedName = accountHolderName.trim();
     const trimmedIban = iban.trim();
-    if (!trimmedName || !trimmedIban || !bankName) {
+    const finalBankName = bankName === 'Other' ? otherBankName.trim() : bankName;
+
+    if (!trimmedName || !trimmedIban || !finalBankName) {
       Alert.alert('Error', 'Please fill all bank details.');
       return;
     }
 
-    const payload = { accountHolderName: trimmedName, iban: trimmedIban, bankName };
+    const payload = { accountHolderName: trimmedName, iban: trimmedIban, bankName: finalBankName };
 
     if (isEditMode && bankAccountId) {
       updateBankAccount.mutate(payload, {
@@ -258,7 +269,7 @@ export const OrganiserBankDetailsScreen: React.FC = () => {
             value={accountHolderName}
             onChangeText={setAccountHolderName}
             containerStyle={styles.inputContainer}
-            inputContainerStyle={{ backgroundColor: colors.glass.background.white, borderWidth: 0 }}
+            inputContainerStyle={{ marginBottom: spacing.md, backgroundColor: colors.glass.background.white, borderWidth: 0 }}
           />
           <FormInput
             label="IBAN"
@@ -267,7 +278,7 @@ export const OrganiserBankDetailsScreen: React.FC = () => {
             value={iban}
             onChangeText={setIban}
             containerStyle={styles.inputContainer}
-            inputContainerStyle={{ backgroundColor: colors.glass.background.white, borderWidth: 0 }}
+            inputContainerStyle={{ marginBottom: spacing.md, backgroundColor: colors.glass.background.white, borderWidth: 0 }}
             autoCapitalize="characters"
           />
           <TextDs style={[styles.bankLabel, { ...getFontStyle(14, 'semibold') }]}>Bank Name</TextDs>
@@ -276,8 +287,20 @@ export const OrganiserBankDetailsScreen: React.FC = () => {
             onSelect={setBankName}
             options={BANK_OPTIONS}
             placeholder="Select Bank"
-            containerStyle={{ backgroundColor: colors.glass.background.white, borderWidth: 0, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: 12 }}
+            containerStyle={{ marginBottom: spacing.md, backgroundColor: colors.glass.background.white, borderWidth: 0, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: 12 }}
           />
+
+          {bankName === 'Other' && (
+            <FormInput
+              label="Enter Bank Name"
+              labelWeight="semibold"
+              placeholder="National Bank of Kuwait"
+              value={otherBankName}
+              onChangeText={setOtherBankName}
+              containerStyle={{ marginBottom: spacing.lg, marginTop: spacing.sm }}
+              inputContainerStyle={{ marginBottom: spacing.lg, backgroundColor: colors.glass.background.white, borderWidth: 0 }}
+            />
+          )}
         </FlexView>
 
         {!isEditMode && bankAccounts.length > 0 && (

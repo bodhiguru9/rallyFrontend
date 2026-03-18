@@ -1,13 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Animated, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { colors, spacing, borderRadius } from '@theme';
 import { Shield, Calendar, Users } from 'lucide-react-native';
 import { FlexView } from '@designSystem/atoms/FlexView';
 import { TextDs } from '@designSystem/atoms/TextDs';
 import type { CarouselAnimatedIndex } from '@components/global/Carousel';
-import { ImageDs } from '@components';
 import { IconTag } from '@components/global/IconTag';
 import { CommunityData } from '../components/PickedForYouSection/PickedForYouSection';
+import { resolveImageUri } from '@utils/image-utils';
+import { images } from '@assets/images';
 
 interface FeaturedOrganiserCardProps {
   organiser: CommunityData;
@@ -30,6 +31,21 @@ export const FeaturedOrganiserCard: React.FC<FeaturedOrganiserCardProps> = ({
   hostedCount,
   attendeesCount,
 }) => {
+  const [imageSource, setImageSource] = useState<any>(images.blackBigLogo);
+  const organizerImageUri = resolveImageUri(organiser.profilePic);
+
+  useEffect(() => {
+    if (organizerImageUri) {
+      setImageSource({ uri: organizerImageUri });
+    } else {
+      setImageSource(images.blackBigLogo);
+    }
+  }, [organizerImageUri]);
+
+  const handleImageError = () => {
+    setImageSource(images.blackBigLogo);
+  };
+
   const relativeIndex = useMemo(() => {
     // Relative index ensures animation follows scroll position, not state updates.
     return Animated.subtract(animatedIndex, index) as Animated.AnimatedInterpolation<number>;
@@ -78,7 +94,12 @@ export const FeaturedOrganiserCard: React.FC<FeaturedOrganiserCardProps> = ({
               'linear-gradient(0deg,rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 100%)',
           }}
         ></FlexView>
-        <ImageDs image="sportsBg" style={styles.image} />
+        <Image
+          source={imageSource || images.blackBigLogo}
+          onError={handleImageError}
+          style={styles.image}
+          resizeMode="cover"
+        />
         <FlexView
           flexDirection="column"
           justifyContent="space-between"

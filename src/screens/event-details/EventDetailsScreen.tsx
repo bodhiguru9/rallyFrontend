@@ -100,7 +100,7 @@ export const EventDetailsScreen: React.FC = () => {
     if (!organiserId) {
       return;
     }
-    navigation.navigate('EventOrginserProfilePlayer', { organiserId: String(organiserId) });
+    navigation.navigate('PlayerOrgEventDetails', { organiserId: String(organiserId) });
   };
   const canInviteGuests =
     !pendingInvitation &&

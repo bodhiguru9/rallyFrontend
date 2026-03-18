@@ -189,9 +189,10 @@ export const PickedForYouSection: React.FC<PickedForYouSectionProps> = ({
             <FlexView key={item.id} style={styles.cardWrapper}>
               <PickedOrganiserCard
                 {...item}
-                onPress={(id, cardCommunityName) => {
+                onPress={(pressedId, cardCommunityName) => {
                   const finalCommunityName = cardCommunityName || item.communityName;
-                  onOrganiserPress(id, finalCommunityName || undefined);
+                  const cleanId = pressedId.startsWith('community-') ? pressedId.replace('community-', '') : pressedId;
+                  onOrganiserPress(cleanId, finalCommunityName || undefined);
                 }}
               />
             </FlexView>

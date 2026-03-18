@@ -8,6 +8,7 @@ import { IconTag } from '@components/global/IconTag';
 import { formatDate } from '@utils';
 import { ImageDs } from '@designSystem/atoms/image';
 import { resolveImageUri } from '@utils/image-utils';
+import { images } from '@assets/images';
 
 export const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
   id,
@@ -40,12 +41,31 @@ export const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
     };
   }, [relativeIndex]);
 
-  const displayImage = useMemo(() => {
-    const rawImage = event.eventImages?.[0] || (event as any).gameImages?.[0] || (event as any).eventImage;
-    const organizerImage = event.creator?.profilePic || (event as any).eventCreatorProfilePic;
-    
-    return resolveImageUri(rawImage) || resolveImageUri(organizerImage) || 'https://via.placeholder.com/400?text=Event';
-  }, [event]);
+  const [imageSource, setImageSource] = React.useState<any>(images.blackBigLogo);
+
+  const rawEventImage = event.eventImages?.[0] || (event as any).gameImages?.[0] || (event as any).eventImage;
+  const organizerProfilePic = event.creator?.profilePic || (event as any).eventCreatorProfilePic;
+
+  const eventImageUri = resolveImageUri(rawEventImage);
+  const organizerImageUri = resolveImageUri(organizerProfilePic);
+
+  React.useEffect(() => {
+    if (eventImageUri) {
+      setImageSource({ uri: eventImageUri });
+    } else if (organizerImageUri) {
+      setImageSource({ uri: organizerImageUri });
+    } else {
+      setImageSource(images.blackBigLogo);
+    }
+  }, [id, eventImageUri, organizerImageUri]);
+
+  const handleImageError = () => {
+    if (imageSource?.uri === eventImageUri && organizerImageUri) {
+      setImageSource({ uri: organizerImageUri });
+    } else {
+      setImageSource(images.blackBigLogo);
+    }
+  };
 
   return (
     <Animated.View
@@ -62,7 +82,8 @@ export const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
         activeOpacity={0.9}
       >
         <Image
-          source={{ uri: displayImage }}
+          source={imageSource || images.blackBigLogo}
+          onError={handleImageError}
           style={[styles.image, styles.imageBackground]}
           resizeMode="cover"
         />

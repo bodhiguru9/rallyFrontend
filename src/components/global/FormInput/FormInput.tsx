@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.base,
     zIndex: 1,
-    marginRight: spacing.lg,
+    // marginRight: spacing.lg,
   },
   input: {
     ...getFontStyle(12, 'regular'),
