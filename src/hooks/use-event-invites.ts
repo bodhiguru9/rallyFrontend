@@ -25,6 +25,12 @@ export const useAcceptEventInvitation = () => {
     mutationFn: (inviteId: string) => eventInvitesService.acceptInvitation(inviteId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event-invites'] });
+      // Invalidate player data so the event appears in My Events / My Bookings in real time
+      queryClient.invalidateQueries({ queryKey: ['player-events'] });
+      queryClient.invalidateQueries({ queryKey: ['player-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['event'] });
+      queryClient.invalidateQueries({ queryKey: ['event-details'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 };
@@ -36,6 +42,7 @@ export const useDeclineEventInvitation = () => {
     mutationFn: (inviteId: string) => eventInvitesService.declineInvitation(inviteId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event-invites'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 };
