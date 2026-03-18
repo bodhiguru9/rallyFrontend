@@ -23,6 +23,28 @@ import { ParticipantProfiles } from '@designSystem/materials/ParticipantProfiles
 import { useEventDetails } from './use-event-details';
 import { FlexView } from '@designSystem/atoms/FlexView';
 import { BackdropBlur } from '@components/global/BackdropBlur';
+
+/** Maps policyJoind (organiser's refund policy) to human-readable text. Returns null only for invalid values. */
+const getRefundPolicyText = (policyJoind?: string | null): string | null => {
+  switch (policyJoind) {
+    case 'before-event':
+      return 'Refund allowed before the day of the event. Cancel before the event day to receive a full refund.';
+    case 'until-start':
+      return 'Refund allowed until event starts. Cancel anytime before the event starts to receive a full refund.';
+    case 'no-restrictions':
+      return 'No restrictions. Refunds are allowed as per the organiser\'s discretion.';
+    default:
+      return null;
+  }
+};
+
+/** For paid events: use organiser's policy or default to before-event if API doesn't return it yet. */
+const getRefundPolicyForDisplay = (policyJoind?: string | null, isPaidEvent?: boolean): string | null => {
+  const text = getRefundPolicyText(policyJoind);
+  if (text) return text;
+  // Backend may not return policyJoind yet; show default (matches create-event placeholder)
+  return isPaidEvent ? getRefundPolicyText('before-event') : null;
+};
 type EventDetailsScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'EventDetails'
@@ -98,6 +120,9 @@ export const EventDetailsScreen: React.FC = () => {
   if (!event) {
     return null;
   }
+
+  const isPaidEvent = event.eventPricePerGuest != null && event.eventPricePerGuest > 0;
+  const refundPolicyText = getRefundPolicyForDisplay(event.policyJoind, isPaidEvent);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -238,6 +263,14 @@ export const EventDetailsScreen: React.FC = () => {
           <TextDs style={styles.cardTitle}>Restrictions</TextDs>
           <TextDs style={styles.restrictionsText}>Male Only, 12-24 yrs, Intermediate Level</TextDs>
         </Card>
+
+        {/* Refund Policy Card - show for paid events (uses organiser's policy or default) */}
+        {isPaidEvent && refundPolicyText != null && (
+            <Card style={{ marginBottom: spacing.base }}>
+              <TextDs style={styles.cardTitle}>Refund Policy</TextDs>
+              <TextDs style={styles.refundPolicyText}>{refundPolicyText}</TextDs>
+            </Card>
+          )}
 
         {/* Payment Details Card */}
         {event.isJoined && (

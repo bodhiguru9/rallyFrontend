@@ -294,254 +294,254 @@ export const CreateEventContent: React.FC = () => {
             <>
               {/* Event Details */}
               <Card>
-            <FlexView row gap={14} alignItems='center'>
-              <ImageUpload
-                imageUri={formData.imageUri}
-                onImageSelect={(uri) => updateFormData('imageUri', uri)}
-              />
-              <FlexView flex={1}>
-                <FormInput
-                  label="Event Name"
-                  labelSize={16}
-                  labelWeight="semibold"
-                  variant='transparent'
-                  placeholder="Enter Your Event Name"
-                  value={formData.eventName}
-                  onChangeText={(text) => updateFormData('eventName', text)}
-                  containerStyle={styles.eventNameInput}
-                />
-                <FlexView row gap={8}>
-                  {formData.sport && <IconTag title={formData.sport} size='small' />}
-                  {formData.eventType && <IconTag  title={formData.eventType} variant='teal' size='small' />}
+                <FlexView row gap={14} alignItems='center'>
+                  <ImageUpload
+                    imageUri={formData.imageUri}
+                    onImageSelect={(uri) => updateFormData('imageUri', uri)}
+                  />
+                  <FlexView flex={1}>
+                    <FormInput
+                      label="Event Name"
+                      labelSize={16}
+                      labelWeight="semibold"
+                      variant='transparent'
+                      placeholder="Enter Your Event Name"
+                      value={formData.eventName}
+                      onChangeText={(text) => updateFormData('eventName', text)}
+                      containerStyle={styles.eventNameInput}
+                    />
+                    <FlexView row gap={8}>
+                      {formData.sport && <IconTag title={formData.sport} size='small' />}
+                      {formData.eventType && <IconTag title={formData.eventType} variant='teal' size='small' />}
+                    </FlexView>
+                  </FlexView>
+                </FlexView>
+              </Card>
+
+              <FlexView row gap={spacing.base} mb={spacing.base} mt={spacing.lg}>
+                <FlexView flex={1}>
+                  <Dropdown
+                    placeholder="Sport"
+                    options={SPORT_OPTIONS}
+                    value={formData.sport}
+                    onSelect={(value) => updateFormData('sport', value)}
+                    containerStyle={styles.selectContainer}
+                    leftIcon={<ImageDs image="SportIcon" size={20} />}
+                  />
+                </FlexView>
+                <FlexView flex={1}>
+                  <Dropdown
+                    placeholder="Event Type"
+                    options={EVENT_TYPE_OPTIONS}
+                    value={formData.eventType}
+                    onSelect={(value) => updateFormData('eventType', value)}
+                    containerStyle={styles.selectContainer}
+                    leftIcon={<ImageDs image="Nametag" size={20} />}
+                  />
                 </FlexView>
               </FlexView>
-            </FlexView>
-          </Card>
 
-          <FlexView row gap={spacing.base} mb={spacing.base} mt={spacing.lg}>
-            <FlexView flex={1}>
-              <Dropdown
-                placeholder="Sport"
-                options={SPORT_OPTIONS}
-                value={formData.sport}
-                onSelect={(value) => updateFormData('sport', value)}
-                containerStyle={styles.selectContainer}
-                leftIcon={<ImageDs image="SportIcon" size={20} />}
-              />
-            </FlexView>
-            <FlexView flex={1}>
-              <Dropdown
-                placeholder="Event Type"
-                options={EVENT_TYPE_OPTIONS}
-                value={formData.eventType}
-                onSelect={(value) => updateFormData('eventType', value)}
-                containerStyle={styles.selectContainer}
-                leftIcon={<ImageDs image="Nametag" size={20} />}
-              />
-            </FlexView>
-          </FlexView>
-
-          <FlexView row alignItems='center' isFullWidth gap={spacing.sm} mb={spacing.base} glassBg borderWhite py={8} borderRadius={borderRadius.lg} px={spacing.md}>
-            <ImageDs image="Time" size={20} />
-            <TouchableOpacity
-              onPress={() => setShowDateTimePicker(true)}
-              style={{ width: '100%' }}
-              activeOpacity={0.7}
-            >
-              <TextDs
-                size={16} weight="regular"
-                color={formData.dateTime ? 'primary' : 'secondary'}
-              >
-                {formData.dateTime
-                  ? formData.dateTime.toLocaleString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  })
-                  : 'Date & Time'}
-              </TextDs>
-            </TouchableOpacity>
-          </FlexView>
-
-          <EventLocationSearch
-            value={
-              typeof formData.location === 'object' && formData.location !== null
-                ? formData.location
-                : typeof formData.location === 'string' && formData.location.trim()
-                  ? {
-                    name: formData.location.trim(),
-                    displayName: formData.location.trim(),
-                    latitude: 0,
-                    longitude: 0,
-                  }
-                  : null
-            }
-            onChange={(location: EventLocation | null) =>
-              updateFormData('location', location)
-            }
-            onInputChange={(text) => updateFormData('locationRawInput', text)}
-            placeholder="Location"
-            leftIcon={<ImageDs image="LocationPin" size={20} />}
-            onDropdownVisibilityChange={setIsLocationDropdownOpen}
-          />
-
-          <FlexView height={14} />
-
-          <FormInput
-            label=""
-            placeholder="Event Description"
-            value={formData.description}
-            onChangeText={(text) => updateFormData('description', text)}
-            leftIcon={<ImageDs image="BallpointPen" size={20} />}
-            multiline
-            numberOfLines={4}
-            style={{ minHeight: 80, textAlignVertical: 'top' }}
-          />
-
-          <FlexView isFullWidth height={1} backgroundColor={colors.background.white} my={14} />
-
-          {/* Guests Section */}
-          <FlexView mb={spacing.xl}>
-            <FlexView row justifyContent="space-between" alignItems="center" mb={spacing.md}>
-              <TextDs size={16} weight="semibold" color="primary">
-                Guests
-              </TextDs>
-              <TouchableOpacity
-                style={styles.restrictionsButton}
-                onPress={() => setShowRestrictionsModal(true)}
-                activeOpacity={0.7}
-              >
-                <ImageDs image="GenderIcon" size={16} />
-                <TextDs size={12} weight="medium" color="white">
-                  Add Restrictions
-                </TextDs>
-              </TouchableOpacity>
-            </FlexView>
-
-            <FlexView row gap={spacing.md} mb={spacing.base}>
-              <FlexView flex={1}>
-                <FlexView mb={spacing.sm}>
-                  <TextDs size={14} weight="medium" color="primary">
-                    Capacity
-                  </TextDs>
-                </FlexView>
-                <FormInput
-                  label=""
-                  placeholder="Maximum Guests"
-                  value={formData.maxGuests}
-                  onChangeText={(text) => updateFormData('maxGuests', text)}
-                  keyboardType="numeric"
-                  leftIcon={<ImageDs image="MultipleUsers" size={16} />}
-                  containerStyle={styles.noMarginInput}
-                />
-              </FlexView>
-              <FlexView flex={1}>
-                <FlexView mb={spacing.sm}>
-                  <TextDs size={14} weight="medium" color="primary">
-                    Price per guest
-                  </TextDs>
-                </FlexView>
-                <FormInput
-                  label=""
-                  placeholder="Prices in Dirham"
-                  value={formData.pricePerGuest}
-                  onChangeText={(text) => updateFormData('pricePerGuest', text)}
-                  keyboardType="numeric"
-                  leftIcon={<ImageDs image="DhiramGrayIcon" size={16} />}
-                  containerStyle={styles.noMarginInput}
-                />
-              </FlexView>
-            </FlexView>
-
-            <Card style={{ marginBottom: spacing.base }}>
-              <Toggle
-                label="Private Event"
-                description="Event will not be displayed to others. Only those invited can join."
-                value={formData.isPrivate}
-                onValueChange={(value) => updateFormData('isPrivate', value)}
-                containerStyle={styles.toggleContainer}
-              />
-            </Card>
-
-            <Card style={{ marginBottom: spacing.base }}>
-              <Toggle
-                label="Disallow Guests"
-                description='Players can&apos;t add guests while joining this event.'
-                value={formData.disallowGuests}
-                onValueChange={(value) => updateFormData('disallowGuests', value)}
-                containerStyle={styles.toggleContainer}
-              />
-            </Card>
-
-            <Card style={{ marginBottom: spacing.base }}>
-              <Toggle
-                label="Approval Required"
-                description='Players will need your approval to be part of this event.'
-                value={formData.approvalRequired}
-                onValueChange={(value) => updateFormData('approvalRequired', value)}
-                containerStyle={styles.toggleContainer}
-              />
-            </Card>
-          </FlexView>
-
-          <FlexView isFullWidth height={1} backgroundColor={colors.background.white} mb={spacing.base} />
-
-          {/* Policies Section */}
-          <FlexView mt={spacing.xl} mb={spacing.xl}>
-            <FlexView mb={spacing.md}>
-              <TextDs size={16} weight="semibold" color="primary">
-                Policies
-              </TextDs>
-            </FlexView>
-
-            <TouchableOpacity
-              onPress={() => {
-                if (!formData.dateTime) {
-                  return;
-                }
-                setRegistrationStep(formData.registrationStartTime ? 'end' : 'start');
-                setShowRegistrationModal(true);
-              }}
-              activeOpacity={0.7}
-              style={[
-                styles.registrationInputTouchable,
-                !formData.dateTime && styles.registrationInputTouchableDisabled,
-              ]}
-            >
-              <FlexView row alignItems="center" gap={spacing.sm} style={styles.registrationInputInner}>
-                <ImageDs image="CalendarCheckmark" size={20} />
-                <TextDs
-                  size={16}
-                  weight="regular"
-                  color={formData.registrationStartTime && formData.registrationEndTime ? 'primary' : 'secondary'}
+              <FlexView row alignItems='center' isFullWidth gap={spacing.sm} mb={spacing.base} glassBg borderWhite py={8} borderRadius={borderRadius.lg} px={spacing.md}>
+                <ImageDs image="Time" size={20} />
+                <TouchableOpacity
+                  onPress={() => setShowDateTimePicker(true)}
+                  style={{ width: '100%' }}
+                  activeOpacity={0.7}
                 >
-                  {formData.registrationStartTime && formData.registrationEndTime
-                    ? `${formData.registrationStartTime.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} – ${formData.registrationEndTime.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
-                    : 'Registration Start & End Time'}
-                </TextDs>
+                  <TextDs
+                    size={16} weight="regular"
+                    color={formData.dateTime ? 'primary' : 'secondary'}
+                  >
+                    {formData.dateTime
+                      ? formData.dateTime.toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })
+                      : 'Date & Time'}
+                  </TextDs>
+                </TouchableOpacity>
               </FlexView>
-            </TouchableOpacity>
 
-            <FlexView height={spacing.base} />
+              <EventLocationSearch
+                value={
+                  typeof formData.location === 'object' && formData.location !== null
+                    ? formData.location
+                    : typeof formData.location === 'string' && formData.location.trim()
+                      ? {
+                        name: formData.location.trim(),
+                        displayName: formData.location.trim(),
+                        latitude: 0,
+                        longitude: 0,
+                      }
+                      : null
+                }
+                onChange={(location: EventLocation | null) =>
+                  updateFormData('location', location)
+                }
+                onInputChange={(text) => updateFormData('locationRawInput', text)}
+                placeholder="Location"
+                leftIcon={<ImageDs image="LocationPin" size={20} />}
+                onDropdownVisibilityChange={setIsLocationDropdownOpen}
+              />
 
-            <Dropdown
-              placeholder="Only Allowed before the day of the event"
-              options={REGISTRATION_POLICY_OPTIONS}
-              value={formData.registrationPolicy}
-              onSelect={(value) => updateFormData('registrationPolicy', value)}
-            />
+              <FlexView height={14} />
 
-            <FlexView height={spacing.base} />
+              <FormInput
+                label=""
+                placeholder="Event Description"
+                value={formData.description}
+                onChangeText={(text) => updateFormData('description', text)}
+                leftIcon={<ImageDs image="BallpointPen" size={20} />}
+                multiline
+                numberOfLines={4}
+                style={{ minHeight: 80, textAlignVertical: 'top' }}
+              />
 
-            <Checkbox
-              label="Save duplicate in drafts for future use."
-              value={formData.saveToDrafts}
-              onValueChange={(value) => updateFormData('saveToDrafts', value)}
-              containerStyle={styles.checkboxContainer}
-            />
-          </FlexView>
+              <FlexView isFullWidth height={1} backgroundColor={colors.background.white} my={14} />
+
+              {/* Guests Section */}
+              <FlexView mb={spacing.xl}>
+                <FlexView row justifyContent="space-between" alignItems="center" mb={spacing.md}>
+                  <TextDs size={16} weight="semibold" color="primary">
+                    Guests
+                  </TextDs>
+                  <TouchableOpacity
+                    style={styles.restrictionsButton}
+                    onPress={() => setShowRestrictionsModal(true)}
+                    activeOpacity={0.7}
+                  >
+                    <ImageDs image="GenderIcon" size={16} />
+                    <TextDs size={12} weight="medium" color="white">
+                      Add Restrictions
+                    </TextDs>
+                  </TouchableOpacity>
+                </FlexView>
+
+                <FlexView row gap={spacing.md} mb={spacing.base}>
+                  <FlexView flex={1}>
+                    <FlexView mb={spacing.sm}>
+                      <TextDs size={14} weight="medium" color="primary">
+                        Capacity
+                      </TextDs>
+                    </FlexView>
+                    <FormInput
+                      label=""
+                      placeholder="Maximum Guests"
+                      value={formData.maxGuests}
+                      onChangeText={(text) => updateFormData('maxGuests', text)}
+                      keyboardType="numeric"
+                      leftIcon={<ImageDs image="MultipleUsers" size={16} />}
+                      containerStyle={styles.noMarginInput}
+                    />
+                  </FlexView>
+                  <FlexView flex={1}>
+                    <FlexView mb={spacing.sm}>
+                      <TextDs size={14} weight="medium" color="primary">
+                        Price per guest
+                      </TextDs>
+                    </FlexView>
+                    <FormInput
+                      label=""
+                      placeholder="Prices in Dirham"
+                      value={formData.pricePerGuest}
+                      onChangeText={(text) => updateFormData('pricePerGuest', text)}
+                      keyboardType="numeric"
+                      leftIcon={<ImageDs image="DhiramGrayIcon" size={16} />}
+                      containerStyle={styles.noMarginInput}
+                    />
+                  </FlexView>
+                </FlexView>
+
+                <Card style={{ marginBottom: spacing.base }}>
+                  <Toggle
+                    label="Private Event"
+                    description="Event will not be displayed to others. Only those invited can join."
+                    value={formData.isPrivate}
+                    onValueChange={(value) => updateFormData('isPrivate', value)}
+                    containerStyle={styles.toggleContainer}
+                  />
+                </Card>
+
+                <Card style={{ marginBottom: spacing.base }}>
+                  <Toggle
+                    label="Disallow Guests"
+                    description='Players can&apos;t add guests while joining this event.'
+                    value={formData.disallowGuests}
+                    onValueChange={(value) => updateFormData('disallowGuests', value)}
+                    containerStyle={styles.toggleContainer}
+                  />
+                </Card>
+
+                <Card style={{ marginBottom: spacing.base }}>
+                  <Toggle
+                    label="Approval Required"
+                    description='Players will need your approval to be part of this event.'
+                    value={formData.approvalRequired}
+                    onValueChange={(value) => updateFormData('approvalRequired', value)}
+                    containerStyle={styles.toggleContainer}
+                  />
+                </Card>
+              </FlexView>
+
+              <FlexView isFullWidth height={1} backgroundColor={colors.background.white} mb={spacing.base} />
+
+              {/* Policies Section */}
+              <FlexView mt={spacing.xl} mb={spacing.xl}>
+                <FlexView mb={spacing.md}>
+                  <TextDs size={16} weight="semibold" color="primary">
+                    Policies
+                  </TextDs>
+                </FlexView>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    if (!formData.dateTime) {
+                      return;
+                    }
+                    setRegistrationStep(formData.registrationStartTime ? 'end' : 'start');
+                    setShowRegistrationModal(true);
+                  }}
+                  activeOpacity={0.7}
+                  style={[
+                    styles.registrationInputTouchable,
+                    !formData.dateTime && styles.registrationInputTouchableDisabled,
+                  ]}
+                >
+                  <FlexView row alignItems="center" gap={spacing.sm} style={styles.registrationInputInner}>
+                    <ImageDs image="CalendarCheckmark" size={20} />
+                    <TextDs
+                      size={16}
+                      weight="regular"
+                      color={formData.registrationStartTime && formData.registrationEndTime ? 'primary' : 'secondary'}
+                    >
+                      {formData.registrationStartTime && formData.registrationEndTime
+                        ? `${formData.registrationStartTime.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} – ${formData.registrationEndTime.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
+                        : 'Registration Start & End Time'}
+                    </TextDs>
+                  </FlexView>
+                </TouchableOpacity>
+
+                <FlexView height={spacing.base} />
+
+                <Dropdown
+                  placeholder="Only Allowed before the day of the event"
+                  options={REGISTRATION_POLICY_OPTIONS}
+                  value={formData.registrationPolicy}
+                  onSelect={(value) => updateFormData('registrationPolicy', value)}
+                />
+
+                <FlexView height={spacing.base} />
+
+                <Checkbox
+                  label="Save duplicate in drafts for future use."
+                  value={formData.saveToDrafts}
+                  onValueChange={(value) => updateFormData('saveToDrafts', value)}
+                  containerStyle={styles.checkboxContainer}
+                />
+              </FlexView>
             </>
           )}
 
@@ -554,8 +554,8 @@ export const CreateEventContent: React.FC = () => {
                     key={event.eventId}
                     id={event.eventId}
                     event={event}
-                    onPress={() => {}}
-                    onBookmark={() => {}}
+                    onPress={() => { }}
+                    onBookmark={() => { }}
                     hideCreator
                   />
                 ))
@@ -578,8 +578,8 @@ export const CreateEventContent: React.FC = () => {
                     key={event.eventId}
                     id={event.eventId}
                     event={event}
-                    onPress={() => {}}
-                    onBookmark={() => {}}
+                    onPress={() => { }}
+                    onBookmark={() => { }}
                     hideCreator
                   />
                 ))
@@ -603,30 +603,30 @@ export const CreateEventContent: React.FC = () => {
             left={0}
             right={0}
           >
-          <FlexView style={styles.blurContainer}>
-            <TouchableOpacity
-              onPress={handleCreateEvent}
-              disabled={isLoading}
-              activeOpacity={0.8}
-              style={styles.createButton}
-            >
-              {Platform.OS === 'android' ? (
-                <View style={[styles.blurFill, { backgroundColor: colors.primaryDark }]} />
-              ) : (
-                <BlurView intensity={50} tint="dark" style={styles.blurFill} />
-              )}
-              <View style={styles.createButtonContent}>
-                {isLoading ? (
-                  <ActivityIndicator color={colors.text.white} />
+            <FlexView style={styles.blurContainer}>
+              <TouchableOpacity
+                onPress={handleCreateEvent}
+                disabled={isLoading}
+                activeOpacity={0.8}
+                style={styles.createButton}
+              >
+                {Platform.OS === 'android' ? (
+                  <View style={[styles.blurFill, { backgroundColor: colors.primaryDark }]} />
                 ) : (
-                  <TextDs size={16} weight="semibold" color="white">
-                    Create Event
-                  </TextDs>
+                  <BlurView intensity={50} tint="dark" style={styles.blurFill} />
                 )}
-              </View>
-            </TouchableOpacity>
+                <View style={styles.createButtonContent}>
+                  {isLoading ? (
+                    <ActivityIndicator color={colors.text.white} />
+                  ) : (
+                    <TextDs size={16} weight="semibold" color="white">
+                      Create Event
+                    </TextDs>
+                  )}
+                </View>
+              </TouchableOpacity>
+            </FlexView>
           </FlexView>
-        </FlexView>
         )}
 
         {/* Modals - Always available */}

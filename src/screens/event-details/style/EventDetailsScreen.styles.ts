@@ -231,6 +231,10 @@ export const styles = StyleSheet.create({
     ...getFontStyle(12, 'regular'),
     color: colors.text.secondary,
   },
+  refundPolicyText: {
+    ...getFontStyle(12, 'regular'),
+    color: colors.text.secondary,
+  },
   organizerSection: {
     flexDirection: 'row',
     alignItems: 'center',

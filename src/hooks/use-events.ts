@@ -66,6 +66,7 @@ export const useEvent = (id: string, options?: UseEventOptions) => {
       const apiEvent = response.data.data.event;
 
       // Transform ApiEvent to EventData by adding missing fields (API booking shape may differ)
+      const apiEventAny = apiEvent as Record<string, unknown>;
       const normalized = normalizeEventJoinFlags({
         ...apiEvent,
         id: apiEvent.eventId, // Map eventId to id for BaseEntity
@@ -76,6 +77,12 @@ export const useEvent = (id: string, options?: UseEventOptions) => {
         eventGender: apiEvent.eventGender as EventData['eventGender'],
         eventSportsLevel: apiEvent.eventSportsLevel as EventData['eventSportsLevel'],
         eventStatus: apiEvent.eventStatus as EventData['eventStatus'],
+        // Refund policy from organiser (API may return policyJoind, policy_joind, or refundPolicy)
+        policyJoind:
+          apiEventAny.policyJoind ??
+          apiEventAny.policy_joind ??
+          apiEventAny.refundPolicy ??
+          null,
         // Map join status fields
         isJoined: apiEvent.isJoined ?? false,
         isPending: apiEvent.isPending ?? false,

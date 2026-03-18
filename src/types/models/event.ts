@@ -108,6 +108,8 @@ export interface EventData extends BaseEntity {
   eventApprovalReq: boolean;
   eventRegistrationStartTime: string | null;
   eventRegistrationEndTime: string | null;
+  /** Refund policy: 'before-event' | 'not-allowed' etc. */
+  policyJoind?: string | null;
   eventStatus: EventStatus;
   eventCreatorEmail: string;
   eventCreatorName: string;
