@@ -20,6 +20,7 @@ import { InviteTab } from './components/InviteTab';
 import { DateTimePickerModal } from '@screens/organiser/create-event/components/DateTimePickerModal';
 import { DeleteEventModal } from './components/DeleteEventModal';
 import type { EventData } from '@app-types';
+import { DEFAULT_DISPLAY_TIME_ZONE } from '@constants/timezones';
 
 // type OrganiserEventDetailsScreenNavigationProp = NativeStackNavigationProp<
 //   RootStackParamList,
@@ -81,6 +82,7 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
       style={styles.scrollView}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps="handled"
     >
       <Card style={{ marginBottom: spacing.base }}>
         <FormInput
@@ -102,7 +104,7 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
         >
           <TextDs size={16} weight="regular" color={editFormData.eventDateTime ? 'primary' : 'secondary'}>
             {editFormData.eventDateTime
-              ? formatDate(editFormData.eventDateTime, 'display-range')
+              ? formatDate(editFormData.eventDateTime, 'display-range', { timeZone: DEFAULT_DISPLAY_TIME_ZONE })
               : 'Date & Time'}
           </TextDs>
         </TouchableOpacity>
@@ -182,12 +184,13 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
       style={styles.scrollView}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps="handled"
     >
       {/* Date and Location Card */}
       <FlexView style={styles.card}>
         <FlexView style={styles.infoRow}>
           <ImageDs image="PeachClock" size={16} />
-          <TextDs style={styles.infoText}>{formatDate(event.eventDateTime ?? '', 'display-range')}</TextDs>
+          <TextDs style={styles.infoText}>{formatDate(event.eventDateTime ?? '', 'display-range', { timeZone: DEFAULT_DISPLAY_TIME_ZONE })}</TextDs>
         </FlexView>
         <FlexView style={styles.infoRow}>
           <ImageDs image="GreenPin" size={16} />

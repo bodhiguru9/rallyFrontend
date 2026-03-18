@@ -284,7 +284,7 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
             </FlexView>
 
             {/* Custom option - expandable */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.customToggle}
               onPress={() => setShowCustom(!showCustom)}
               activeOpacity={0.7}
@@ -292,7 +292,7 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
               <TextDs size={14} weight="medium" color="primary">
                 {showCustom ? 'Hide custom' : '+ Custom recurrence'}
               </TextDs>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             {showCustom && (
               <FlexView style={styles.customSection}>
                 <TextInput

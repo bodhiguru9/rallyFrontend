@@ -71,6 +71,19 @@ export const images = {
   premium: require('./icons/premium.png'),
   pencil: require('./icons/pencil.png'),
 
+  // Blue sport icons
+  pilatesBlue: require('./icons/blueicons/pilates.png'),
+  runningBlue: require('./icons/blueicons/running.png'),
+  indoorCricketBlue: require('./icons/blueicons/indoorCricket.png'),
+  badmintonBlue: require('./icons/blueicons/badminton.png'),
+  cricketBlue: require('./icons/blueicons/cricket.png'),
+  footballBlue: require('./icons/blueicons/football.png'),
+  tableTennisBlue: require('./icons/blueicons/tableTennis.png'),
+  tennisBlue: require('./icons/blueicons/tennis.png'),
+  padelBlue: require('./icons/blueicons/padel.png'),
+  pickleballBlue: require('./icons/blueicons/pickleball.png'),
+  basketballBlue: require('./icons/blueicons/basketball.png'),
+
   // Individual Sport Icons
   pilatesIcon: require('./icons/whiteIcons/pilates.png'),
   runningIcon: require('./icons/whiteIcons/run.png'),

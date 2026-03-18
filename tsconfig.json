@@ -25,6 +25,8 @@
       "@config/*": ["src/config/*"],
       "@theme": ["src/theme"],
       "@theme/*": ["src/theme/*"],
+      "@constants": ["src/constants"],
+      "@constants/*": ["src/constants/*"],
       "@contexts": ["src/contexts"],
       "@contexts/*": ["src/contexts/*"],
       "@store": ["src/store"],

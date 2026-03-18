@@ -24,8 +24,7 @@ import {
   canLoadMoreDates,
 } from '@utils/date-utils';
 
-/** Display timezone for event times (was GST/Dubai - keeping for consistency) */
-const DISPLAY_TIME_ZONE = 'Asia/Dubai';
+import { DEFAULT_DISPLAY_TIME_ZONE } from '@constants/timezones';
 
 const ORGANISER_CALENDAR_TABS = [
   { value: 'upcoming' as CalendarTab, label: 'Upcoming' },
@@ -169,7 +168,7 @@ export const OrganiserCalendarScreen: React.FC = () => {
           onEventPress={handleEventPress}
           onBookmark={handleBookmark}
           showStatus={false}
-          displayTimeZone={DISPLAY_TIME_ZONE}
+          displayTimeZone={DEFAULT_DISPLAY_TIME_ZONE}
         />
       </ScrollView>
     </HomeContainer>

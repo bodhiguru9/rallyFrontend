@@ -79,13 +79,13 @@ export const FormInput: React.FC<FormInputProps> = ({
 const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     borderRadius: borderRadius.lg,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     boxShadow: colors.glass.boxShadow.light,
     gap: spacing.sm,
-    minHeight: 44,
+    minHeight: 35,
   },
   inputContainerGlass: {
     backgroundColor: colors.glass.background.white,
@@ -103,12 +103,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.base,
     zIndex: 1,
+    marginRight: spacing.lg,
   },
   input: {
     ...getFontStyle(12, 'regular'),
     color: colors.text.primary,
     flex: 1,
-    paddingRight: spacing.xl, // Add padding for eye icon
+    // paddingRight: spacing.xl, // Add padding for eye icon
     paddingVertical: 0, // Remove default padding to match design
   },
   inputWithLeftIcon: {

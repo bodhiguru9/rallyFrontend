@@ -90,19 +90,18 @@ const ProfileSetupScreenContent: React.FC = () => {
   const { data: filterOptions } = useFilterOptions();
 
   // Sport value → ImageKey string lookup for dropdown icons
-  // Using "yellow" variants since the dropdown has a light background
   const sportIconLookup: Record<string, string> = {
-    'tennis': 'tennisYellow',
-    'badminton': 'badmintonYellow',
-    'basketball': 'basketballYellow',
-    'padel': 'padelYellow',
-    'football': 'footballYellow',
-    'cricket': 'cricketYellow',
-    'indoor-cricket': 'indoorCricketYellow',
-    'pilates': 'pilatesYellow',
-    'running': 'runningYellow',
-    'table-tennis': 'tableTennisYellow',
-    'pickleball': 'pickleballYellow'
+    'tennis': 'tennisBlue',
+    'badminton': 'badmintonBlue',
+    'basketball': 'basketballBlue',
+    'padel': 'padelBlue',
+    'football': 'footballBlue',
+    'cricket': 'cricketBlue',
+    'indoor-cricket': 'indoorCricketBlue',
+    'pilates': 'pilatesBlue',
+    'running': 'runningBlue',
+    'table-tennis': 'tableTennisBlue',
+    'pickleball': 'pickleballBlue'
   };
 
   // Transform API sports data to Dropdown option format
@@ -133,7 +132,8 @@ const ProfileSetupScreenContent: React.FC = () => {
       return {
         label: sport,
         value: sportValue,
-        icon: iconKey || 'basketballIcon',
+        icon: iconKey || 'basketballBlue',
+        color: '#3D6F92',
       };
     }).sort((a, b) => {
       const indexA = PRIMARY_SPORTS.indexOf(a.label);

@@ -9,7 +9,7 @@ import {
   Platform,
   StyleSheet,
 } from 'react-native';
-import { Select } from '@components/global';
+import { Dropdown } from '@designSystem/molecules/dropdown/Dropdown';
 import { RangeSlider } from '../RangeSlider';
 import type { RestrictionsModalProps } from './RestrictionsModal.types';
 import { styles } from './style/RestrictionsModal.styles';
@@ -124,7 +124,7 @@ const RestrictionsForm: React.FC<{
             <FlexView style={styles.section}>
               <FlexView style={styles.row}>
                 <FlexView style={styles.halfWidth}>
-                  <Select
+                  <Dropdown
                     label="Gender"
                     placeholder="Select gender"
                     options={GENDER_OPTIONS}
@@ -135,7 +135,7 @@ const RestrictionsForm: React.FC<{
                   />
                 </FlexView>
                 <FlexView style={styles.halfWidth}>
-                  <Select
+                  <Dropdown
                     label="Skill Level"
                     placeholder="Select level"
                     options={SPORTS_LEVEL_OPTIONS}

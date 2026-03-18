@@ -199,7 +199,7 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
             <FlexView style={styles.dateSection}>
               {/* Month/Year Header with Navigation */}
               <FlexView style={styles.dateHeader}>
-                <TextDs size={14} weight="regular">
+                <TextDs size={14} weight="bold">
                   {MONTHS[currentMonth]} {currentYear}
                 </TextDs>
                 <FlexView flexDirection='row' alignItems='center' >
@@ -224,7 +224,7 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
               <FlexView style={styles.daysOfWeekContainer}>
                 {DAYS_OF_WEEK.map((day, index) => (
                   <FlexView key={index} style={styles.dayOfWeek}>
-                    <TextDs size={14} weight="regular">{day}</TextDs>
+                    <TextDs size={12} weight="bold">{day}</TextDs>
                   </FlexView>
                 ))}
               </FlexView>

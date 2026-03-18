@@ -10,7 +10,7 @@ export const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   eventNameInput: {
-    marginBottom: 0,
+    marginBottom: 2,
   },
   selectContainer: {
     marginBottom: 0,

@@ -13,8 +13,9 @@ import { ArrowLeft, Pencil, Trash2 } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation';
-import { colors, spacing } from '@theme';
-import { FormInput, Select } from '@components/global';
+import { colors, spacing, getFontStyle } from '@theme';
+import { FormInput } from '@components/global';
+import { Dropdown } from '@designSystem/molecules/dropdown/Dropdown';
 import {
   useCreateOrganiserBankAccount,
   useOrganiserBankAccounts,
@@ -24,6 +25,7 @@ import {
 } from '@hooks/organiser';
 import type { OrganiserBankAccount } from '@services/organiser-service';
 import { styles } from './style/OrganiserBankDetailsScreen.styles';
+import { useEffect } from 'react';
 
 type TNav = NativeStackNavigationProp<RootStackParamList, 'OrganiserBankDetails'>;
 type BankDetailsRoute = RouteProp<RootStackParamList, 'OrganiserBankDetails'>;
@@ -107,84 +109,6 @@ function BankAccountCard({
   );
 }
 
-type BankAccountFormProps = {
-  initialAccount: OrganiserBankAccount | null;
-  onSave: (payload: { accountHolderName: string; iban: string; bankName: string }) => void;
-  isSaving: boolean;
-  sectionTitle: string;
-  saveButtonLabel: string;
-};
-
-function BankAccountForm({
-  initialAccount,
-  onSave,
-  isSaving,
-  sectionTitle,
-  saveButtonLabel,
-}: BankAccountFormProps) {
-  const [accountHolderName, setAccountHolderName] = useState(
-    initialAccount?.accountHolderName ?? '',
-  );
-  const [iban, setIban] = useState(initialAccount?.iban ?? '');
-  const [bankName, setBankName] = useState(initialAccount?.bankName ?? '');
-
-  const selectedBankLabel = useMemo(
-    () => BANK_OPTIONS.find((b) => b.value === bankName)?.label || bankName || '',
-    [bankName],
-  );
-
-  const handleSave = () => {
-    const trimmedName = accountHolderName.trim();
-    const trimmedIban = iban.trim();
-    if (!trimmedName || !trimmedIban || !bankName) {
-      Alert.alert('Error', 'Please fill all bank details.');
-      return;
-    }
-    onSave({ accountHolderName: trimmedName, iban: trimmedIban, bankName });
-  };
-
-  return (
-    <FlexView style={styles.section}>
-      <TextDs style={styles.addSectionTitle}>{sectionTitle}</TextDs>
-      <FormInput
-        label="Account Holder Name"
-        placeholder="Account holder name"
-        value={accountHolderName}
-        onChangeText={setAccountHolderName}
-        containerStyle={styles.inputContainer}
-      />
-      <FormInput
-        label="IBAN"
-        placeholder="Enter IBAN"
-        value={iban}
-        onChangeText={setIban}
-        containerStyle={styles.inputContainer}
-        autoCapitalize="characters"
-      />
-      <TextDs style={styles.bankLabel}>Bank Name</TextDs>
-      <Select
-        value={bankName}
-        onValueChange={setBankName}
-        options={BANK_OPTIONS}
-        placeholder={selectedBankLabel || 'Select Bank'}
-        searchable
-        searchPlaceholder="Search Bank Name"
-      />
-      <TouchableOpacity
-        style={[styles.saveButton, { marginTop: 16, alignSelf: 'flex-start' }]}
-        onPress={handleSave}
-        activeOpacity={0.8}
-        disabled={isSaving}
-      >
-        {isSaving ? (
-          <ActivityIndicator size="small" color={colors.text.white} />
-        ) : (
-          <TextDs style={styles.saveButtonText}>{saveButtonLabel}</TextDs>
-        )}
-      </TouchableOpacity>
-    </FlexView>
-  );
-}
 
 export const OrganiserBankDetailsScreen: React.FC = () => {
   const navigation = useNavigation<TNav>();
@@ -208,11 +132,28 @@ export const OrganiserBankDetailsScreen: React.FC = () => {
   const bankAccounts = listData?.bankAccounts ?? [];
   const isSaving = createBankAccount.isPending || updateBankAccount.isPending;
 
-  const handleSave = (payload: {
-    accountHolderName: string;
-    iban: string;
-    bankName: string;
-  }) => {
+  const [accountHolderName, setAccountHolderName] = useState('');
+  const [iban, setIban] = useState('');
+  const [bankName, setBankName] = useState('');
+
+  useEffect(() => {
+    if (isEditMode && singleAccount) {
+      setAccountHolderName(singleAccount.accountHolderName);
+      setIban(singleAccount.iban);
+      setBankName(singleAccount.bankName);
+    }
+  }, [isEditMode, singleAccount]);
+
+  const handleSave = () => {
+    const trimmedName = accountHolderName.trim();
+    const trimmedIban = iban.trim();
+    if (!trimmedName || !trimmedIban || !bankName) {
+      Alert.alert('Error', 'Please fill all bank details.');
+      return;
+    }
+
+    const payload = { accountHolderName: trimmedName, iban: trimmedIban, bankName };
+
     if (isEditMode && bankAccountId) {
       updateBankAccount.mutate(payload, {
         onSuccess: () => {
@@ -224,6 +165,9 @@ export const OrganiserBankDetailsScreen: React.FC = () => {
       createBankAccount.mutate(payload, {
         onSuccess: () => {
           Alert.alert('Saved', 'Bank account saved successfully.');
+          setAccountHolderName('');
+          setIban('');
+          setBankName('');
         },
       });
     }
@@ -287,25 +231,62 @@ export const OrganiserBankDetailsScreen: React.FC = () => {
             <ArrowLeft size={22} color={colors.text.primary} />
           </TouchableOpacity>
           <TextDs style={styles.headerTitle}>
-            {isEditMode ? 'Edit Bank Account' : 'Bank Details'}
+            Bank Details
           </TextDs>
         </FlexView>
 
-        <View style={{ width: 60 }} />
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSave}
+          activeOpacity={0.8}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color={colors.text.white} />
+          ) : (
+            <TextDs style={styles.saveButtonText}>Save</TextDs>
+          )}
+        </TouchableOpacity>
       </FlexView>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {!isEditMode && (
+        <FlexView style={styles.section}>
+          <FormInput
+            label="Account Holder Name"
+            labelWeight="semibold"
+            placeholder="Account holder name"
+            value={accountHolderName}
+            onChangeText={setAccountHolderName}
+            containerStyle={styles.inputContainer}
+            inputContainerStyle={{ backgroundColor: colors.glass.background.white, borderWidth: 0 }}
+          />
+          <FormInput
+            label="IBAN"
+            labelWeight="semibold"
+            placeholder="Enter IBAN"
+            value={iban}
+            onChangeText={setIban}
+            containerStyle={styles.inputContainer}
+            inputContainerStyle={{ backgroundColor: colors.glass.background.white, borderWidth: 0 }}
+            autoCapitalize="characters"
+          />
+          <TextDs style={[styles.bankLabel, { ...getFontStyle(14, 'semibold') }]}>Bank Name</TextDs>
+          <Dropdown
+            value={bankName}
+            onSelect={setBankName}
+            options={BANK_OPTIONS}
+            placeholder="Select Bank"
+            containerStyle={{ backgroundColor: colors.glass.background.white, borderWidth: 0, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: 12 }}
+          />
+        </FlexView>
+
+        {!isEditMode && bankAccounts.length > 0 && (
           <FlexView style={styles.listSection}>
-            <TextDs style={styles.listSectionTitle}>Your bank accounts</TextDs>
+            <TextDs style={styles.listSectionTitle}>Your existing accounts</TextDs>
             {isLoadingList ? (
               <FlexView style={{ paddingVertical: spacing.lg, alignItems: 'center' }}>
                 <ActivityIndicator size="small" color={colors.primary} />
               </FlexView>
-            ) : bankAccounts.length === 0 ? (
-              <TextDs style={styles.emptyListText}>
-                No bank accounts yet. Add one below.
-              </TextDs>
             ) : (
               bankAccounts.map((account) => (
                 <BankAccountCard
@@ -318,25 +299,6 @@ export const OrganiserBankDetailsScreen: React.FC = () => {
               ))
             )}
           </FlexView>
-        )}
-
-        {isEditMode && singleAccount ? (
-          <BankAccountForm
-            key={singleAccount.id}
-            initialAccount={singleAccount}
-            onSave={handleSave}
-            isSaving={isSaving}
-            sectionTitle="Edit details"
-            saveButtonLabel="Update"
-          />
-        ) : (
-          <BankAccountForm
-            initialAccount={null}
-            onSave={handleSave}
-            isSaving={isSaving}
-            sectionTitle="Add bank account"
-            saveButtonLabel="Save"
-          />
         )}
       </ScrollView>
     </SafeAreaView>

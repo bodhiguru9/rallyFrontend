@@ -14,6 +14,7 @@ import { useFilterOptions } from '@hooks';
 import type { OrganiserBookingsAnalyticsEvent } from '@services';
 import { colors, spacing } from '@theme';
 import { styles } from './style/OrganiserAnalyticsScreen.styles';
+import { DEFAULT_DISPLAY_TIME_ZONE } from '@constants/timezones';
 import { getDateFilters } from '@screens/home/context/Home.data';
 import type { DateFilter as DateFilterType } from '@screens/home/Home.types';
 import { ChevronDown } from 'lucide-react-native';
@@ -406,6 +407,7 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
                     onPress={handleEventPress}
                     onBookmark={() => { }}
                     showRevenue={true}
+                    displayTimeZone={DEFAULT_DISPLAY_TIME_ZONE}
                   />
                 ))
               ) : (

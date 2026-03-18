@@ -249,8 +249,6 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
       {showDropdown && (
         <View 
           style={styles.dropdown}
-          onStartShouldSetResponder={() => true}
-          onTouchEnd={(e) => e.stopPropagation()}
         >
           {isLoading && (
             <FlexView style={styles.loadingRow}>

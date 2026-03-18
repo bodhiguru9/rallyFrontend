@@ -231,18 +231,24 @@ const RECURRING_EVENTS: PlayerBooking[] = [
 ];
 
 const SPORT_OPTIONS = [
-  { label: 'Football', value: 'football' },
-  { label: 'Tennis', value: 'tennis' },
-  { label: 'Table Tennis', value: 'table-tennis' },
-  { label: 'Basketball', value: 'basketball' },
-  { label: 'Badminton', value: 'badminton' },
+  { label: 'Football', value: 'football', icon: 'footballBlue', color: '#3D6F92' },
+  { label: 'Tennis', value: 'tennis', icon: 'tennisBlue', color: '#3D6F92' },
+  { label: 'Table Tennis', value: 'table-tennis', icon: 'tableTennisBlue', color: '#3D6F92' },
+  { label: 'Basketball', value: 'basketball', icon: 'basketballBlue', color: '#3D6F92' },
+  { label: 'Badminton', value: 'badminton', icon: 'badmintonBlue', color: '#3D6F92' },
+  { label: 'Cricket', value: 'cricket', icon: 'cricketBlue', color: '#3D6F92' },
+  { label: 'Indoor Cricket', value: 'indoor-cricket', icon: 'indoorCricketBlue', color: '#3D6F92' },
+  { label: 'Padel', value: 'padel', icon: 'padelBlue', color: '#3D6F92' },
+  { label: 'Pickleball', value: 'pickleball', icon: 'pickleballBlue', color: '#3D6F92' },
+  { label: 'Pilates', value: 'pilates', icon: 'pilatesBlue', color: '#3D6F92' },
+  { label: 'Running', value: 'running', icon: 'runningBlue', color: '#3D6F92' },
 ];
 
 const EVENT_TYPE_OPTIONS = [
-  { label: 'Social', value: 'social' },
-  { label: 'Class', value: 'class' },
-  { label: 'Tournament', value: 'tournament' },
-  { label: 'Training', value: 'training' },
+  { label: 'Social', value: 'social', customLabel: <IconTag title="Social" /> },
+  { label: 'Class', value: 'class', customLabel: <IconTag title="Class" /> },
+  { label: 'Tournament', value: 'tournament', customLabel: <IconTag title="Tournament" /> },
+  { label: 'Training', value: 'training', customLabel: <IconTag title="Training" /> },
 ];
 
 const REGISTRATION_POLICY_OPTIONS = [
@@ -290,6 +296,7 @@ export const CreateEventContent: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           scrollEnabled={!isLocationDropdownOpen}
+          keyboardShouldPersistTaps="always"
         >
           {activeTab === 0 && (
             <>
@@ -303,7 +310,11 @@ export const CreateEventContent: React.FC = () => {
                   <FlexView flex={1}>
                     <FormInput
                       label="Event Name"
+<<<<<<< Updated upstream
                       labelSize={16}
+=======
+                      labelSize={14}
+>>>>>>> Stashed changes
                       labelWeight="semibold"
                       variant='transparent'
                       placeholder="Enter Your Event Name"
@@ -327,7 +338,11 @@ export const CreateEventContent: React.FC = () => {
                     value={formData.sport}
                     onSelect={(value) => updateFormData('sport', value)}
                     containerStyle={styles.selectContainer}
+<<<<<<< Updated upstream
                     leftIcon={<ImageDs image="SportIcon" size={20} />}
+=======
+                    leftIcon={!formData.sport ? <ImageDs image="SportIcon" size={20} /> : undefined}
+>>>>>>> Stashed changes
                   />
                 </FlexView>
                 <FlexView flex={1}>
@@ -337,7 +352,11 @@ export const CreateEventContent: React.FC = () => {
                     value={formData.eventType}
                     onSelect={(value) => updateFormData('eventType', value)}
                     containerStyle={styles.selectContainer}
+<<<<<<< Updated upstream
                     leftIcon={<ImageDs image="Nametag" size={20} />}
+=======
+                    leftIcon={!formData.eventType ? <ImageDs image="Nametag" size={20} /> : undefined}
+>>>>>>> Stashed changes
                   />
                 </FlexView>
               </FlexView>
@@ -349,6 +368,7 @@ export const CreateEventContent: React.FC = () => {
                   style={{ width: '100%' }}
                   activeOpacity={0.7}
                 >
+<<<<<<< Updated upstream
                   <FlexView flex={1} gap={4}>
                     {formData.dateTime ? (
                       <>
@@ -377,6 +397,22 @@ export const CreateEventContent: React.FC = () => {
                       </TextDs>
                     )}
                   </FlexView>
+=======
+                  <TextDs
+                    size={16} weight="regular"
+                    color={formData.dateTime ? 'primary' : 'secondary'}
+                  >
+                    {formData.dateTime
+                      ? formData.dateTime.toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })
+                      : 'Date & Time'}
+                  </TextDs>
+>>>>>>> Stashed changes
                 </TouchableOpacity>
               </FlexView>
 
@@ -411,12 +447,16 @@ export const CreateEventContent: React.FC = () => {
                 onChangeText={(text) => updateFormData('description', text)}
                 leftIcon={<ImageDs image="BallpointPen" size={20} />}
                 multiline
+<<<<<<< Updated upstream
                 numberOfLines={4}
                 style={{ minHeight: 80, height: descriptionHeight, maxHeight: 300, textAlignVertical: 'top' }}
                 onContentSizeChange={(e) => {
                   const h = e.nativeEvent.contentSize.height;
                   setDescriptionHeight(Math.max(80, Math.min(300, h + 16)));
                 }}
+=======
+                style={{ maxHeight: 130, textAlignVertical: 'top' }}
+>>>>>>> Stashed changes
               />
 
               <FlexView isFullWidth height={1} backgroundColor={colors.background.white} my={14} />
@@ -434,6 +474,7 @@ export const CreateEventContent: React.FC = () => {
                   >
                     <ImageDs image="GenderIcon" size={16} />
                     <TextDs size={12} weight="medium" color="white">
+<<<<<<< Updated upstream
                       {formData.restrictions &&
                       ((formData.restrictions.gender && formData.restrictions.gender !== 'open') ||
                         (formData.restrictions.sportsLevel && formData.restrictions.sportsLevel !== 'all') ||
@@ -441,6 +482,9 @@ export const CreateEventContent: React.FC = () => {
                         !!formData.restrictions.levelRestriction?.trim())
                         ? 'Edit'
                         : 'Add Restrictions'}
+=======
+                      Add Restrictions
+>>>>>>> Stashed changes
                     </TextDs>
                   </TouchableOpacity>
                 </FlexView>
@@ -543,7 +587,11 @@ export const CreateEventContent: React.FC = () => {
                       color={formData.registrationStartTime && formData.registrationEndTime ? 'primary' : 'secondary'}
                     >
                       {formData.registrationStartTime && formData.registrationEndTime
+<<<<<<< Updated upstream
                         ? `${formData.registrationStartTime.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} – ${formData.registrationEndTime.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
+=======
+                        ? `${formData.registrationStartTime.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} – ${formData.registrationEndTime.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
+>>>>>>> Stashed changes
                         : 'Registration Start & End Time'}
                     </TextDs>
                   </FlexView>
@@ -551,6 +599,7 @@ export const CreateEventContent: React.FC = () => {
 
                 <FlexView height={spacing.base} />
 
+<<<<<<< Updated upstream
                 <FlexView mb={spacing.sm}>
                   <TextDs size={14} weight="medium" color="primary">
                     Refund Policy
@@ -559,6 +608,8 @@ export const CreateEventContent: React.FC = () => {
                     Choose when users can cancel and receive a refund
                   </TextDs>
                 </FlexView>
+=======
+>>>>>>> Stashed changes
                 <Dropdown
                   placeholder="Only Allowed before the day of the event"
                   options={REGISTRATION_POLICY_OPTIONS}

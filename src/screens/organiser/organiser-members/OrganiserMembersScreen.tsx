@@ -30,13 +30,17 @@ export const OrganiserMembersScreen: React.FC = () => {
 
   const sportsOptions = [
     { id: 'all-sports', label: 'All Sports', value: 'all' },
-    { id: 'football', label: 'Football', value: 'football' },
-    { id: 'basketball', label: 'Basketball', value: 'basketball' },
-    { id: 'cricket', label: 'Cricket', value: 'cricket' },
-    { id: 'tennis', label: 'Tennis', value: 'tennis' },
-    { id: 'badminton', label: 'Badminton', value: 'badminton' },
-    { id: 'volleyball', label: 'Volleyball', value: 'volleyball' },
-    { id: 'padel', label: 'Padel', value: 'padel' },
+    { id: 'football', label: 'Football', value: 'football', icon: 'footballIcon' },
+    { id: 'tennis', label: 'Tennis', value: 'tennis', icon: 'tennisIcon' },
+    { id: 'table-tennis', label: 'Table Tennis', value: 'table-tennis', icon: 'tableTennisIcon' },
+    { id: 'basketball', label: 'Basketball', value: 'basketball', icon: 'basketballIcon' },
+    { id: 'badminton', label: 'Badminton', value: 'badminton', icon: 'badmintonIcon' },
+    { id: 'cricket', label: 'Cricket', value: 'cricket', icon: 'cricketIcon' },
+    { id: 'indoor-cricket', label: 'Indoor Cricket', value: 'indoor-cricket', icon: 'indoorCricketIcon' },
+    { id: 'padel', label: 'Padel', value: 'padel', icon: 'padelIcon' },
+    { id: 'pickleball', label: 'Pickleball', value: 'pickleball', icon: 'pickleballIcon' },
+    { id: 'pilates', label: 'Pilates', value: 'pilates', icon: 'pilatesIcon' },
+    { id: 'running', label: 'Running', value: 'running', icon: 'runningIcon' },
   ];
 
   const activeSport = useMemo(() => {

@@ -27,10 +27,10 @@ export const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   saveButton: {
-    backgroundColor: '#64B5F6',
+    backgroundColor: '#7A9CB5', // matching the blue-grey pill in the image
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
+    paddingVertical: 6,
+    borderRadius: 100,
   },
   saveButtonText: {
     ...getFontStyle(12, 'semibold'),

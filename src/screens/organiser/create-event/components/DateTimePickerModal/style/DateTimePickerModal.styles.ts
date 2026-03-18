@@ -4,7 +4,7 @@ import { colors, spacing, borderRadius, getFontStyle, shadows } from '@theme';
 export const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: colors.surface.overlay,
+    backgroundColor: "rgb(0, 0, 0, 0.6)",
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
   monthYearText: {
-    ...getFontStyle(16, 'semibold'),
+    ...getFontStyle(16, 'bold'),
     color: colors.text.primary,
   },
   monthNavigationButton: {
@@ -45,7 +45,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dayOfWeekText: {
-    ...getFontStyle(8, 'medium'),
+    ...getFontStyle(8, 'bold'),
     color: colors.text.secondary,
   },
   calendarGrid: {
@@ -79,9 +79,9 @@ export const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   timeSectionTitle: {
-    ...getFontStyle(14, 'semibold'),
+    ...getFontStyle(14, 'bold'),
     color: colors.text.primary,
-    marginBottom: spacing.md,
+    marginTop: spacing.lg,
   },
   timeInputContainer: {
     flexDirection: 'row',
@@ -195,13 +195,13 @@ export const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.button.cancel.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelButtonText: {
     ...getFontStyle(14, 'semibold'),
-    color: colors.text.secondary,
+    color: colors.button.cancel.text,
   },
   confirmButton: {
     flex: 1,

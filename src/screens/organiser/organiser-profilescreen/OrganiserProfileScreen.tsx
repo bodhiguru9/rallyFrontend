@@ -111,7 +111,7 @@ export const OrganiserProfileScreen: React.FC = () => {
   };
 
   const handleAttendeesPress = () => {
-    navigation.navigate('OrganiserAttendees');
+    navigation.navigate('OrganiserMembers');
   };
 
   const handleHostedPress = () => {

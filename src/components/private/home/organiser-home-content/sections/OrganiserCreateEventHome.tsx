@@ -9,6 +9,7 @@ import { EventData } from '@app-types';
 import { EventCard, TextDs } from '@components';
 import { ArrowIcon } from '@components/global/ArrowIcon';
 import { FlexView } from '@designSystem/atoms/FlexView';
+import { DEFAULT_DISPLAY_TIME_ZONE } from '@constants/timezones';
 
 interface OrganiserCreateEventHomeProps {
   events: EventData[];
@@ -62,6 +63,7 @@ export const OrganiserCreateEventHome: React.FC<OrganiserCreateEventHomeProps> =
                 onBookmark={handleBookmark}
                 hidePrice
                 hideCreator={true}
+                displayTimeZone={DEFAULT_DISPLAY_TIME_ZONE}
               />
             </FlexView>
           );

@@ -20,6 +20,7 @@ import { generateDateFilters } from '@utils/date-utils';
 import type { DateFilter as DateFilterType } from '@screens/home/Home.types';
 import { ChevronDown } from 'lucide-react-native';
 import { isRecurringEventOnDate, getRecurringEventInstanceDateTime } from '@utils/recurrence-utils';
+import { DEFAULT_DISPLAY_TIME_ZONE } from '@constants/timezones';
 
 type TNavigation = NativeStackNavigationProp<RootStackParamList, 'OrganiserEventsHosted'>;
 
@@ -377,6 +378,7 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
                     onPress={handleEventPress}
                     onBookmark={() => { }}
                     showRevenue
+                    displayTimeZone={DEFAULT_DISPLAY_TIME_ZONE}
                   />
                 ))
               ) : (

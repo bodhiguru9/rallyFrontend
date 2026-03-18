@@ -7,6 +7,7 @@ export interface DropdownOption {
   disabled?: boolean;
   color?: string;
   icon?: string; // <-- Add this line
+  customLabel?: ReactNode;
 }
 
 export type DropdownPosition = 'top' | 'bottom' | 'left' | 'right';

@@ -164,16 +164,22 @@ export const Dropdown: React.FC<DropdownProps> = (props) => {
                 {item.icon && (
                     <ImageDs image={item.icon as any} size={16} style={styles.optionIcon} />
                 )}
-                <TextDs
-                    style={[
-                        styles.optionText,
-                        isSelected && styles.selectedOptionText,
-                        item.color && { color: item.color },
-                        optionDisabled && styles.disabledOptionText,
-                    ]}
-                >
-                    {item.label}
-                </TextDs>
+                {item.customLabel ? (
+                    <View style={{ flex: 1, alignItems: 'flex-start', paddingRight: spacing.sm }}>
+                        {item.customLabel}
+                    </View>
+                ) : (
+                    <TextDs
+                        style={[
+                            styles.optionText,
+                            isSelected && styles.selectedOptionText,
+                            item.color && { color: item.color },
+                            optionDisabled && styles.disabledOptionText,
+                        ]}
+                    >
+                        {item.label}
+                    </TextDs>
+                )}
                 {isSelected && <Check size={18} color={colors.primary} />}
             </TouchableOpacity>
         );
@@ -208,16 +214,22 @@ export const Dropdown: React.FC<DropdownProps> = (props) => {
                         </FlexView>
                     )
                 )}
-                <TextDs
-                    style={[
-                        styles.triggerText,
-                        triggerTextStyle,
-                        triggerLabel === placeholder && styles.placeholderText,
-                        disabled && styles.disabledText,
-                    ]}
-                >
-                    {triggerLabel}
-                </TextDs>
+                {selectedOption?.customLabel && !isMulti ? (
+                    <View style={{ flex: 1, paddingRight: spacing.sm }}>
+                        {selectedOption.customLabel}
+                    </View>
+                ) : (
+                    <TextDs
+                        style={[
+                            styles.triggerText,
+                            triggerTextStyle,
+                            triggerLabel === placeholder && styles.placeholderText,
+                            disabled && styles.disabledText,
+                        ]}
+                    >
+                        {triggerLabel}
+                    </TextDs>
+                )}
                 {icon ||
                     (isOpen ? (
                         <ChevronUp size={20} color={disabled ? colors.text.tertiary : colors.text.secondary} />
@@ -413,7 +425,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: spacing.base,
+        paddingHorizontal: spacing.sm,
         paddingVertical: spacing.md,
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: colors.border.light,
