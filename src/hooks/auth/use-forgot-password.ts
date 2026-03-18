@@ -89,7 +89,7 @@ export const useForgotPassword = () => {
     if (!useEmail && phoneNumber) {
       formattedPhone = phoneNumber.startsWith('+')
         ? phoneNumber
-        : `+91${phoneNumber}`; // Default to India if no country code
+        : `+971${phoneNumber}`; // Default to UAE if no country code
 
       // Validate phone number format
       if (!validatePhoneNumber(formattedPhone)) {

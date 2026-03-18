@@ -116,7 +116,7 @@ export const useSignIn = () => {
     // Format phone number with country code if not using email
     let formattedPhone: string | undefined;
     if (!useEmail && phoneNumber) {
-      formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`; // Default to India if no country code
+      formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+971${phoneNumber}`; // Default to India if no country code
 
       // Validate phone number format
       if (!validatePhoneNumber(formattedPhone)) {
