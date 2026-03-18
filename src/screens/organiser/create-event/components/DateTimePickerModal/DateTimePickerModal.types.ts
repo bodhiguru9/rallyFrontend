@@ -3,7 +3,7 @@ import type { FrequencySelection } from '../FrequencyModal';
 export interface DateTimePickerModalProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (dateTime: Date, frequency?: FrequencySelection) => void;
+  onConfirm: (startDateTime: Date, endDateTime: Date, frequency?: FrequencySelection) => void;
   initialDate?: Date;
   /** 24-hour format: hour 0-23 */
   initialStartTime?: { hour: number; minute: number };

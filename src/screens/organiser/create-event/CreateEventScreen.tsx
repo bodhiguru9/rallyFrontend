@@ -259,6 +259,7 @@ export const CreateEventContent: React.FC = () => {
   const [registrationStep, setRegistrationStep] = useState<'start' | 'end'>('start');
   const [showRestrictionsModal, setShowRestrictionsModal] = useState(false);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const [descriptionHeight, setDescriptionHeight] = useState(80);
 
   // Use the create organiser event hook
   const {
@@ -348,20 +349,34 @@ export const CreateEventContent: React.FC = () => {
                   style={{ width: '100%' }}
                   activeOpacity={0.7}
                 >
-                  <TextDs
-                    size={16} weight="regular"
-                    color={formData.dateTime ? 'primary' : 'secondary'}
-                  >
-                    {formData.dateTime
-                      ? formData.dateTime.toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })
-                      : 'Date & Time'}
-                  </TextDs>
+                  <FlexView flex={1} gap={4}>
+                    {formData.dateTime ? (
+                      <>
+                        <TextDs size={14} weight="medium" color="primary">
+                          Start: {formData.dateTime.toLocaleString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </TextDs>
+                        <TextDs size={14} weight="medium" color="primary">
+                          End: {(formData.endDateTime ?? new Date(formData.dateTime!.getTime() + 3600000)).toLocaleString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </TextDs>
+                      </>
+                    ) : (
+                      <TextDs size={16} weight="regular" color="secondary">
+                        Date & Time
+                      </TextDs>
+                    )}
+                  </FlexView>
                 </TouchableOpacity>
               </FlexView>
 
@@ -397,7 +412,11 @@ export const CreateEventContent: React.FC = () => {
                 leftIcon={<ImageDs image="BallpointPen" size={20} />}
                 multiline
                 numberOfLines={4}
-                style={{ minHeight: 80, textAlignVertical: 'top' }}
+                style={{ minHeight: 80, height: descriptionHeight, maxHeight: 300, textAlignVertical: 'top' }}
+                onContentSizeChange={(e) => {
+                  const h = e.nativeEvent.contentSize.height;
+                  setDescriptionHeight(Math.max(80, Math.min(300, h + 16)));
+                }}
               />
 
               <FlexView isFullWidth height={1} backgroundColor={colors.background.white} my={14} />
@@ -415,7 +434,13 @@ export const CreateEventContent: React.FC = () => {
                   >
                     <ImageDs image="GenderIcon" size={16} />
                     <TextDs size={12} weight="medium" color="white">
-                      Add Restrictions
+                      {formData.restrictions &&
+                      ((formData.restrictions.gender && formData.restrictions.gender !== 'open') ||
+                        (formData.restrictions.sportsLevel && formData.restrictions.sportsLevel !== 'all') ||
+                        (formData.restrictions.ageRange && (formData.restrictions.ageRange.min > 0 || formData.restrictions.ageRange.max < 100)) ||
+                        !!formData.restrictions.levelRestriction?.trim())
+                        ? 'Edit'
+                        : 'Add Restrictions'}
                     </TextDs>
                   </TouchableOpacity>
                 </FlexView>
@@ -518,7 +543,7 @@ export const CreateEventContent: React.FC = () => {
                       color={formData.registrationStartTime && formData.registrationEndTime ? 'primary' : 'secondary'}
                     >
                       {formData.registrationStartTime && formData.registrationEndTime
-                        ? `${formData.registrationStartTime.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} – ${formData.registrationEndTime.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
+                        ? `${formData.registrationStartTime.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} – ${formData.registrationEndTime.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
                         : 'Registration Start & End Time'}
                     </TextDs>
                   </FlexView>
@@ -526,6 +551,14 @@ export const CreateEventContent: React.FC = () => {
 
                 <FlexView height={spacing.base} />
 
+                <FlexView mb={spacing.sm}>
+                  <TextDs size={14} weight="medium" color="primary">
+                    Refund Policy
+                  </TextDs>
+                  <TextDs size={12} weight="regular" color="secondary" style={{ marginTop: 4 }}>
+                    Choose when users can cancel and receive a refund
+                  </TextDs>
+                </FlexView>
                 <Dropdown
                   placeholder="Only Allowed before the day of the event"
                   options={REGISTRATION_POLICY_OPTIONS}
@@ -635,8 +668,9 @@ export const CreateEventContent: React.FC = () => {
           <DateTimePickerModal
             visible={showDateTimePicker}
             onClose={() => setShowDateTimePicker(false)}
-            onConfirm={(date, frequency) => {
-              updateFormData('dateTime', date);
+            onConfirm={(startDate, endDate, frequency) => {
+              updateFormData('dateTime', startDate);
+              updateFormData('endDateTime', endDate);
               if (!frequency) {
                 updateFormData('frequency', []);
                 updateFormData('frequencyEndDate', null);
@@ -650,6 +684,8 @@ export const CreateEventContent: React.FC = () => {
               }
             }}
             initialDate={formData.dateTime || undefined}
+            initialStartTime={formData.dateTime ? { hour: formData.dateTime.getHours(), minute: formData.dateTime.getMinutes() } : undefined}
+            initialEndTime={formData.endDateTime ? { hour: formData.endDateTime.getHours(), minute: formData.endDateTime.getMinutes() } : undefined}
             initialFrequency={formData.frequency}
           />
 

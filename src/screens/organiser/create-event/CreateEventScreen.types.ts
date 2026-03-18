@@ -6,6 +6,8 @@ export interface CreateEventFormData {
   sport: string;
   eventType: string;
   dateTime: Date | null;
+  /** Event end date/time (when different from start) */
+  endDateTime?: Date | null;
   /** Structured location from EventLocationSearch (OpenStreetMap), or legacy string. */
   location: EventLocation | string | null;
   /** Raw text from location input (fallback when user types without selecting). */

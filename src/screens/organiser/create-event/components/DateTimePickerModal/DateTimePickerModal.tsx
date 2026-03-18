@@ -155,7 +155,10 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
     const startDateTime = new Date(selectedDate);
     startDateTime.setHours(startTime.hour, startTime.minute, 0, 0);
 
-    onConfirm(startDateTime, frequency.type === 'never' ? undefined : frequency);
+    const endDateTime = new Date(selectedDate);
+    endDateTime.setHours(endTime.hour, endTime.minute, 0, 0);
+
+    onConfirm(startDateTime, endDateTime, frequency.type === 'never' ? undefined : frequency);
     onClose();
   };
 
