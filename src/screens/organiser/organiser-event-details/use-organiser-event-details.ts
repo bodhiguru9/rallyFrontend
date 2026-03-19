@@ -6,6 +6,7 @@ import { useEvent, useUpdateEvent } from '@hooks/use-events';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDate, shareEvent } from '@utils';
 import type { EventData } from '@app-types';
+import { eventInvitesService } from '@services';
 
 type Tab = 'about' | 'members' | 'invite';
 
@@ -78,12 +79,30 @@ export const useOrganiserEventDetails = () => {
   const [isDeleteEventModalVisible, setIsDeleteEventModalVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editFormData, setEditFormData] = useState<OrganiserEventEditFormData>(defaultEditFormData);
+  const [invitedUserIds, setInvitedUserIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (error && !isLoading) {
       navigation.navigate('Home');
     }
   }, [error, isLoading, navigation]);
+
+  useEffect(() => {
+    if (eventId) {
+      eventInvitesService.getOrganiserEventInvites(eventId)
+        .then((res) => {
+          if (res?.invitations) {
+            const pastInvitedIds = res.invitations
+              .map((inv) => inv.player?.userId?.toString())
+              .filter(Boolean) as string[];
+            setInvitedUserIds((prev) => Array.from(new Set([...prev, ...pastInvitedIds])));
+          }
+        })
+        .catch((err) => {
+          console.log('Failed to fetch previous invites:', err);
+        });
+    }
+  }, [eventId]);
 
   const handleShare = () => {
     if (event) {
@@ -192,6 +211,8 @@ export const useOrganiserEventDetails = () => {
     isEditMode,
     editFormData,
     isSaving: updateEventMutation.isPending,
+    invitedUserIds,
+    setInvitedUserIds,
 
     // Handlers
     handleShare,

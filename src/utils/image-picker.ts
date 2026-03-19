@@ -14,7 +14,7 @@ export interface ImagePickerResult {
  * Pick an image from the device's image library
  * Requests permissions if needed and allows user to select an image
  */
-export const pickImageFromLibrary = async (): Promise<ImagePickerResult | null> => {
+export const pickImageFromLibrary = async (aspect: [number, number] = [1, 1]): Promise<ImagePickerResult | null> => {
   try {
     // Request permission to access media library
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -31,7 +31,7 @@ export const pickImageFromLibrary = async (): Promise<ImagePickerResult | null> 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
-      aspect: [1, 1], // Square aspect ratio for profile pictures
+      aspect, // Square aspect ratio default
       quality: 0.8,
     });
 
@@ -59,7 +59,7 @@ export const pickImageFromLibrary = async (): Promise<ImagePickerResult | null> 
  * Take a photo using the device's camera
  * Requests permissions if needed and allows user to capture a photo
  */
-export const takePhotoWithCamera = async (): Promise<ImagePickerResult | null> => {
+export const takePhotoWithCamera = async (aspect: [number, number] = [1, 1]): Promise<ImagePickerResult | null> => {
   try {
     // Request permission to access camera
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -75,7 +75,7 @@ export const takePhotoWithCamera = async (): Promise<ImagePickerResult | null> =
     // Launch camera
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
-      aspect: [1, 1], // Square aspect ratio for profile pictures
+      aspect, // Square aspect ratio default
       quality: 0.8,
     });
 
@@ -103,7 +103,7 @@ export const takePhotoWithCamera = async (): Promise<ImagePickerResult | null> =
  * Show action sheet to choose between camera and library
  * Returns the selected image or null if cancelled
  */
-export const showImagePickerOptions = (): Promise<ImagePickerResult | null> => {
+export const showImagePickerOptions = (aspect: [number, number] = [1, 1]): Promise<ImagePickerResult | null> => {
   return new Promise((resolve) => {
     Alert.alert(
       'Choose Profile Picture',
@@ -111,16 +111,20 @@ export const showImagePickerOptions = (): Promise<ImagePickerResult | null> => {
       [
         {
           text: 'Take Photo',
-          onPress: async () => {
-            const result = await takePhotoWithCamera();
-            resolve(result);
+          onPress: () => {
+            setTimeout(async () => {
+              const result = await takePhotoWithCamera(aspect);
+              resolve(result);
+            }, 300);
           },
         },
         {
           text: 'Choose from Library',
-          onPress: async () => {
-            const result = await pickImageFromLibrary();
-            resolve(result);
+          onPress: () => {
+            setTimeout(async () => {
+              const result = await pickImageFromLibrary(aspect);
+              resolve(result);
+            }, 300);
           },
         },
         {

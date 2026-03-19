@@ -4,6 +4,7 @@ import { TextDs } from '@designSystem/atoms/TextDs';
 import { colors, spacing } from '@theme';
 import { styles } from '../style/OrganiserHomeContent.styles';
 import { SummaryCard } from '@screens/organiser/components/SummaryCard';
+import { ImageDs } from '@components';
 import type { EventData } from '@app-types';
 import { MostBookedSection } from '@screens/organiser/components/MostBookedSection';
 import { TransactionItem } from '@screens/organiser/components/TransactionItem';
@@ -76,10 +77,14 @@ export const renderDashboard = ({
           {dashboardData.summaryCards.map((card, index) => {
             const isRevenue = isRevenueCard(card.label);
             const isEventsHosted = isEventsHostedCard(card.label);
-            const isTotalMembers = isTotalMembersCard(card.label); // 👈 added
+            const isTotalMembers = isTotalMembersCard(card.label);
 
             const cardContent = (
-              <SummaryCard value={card.value} label={card.label} />
+              <SummaryCard 
+                value={card.value} 
+                label={card.label} 
+                prefixIcon={isRevenue ? <ImageDs image="DhiramIcon" size={16} /> : undefined}
+              />
             );
 
             const isClickable = isRevenue || isEventsHosted || isTotalMembers;

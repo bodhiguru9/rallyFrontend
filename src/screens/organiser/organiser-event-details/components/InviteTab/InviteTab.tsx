@@ -6,7 +6,7 @@ import { TextDs, ImageDs, BottomSheetModal } from '@components';
 import { Card } from '@components/global/Card';
 import { colors, spacing, borderRadius, getFontStyle } from '@theme';
 import { FlexView } from '@designSystem/atoms/FlexView';
-import { Users, Megaphone, QrCode } from 'lucide-react-native';
+import { Users, Megaphone, QrCode, Check } from 'lucide-react-native';
 import QRCode from 'react-native-qrcode-svg';
 import type { EventData } from '@app-types';
 import { useOrganiserFollowers } from '@hooks/organiser';
@@ -21,9 +21,11 @@ type InviteView = 'invite' | 'buzz' | 'qrcode';
 
 interface InviteTabProps {
   event: EventData;
+  invitedUserIds: string[];
+  setInvitedUserIds: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-export const InviteTab: React.FC<InviteTabProps> = ({ event }) => {
+export const InviteTab: React.FC<InviteTabProps> = ({ event, invitedUserIds, setInvitedUserIds }) => {
   const [activeView, setActiveView] = useState<InviteView>('invite');
   const [searchQuery, setSearchQuery] = useState('');
   const [buzzMessage, setBuzzMessage] = useState('');
@@ -109,6 +111,7 @@ export const InviteTab: React.FC<InviteTabProps> = ({ event }) => {
       const response = await eventService.sendEventInvite(event.eventId.toString(), userId);
 
       if (response.success) {
+        setInvitedUserIds((prev) => [...prev, userId]);
         Alert.alert(
           'Invite Sent!',
           response.message || 'The invite has been sent successfully to the player.',
@@ -293,23 +296,26 @@ export const InviteTab: React.FC<InviteTabProps> = ({ event }) => {
             <FlexView style={styles.subscribersGrid}>
               {filteredSubscribers.map((subscriber: { fullName: string; userId: string; profilePic: string }) => {
                 const isInviting = invitingUserId === subscriber.userId;
+                const isInvited = invitedUserIds.includes(subscriber.userId);
 
                 return (
                   <TouchableOpacity
                     key={subscriber.userId}
                     style={styles.subscriberItem}
-                    onPress={() => handleInvitePlayer(subscriber.userId)}
+                    onPress={() => !isInvited && handleInvitePlayer(subscriber.userId)}
                     activeOpacity={0.7}
-                    disabled={isInviting}
+                    disabled={isInviting || isInvited}
                   >
                     <FlexView style={styles.subscriberAvatarContainer}>
                       <Image
                         source={{ uri: subscriber.profilePic }}
-                        style={[styles.subscriberAvatar, isInviting && styles.subscriberAvatarLoading]}
+                        style={[styles.subscriberAvatar, (isInviting || isInvited) && styles.subscriberAvatarLoading]}
                       />
-                      <FlexView style={styles.addIcon}>
+                      <FlexView style={[styles.addIcon, isInvited && { backgroundColor: colors.status.success, borderColor: colors.status.success }]}>
                         {isInviting ? (
                           <ActivityIndicator size="small" color={colors.text.white} />
+                        ) : isInvited ? (
+                          <Check size={14} color={colors.text.white} />
                         ) : (
                           <TextDs size={14} weight="regular" color="white">
                             +

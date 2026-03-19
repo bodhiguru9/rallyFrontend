@@ -97,7 +97,7 @@ export const OrganiserMembersScreen: React.FC = () => {
     if (selectedPeriod !== 'all-time') {
       let startDate: Date = todayStart;
       let endDate: Date = todayEnd;
-      
+
       if (selectedPeriod === 'today') {
         startDate = todayStart;
         endDate = todayEnd;
@@ -243,7 +243,7 @@ export const OrganiserMembersScreen: React.FC = () => {
                   </FlexView>
                   <FlexView style={styles.memberPrice}>
                     <ImageDs image="DhiramIcon" style={styles.priceIcon} />
-                    <TextDs size={14} weight="regular" color="primary">
+                    <TextDs size={16} weight="bold" color="blueGray">
                       {member.totalBookingAmount ?? 0}
                     </TextDs>
                   </FlexView>

@@ -12,6 +12,8 @@ import { useEvent } from '@hooks/use-events';
 import { colors, spacing } from '@theme';
 import { formatDate, formatBookingSlot, shareEvent, calculateSpotsFilled } from '@utils';
 import { eventService } from '@services/event-service';
+import { resolveImageUri } from '@utils/image-utils';
+import { images } from '@assets/images';
 import { styles } from './style/OrganiserAnalyticsEventDetailsScreen.styles';
 import { styles as eventStyles } from '@screens/event-details/style/EventDetailsScreen.styles';
 import { EventDetailsMap } from '@screens/event-details/components/event-details-map/EventDetailsMap';
@@ -49,6 +51,32 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
     const approval = event?.eventApprovalReq ? ': Approval Required' : '';
     return `${visibility}${approval}`;
   }, [event?.IsPrivateEvent, event?.eventApprovalReq]);
+
+  const [imageSource, setImageSource] = useState<any>(images.blackLogo);
+
+  const rawEventImage = event?.eventImages?.[0] || (event as any)?.gameImages?.[0] || (event as any)?.eventImage;
+  const organizerProfilePic = event?.creator?.profilePic || (event as any)?.eventCreatorProfilePic || (event as any)?.organizerProfilePic;
+
+  const eventImageUri = resolveImageUri(rawEventImage);
+  const organizerImageUri = resolveImageUri(organizerProfilePic);
+
+  React.useEffect(() => {
+    if (eventImageUri) {
+      setImageSource({ uri: eventImageUri });
+    } else if (organizerImageUri) {
+      setImageSource({ uri: organizerImageUri });
+    } else {
+      setImageSource(images.blackLogo);
+    }
+  }, [eventImageUri, organizerImageUri]);
+
+  const handleImageError = () => {
+    if (imageSource?.uri === eventImageUri && organizerImageUri) {
+      setImageSource({ uri: organizerImageUri });
+    } else {
+      setImageSource(images.blackLogo);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -107,7 +135,8 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
             <FlexView style={eventStyles.card}>
               <FlexView style={eventStyles.eventOverview}>
                 <Image
-                  source={{ uri: event.eventImages?.[0] || 'https://via.placeholder.com/150' }}
+                  source={imageSource || images.blackLogo}
+                  onError={handleImageError}
                   style={eventStyles.eventImage}
                 />
                 <FlexView style={eventStyles.eventInfo}>

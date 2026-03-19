@@ -50,6 +50,29 @@ export interface MyEventInvitationsApiResponse {
 
 export type MyEventInvitationsData = MyEventInvitationsApiResponse['data'];
 
+export interface OrganiserEventInvitationsApiResponse {
+  success: boolean;
+  message: string;
+  data: {
+    invitations: Array<{
+      inviteId: string | null;
+      event: {
+        eventId: string;
+      } | null;
+      player: {
+        userId: number;
+        fullName: string;
+        profilePic: string | null;
+      } | null;
+      message: string | null;
+      status: 'pending' | 'accepted' | 'declined' | 'cancelled' | string;
+      createdAt: string;
+    }>;
+    totalInvitations: number;
+    filter?: { eventId?: string; status?: string };
+  };
+}
+
 export const eventInvitesService = {
   /**
    * GET /api/event-invites/my?page=1&status=pending
@@ -61,6 +84,21 @@ export const eventInvitesService = {
 
     if (!data.success) {
       throw new Error(data.message || 'Failed to fetch invitations');
+    }
+
+    return data.data;
+  },
+
+  /**
+   * GET /api/event-invites/organiser?eventId=xyz&page=1
+   */
+  getOrganiserEventInvites: async (eventId: string, page: number = 1): Promise<OrganiserEventInvitationsApiResponse['data']> => {
+    const { data } = await apiClient.get<OrganiserEventInvitationsApiResponse>('/api/event-invites/organiser', {
+      params: { eventId, page },
+    });
+
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to fetch organiser invitations');
     }
 
     return data.data;

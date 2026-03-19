@@ -3,12 +3,12 @@ import { colors, spacing, borderRadius, getFontStyle } from '@theme';
 
 export const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    alignItems: 'center',
+    width: '48%',
+    alignItems: 'stretch',
   },
   placeholder: {
     width: '100%',
-    aspectRatio: 0.7,
+    aspectRatio: 1.6,
     backgroundColor: colors.background.secondary,
     borderRadius: borderRadius.md,
     justifyContent: 'center',
@@ -19,14 +19,13 @@ export const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    aspectRatio: 0.7,
+    aspectRatio: 1.6,
     borderRadius: borderRadius.md,
     overflow: 'hidden',
     position: 'relative',
   },
   image: {
-    width: '100%',
-    height: '100%',
+    ...StyleSheet.absoluteFillObject,
   },
   removeButton: {
     position: 'absolute',
@@ -40,9 +39,10 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   label: {
-    ...getFontStyle(8, 'medium'),
+    ...getFontStyle(12, 'medium'),
     color: colors.text.secondary,
     marginTop: spacing.xs,
+    textAlign: 'center',
   },
 });
 

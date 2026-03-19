@@ -81,7 +81,8 @@ export const styles = StyleSheet.create({
   },
   emiratesRow: {
     flexDirection: 'row',
-    gap: spacing.base,
+    width: '100%',
+    justifyContent: 'space-between',
   },
   sectionTitle: {
     ...getFontStyle(14, 'semibold'),

@@ -7,7 +7,18 @@ import {Modal,
 import { CloudUpload } from 'lucide-react-native';
 import { colors } from '@theme';
 import { SearchInput } from '@components/global';
-import type { ChooseImageModalProps, RecommendedImage } from './ChooseImageModal.types';
+export interface RecommendedImage {
+  id: string;
+  uri: string;
+}
+
+export interface ChooseImageModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onImageSelect: (uri: string) => void;
+  onUploadPress: () => void;
+  hideRecommended?: boolean;
+}
 import { styles } from './style/ChooseImageModal.styles';
 
 // Mock recommended images - in a real app, these would come from an API
@@ -31,6 +42,7 @@ export const ChooseImageModal: React.FC<ChooseImageModalProps> = ({
   onClose,
   onImageSelect,
   onUploadPress,
+  hideRecommended = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -57,34 +69,38 @@ export const ChooseImageModal: React.FC<ChooseImageModalProps> = ({
           <TextDs style={styles.title}>Choose Image</TextDs>
 
           {/* Search Bar */}
-          <FlexView style={styles.searchContainer}>
-            <SearchInput
-              placeholder="Search Players by Name"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </FlexView>
+          {!hideRecommended && (
+            <FlexView style={styles.searchContainer}>
+              <SearchInput
+                placeholder="Search Players by Name"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </FlexView>
+          )}
 
           {/* Recommended Section */}
-          <FlexView style={styles.recommendedSection}>
-            <TextDs style={styles.recommendedTitle}>Recommended</TextDs>
-            <FlexView style={styles.recommendedImagesContainer}>
-              {RECOMMENDED_IMAGES.map((image) => (
-                <TouchableOpacity
-                  key={image.id}
-                  style={styles.recommendedImage}
-                  onPress={() => handleImageSelect(image)}
-                  activeOpacity={0.7}
-                >
-                  <Image
-                    source={{ uri: image.uri }}
-                    style={styles.recommendedImageContent}
-                    resizeMode="cover"
-                  />
-                </TouchableOpacity>
-              ))}
+          {!hideRecommended && (
+            <FlexView style={styles.recommendedSection}>
+              <TextDs style={styles.recommendedTitle}>Recommended</TextDs>
+              <FlexView style={styles.recommendedImagesContainer}>
+                {RECOMMENDED_IMAGES.map((image) => (
+                  <TouchableOpacity
+                    key={image.id}
+                    style={styles.recommendedImage}
+                    onPress={() => handleImageSelect(image)}
+                    activeOpacity={0.7}
+                  >
+                    <Image
+                      source={{ uri: image.uri }}
+                      style={styles.recommendedImageContent}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
+                ))}
+              </FlexView>
             </FlexView>
-          </FlexView>
+          )}
 
           {/* Upload Button */}
           <TouchableOpacity

@@ -78,7 +78,7 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({ event, onP
               <TextDs size={16} weight="bold">{displayEvent.eventName}</TextDs>
               {displayEvent.creator?.fullName &&
                 <TextDs size={12} weight="regular">
-                  by {displayEvent.creator?.fullName || 'Unknown Organizer'}
+                  by {(displayEvent.creator as any)?.communityName || (displayEvent as any).communityName || displayEvent.creator?.fullName || 'Unknown Organizer'}
                 </TextDs>}
             </FlexView>
 

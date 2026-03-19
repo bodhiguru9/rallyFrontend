@@ -3,6 +3,7 @@ import { TextDs, FlexView, Avatar } from '@components';
 import { Modal, TouchableOpacity, Pressable, ScrollView } from 'react-native';
 import { User, X } from 'lucide-react-native';
 import { colors } from '@theme';
+import { useAuthStore } from '@store/auth-store';
 import type { MembersModalProps } from './MembersModal.types';
 import { styles } from './style/MembersModal.styles';
 
@@ -15,6 +16,9 @@ export const MembersModal: React.FC<MembersModalProps> = ({
   totalSpots,
   onClose,
 }) => {
+  const user = useAuthStore((state) => state.user);
+  const isOrganiser = user?.userType === 'organiser';
+
   const progressPercentage = useMemo(() => {
     if (totalSpots === 0) { return 0; }
     return Math.min((spotsFilled / totalSpots) * 100, 100);
@@ -46,7 +50,9 @@ export const MembersModal: React.FC<MembersModalProps> = ({
             {/* Header */}
             <FlexView style={styles.header}>
               <TextDs style={styles.eventTitle}>{eventTitle}</TextDs>
-              <TextDs style={styles.organizerName}>by {organizerName}</TextDs>
+              {!isOrganiser && (
+                <TextDs style={styles.organizerName}>by {organizerName}</TextDs>
+              )}
             </FlexView>
 
             {/* Spots Info */}

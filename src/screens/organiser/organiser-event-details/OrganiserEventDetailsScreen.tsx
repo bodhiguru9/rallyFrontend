@@ -12,6 +12,8 @@ import { formatDate } from '@utils';
 import { Card } from '@components/global/Card';
 import { useOrganiserEventDetails } from './use-organiser-event-details';
 import { FlexView } from '@designSystem/atoms/FlexView';
+import { resolveImageUri } from '@utils/image-utils';
+import { images } from '@assets/images';
 import { BackdropBlur } from '@components/global/BackdropBlur';
 import { MembersModal } from '@screens/event-details/MembersModal';
 import { TabSelector } from './components/TabSelector';
@@ -53,7 +55,35 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
     handleCloseMembersModal,
     handleCloseDeleteEventModal,
     handleDeleteEventSuccess,
+    invitedUserIds,
+    setInvitedUserIds,
   } = useOrganiserEventDetails();
+
+  const rawEventImage = event?.eventImages?.[0] || (event as any)?.gameImages?.[0] || (event as any)?.eventImage;
+  const organizerProfilePic = event?.creator?.profilePic || (event as any)?.eventCreatorProfilePic || (event as any)?.organizerProfilePic;
+
+  const eventImageUri = resolveImageUri(rawEventImage);
+  const organizerImageUri = resolveImageUri(organizerProfilePic);
+
+  const [imageSource, setImageSource] = useState<any>(images.blackLogo);
+
+  React.useEffect(() => {
+    if (eventImageUri) {
+      setImageSource({ uri: eventImageUri });
+    } else if (organizerImageUri) {
+      setImageSource({ uri: organizerImageUri });
+    } else {
+      setImageSource(images.blackLogo);
+    }
+  }, [eventImageUri, organizerImageUri]);
+
+  const handleImageError = () => {
+    if (imageSource?.uri === eventImageUri && organizerImageUri) {
+      setImageSource({ uri: organizerImageUri });
+    } else {
+      setImageSource(images.blackLogo);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -299,9 +329,8 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
             <FlexView style={[styles.card, { marginHorizontal: spacing.base }]}>
               <FlexView style={styles.eventOverview}>
                 <Image
-                  source={{
-                    uri: event.eventImages?.[0] || 'https://via.placeholder.com/150',
-                  }}
+                  source={imageSource || images.blackLogo}
+                  onError={handleImageError}
                   style={styles.eventImage}
                 />
                 <FlexView style={styles.eventInfo}>
@@ -330,7 +359,11 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
       )}
       {!isReadOnly && activeTab === 'invite' && (
         <FlexView style={{ flex: 1, paddingHorizontal: spacing.base, paddingTop: spacing.sm }}>
-          <InviteTab event={event as EventData} />
+          <InviteTab 
+            event={event as EventData} 
+            invitedUserIds={invitedUserIds}
+            setInvitedUserIds={setInvitedUserIds}
+          />
         </FlexView>
       )}
 
