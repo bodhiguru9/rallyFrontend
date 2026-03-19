@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { eventService } from '@services/event-service';
+import { useOrganiserBankAccounts } from './use-organiser-bank-accounts';
 import { formatErrorForAlert, logError } from '@utils/error-handler';
 import { logger } from '@dev-tools/logger';
 import type { RootStackParamList } from '@navigation';
@@ -46,7 +47,6 @@ export const useCreateOrganiserEvent = () => {
 
   const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
 
-  // Create event mutation
   const createEventMutation = useMutation({
     mutationFn: eventService.createOrganiserEvent,
     onSuccess: () => {
@@ -59,6 +59,8 @@ export const useCreateOrganiserEvent = () => {
       logger.error('Event creation failed', error);
     },
   });
+
+  const { data: bankAccountsData, isLoading: isLoadingBankAccounts } = useOrganiserBankAccounts();
 
   /**
    * Updates a specific field in the form data
@@ -238,10 +240,6 @@ export const useCreateOrganiserEvent = () => {
     }
   };
 
-  /**
-   * Handles the create event button press
-   * Validates form and shows complete profile modal if needed
-   */
   const handleCreateEvent = () => {
     // Validate form data
     const validationError = validateFormData();
@@ -250,8 +248,15 @@ export const useCreateOrganiserEvent = () => {
       return;
     }
 
-    // Show Complete Profile Modal first
-    setShowCompleteProfileModal(true);
+    const hasBankAccounts = bankAccountsData?.bankAccounts && bankAccountsData.bankAccounts.length > 0;
+
+    if (hasBankAccounts) {
+      // Proceed directly to create event
+      handleCreateEventAPI();
+    } else {
+      // Show Complete Profile Modal first
+      setShowCompleteProfileModal(true);
+    }
   };
 
   /**
