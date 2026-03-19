@@ -1,7 +1,8 @@
 const dotenv = require('dotenv');
 const { expand } = require('dotenv-expand');
 
-// Load .env.local if present
+// Load .env first, then allow .env.local to override for local development.
+expand(dotenv.config({ path: '.env' }));
 expand(dotenv.config({ path: '.env.local' }));
 
 module.exports = ({ config }) => {
@@ -10,6 +11,10 @@ module.exports = ({ config }) => {
   const googleWebClientId = process.env.GOOGLE_WEB_CLIENT_ID || legacyClientId;
   const googleIosClientId = process.env.GOOGLE_IOS_CLIENT_ID || legacyClientId;
   const googleAndroidClientId = process.env.GOOGLE_ANDROID_CLIENT_ID || legacyClientId;
+  const stripePublishableKey =
+    process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
+    process.env.STRIPE_PUBLISHABLE_KEY ||
+    baseConfig.extra?.stripe?.publishableKey;
 
   return {
     ...baseConfig,
@@ -25,6 +30,10 @@ module.exports = ({ config }) => {
         ...(baseConfig.extra?.googleMaps || {}),
         androidApiKey: process.env.GOOGLE_MAPS_ANDROID_API_KEY || baseConfig.extra?.googleMaps?.androidApiKey,
         iosApiKey: process.env.GOOGLE_MAPS_IOS_API_KEY || baseConfig.extra?.googleMaps?.iosApiKey,
+      },
+      stripe: {
+        ...(baseConfig.extra?.stripe || {}),
+        publishableKey: stripePublishableKey,
       },
     },
   };

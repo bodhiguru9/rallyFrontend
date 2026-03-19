@@ -1,10 +1,11 @@
 // Card API Types
 
 export interface AddCardRequest {
+  paymentMethodId?: string;
   cardHolderName: string;
-  cardNumber: string;
+  cardNumber?: string;
   isDefault: boolean;
-  expiry: string; // Format: MM/YY
+  expiry?: string; // Format: MM/YY
 }
 
 export interface CardResponse {

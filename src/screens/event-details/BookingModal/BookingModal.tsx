@@ -99,10 +99,9 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   };
 
   const handleAddCardSubmit = async (cardData: {
-    cardNumber: string;
+    paymentMethodId: string;
     cardHolderName: string;
     isDefault: boolean;
-    expiry: string;
   }) => {
     try {
       const newCard = await cardService.addCard(cardData);
@@ -225,6 +224,15 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       return;
     }
 
+    // Saved cards must include Stripe payment method id so Stripe can charge them.
+    if (!selectedCard.stripePaymentMethodId) {
+      Alert.alert(
+        'Card Setup Required',
+        'This saved card is missing Stripe payment details. Please add the card again and retry payment.',
+      );
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -277,8 +285,9 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       const { error, paymentIntent } = await confirmPayment(data.paymentIntent.clientSecret, {
         paymentMethodType: 'Card',
         paymentMethodData: {
+          paymentMethodId: selectedCard.stripePaymentMethodId,
           billingDetails: {
-            name: data.user.fullName,
+            name: selectedCard.cardHolderName || data.user.fullName,
             email: data.user.email,
             phone: data.user.mobileNumber,
           },

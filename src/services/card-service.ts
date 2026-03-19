@@ -25,7 +25,8 @@ export const cardService = {
   addCard: async (data: AddCardRequest): Promise<CardResponse> => {
     const response = await apiClient.post('/api/cards', data);
     // API wraps responses in { success, message, data }
-    return (response.data as any)?.data ?? response.data;
+    const payload = (response.data as any)?.data ?? response.data;
+    return payload?.card ?? payload;
   },
 
   /**

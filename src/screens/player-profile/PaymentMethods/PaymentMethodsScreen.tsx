@@ -70,10 +70,9 @@ export const PaymentMethodsScreen: React.FC = () => {
   };
 
   const handleAddCardSubmit = async (cardData: {
-    cardNumber: string;
+    paymentMethodId: string;
     cardHolderName: string;
     isDefault: boolean;
-    expiry: string;
   }) => {
     try {
       setIsAddingCard(true);

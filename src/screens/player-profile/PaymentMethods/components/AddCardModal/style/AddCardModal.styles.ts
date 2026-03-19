@@ -41,6 +41,16 @@ export const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: spacing.base,
   },
+  cardFieldLabel: {
+    ...getFontStyle(14, 'medium'),
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  cardField: {
+    width: '100%',
+    height: 52,
+    marginBottom: spacing.base,
+  },
   row: {
     flexDirection: 'row',
     gap: spacing.md,

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { AppNavigator } from '@navigation';
 import { HomeProvider } from '@screens';
 import { useFonts } from '@hooks';
+import Constants from 'expo-constants';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -30,6 +31,22 @@ const queryClient = new QueryClient({
   },
 });
 
+const isValidStripePublishableKey = (value?: string | null): value is string => {
+  if (!value) return false;
+  const key = value.trim();
+  if (!key) return false;
+  if (!/^pk_(test|live)_/.test(key)) return false;
+  if (key.toLowerCase().includes('placeholder')) return false;
+  return key.length > 20;
+};
+
+const pickStripePublishableKey = (
+  ...candidates: Array<string | undefined | null>
+): string => {
+  const valid = candidates.find(isValidStripePublishableKey);
+  return valid?.trim() || '';
+};
+
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
   const fontsLoaded = useFonts();
@@ -37,6 +54,11 @@ function App() {
   const globalLoadingMessage = useAuthStore((state) => state.globalLoadingMessage);
   const isAuthInitialized = useAuthStore((state) => state.isAuthInitialized);
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
+  const stripePublishableKey = pickStripePublishableKey(
+    process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    (Constants.expoConfig?.extra as { stripe?: { publishableKey?: string } } | undefined)?.stripe
+      ?.publishableKey,
+  );
 
   // Initialize authentication on app startup
   useEffect(() => {
@@ -67,6 +89,19 @@ function App() {
     });
   }, [isDarkMode, fontsLoaded, isAuthInitialized]);
 
+  useEffect(() => {
+    if (!stripePublishableKey) {
+      const envKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+      const configKey =
+        (Constants.expoConfig?.extra as { stripe?: { publishableKey?: string } } | undefined)
+          ?.stripe?.publishableKey || '';
+      logger.error('Stripe publishable key is missing or invalid.', {
+        envKeyPrefix: envKey ? envKey.slice(0, 12) : 'none',
+        configKeyPrefix: configKey ? configKey.slice(0, 12) : 'none',
+      });
+    }
+  }, [stripePublishableKey]);
+
   // Wait for both fonts and auth initialization before rendering app
   if (!fontsLoaded || !isAuthInitialized) {
     logger.debug('Loading app...', { fontsLoaded, isAuthInitialized });
@@ -82,7 +117,7 @@ function App() {
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <StripeProvider
-            publishableKey="pk_test_placeholder"
+            publishableKey={stripePublishableKey}
             merchantIdentifier="merchant.com.rally.app"
           >
             <SafeAreaProvider>

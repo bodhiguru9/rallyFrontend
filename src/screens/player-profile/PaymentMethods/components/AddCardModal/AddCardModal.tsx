@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { TextDs,  FlexView } from '@components';
-import {Modal, TouchableOpacity, Animated, Platform, KeyboardAvoidingView, ScrollView} from 'react-native';
+import {Modal, TouchableOpacity, Animated, Platform, KeyboardAvoidingView, ScrollView, Alert} from 'react-native';
 import { FormInput, Checkbox } from '@components/global';
-import { ExpiryDateInput } from '../ExpiryDateInput';
+import { CardField, useStripe } from '@stripe/stripe-react-native';
 import type { AddCardModalProps } from './AddCardModal.types';
 import { styles } from './style/AddCardModal.styles';
 
@@ -11,11 +11,12 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
   onClose,
   onAddCard,
 }) => {
-  const [cardNumber, setCardNumber] = useState('');
   const [cardHolderName, setCardHolderName] = useState('');
   const [isDefault, setIsDefault] = useState(false);
-  const [expiryDate, setExpiryDate] = useState<{ month: number; year: number } | undefined>();
+  const [isCardComplete, setIsCardComplete] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [slideAnim] = useState(new Animated.Value(0));
+  const { createPaymentMethod } = useStripe();
 
   // Handle animation
   useEffect(() => {
@@ -37,67 +38,70 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
 
   const handleClose = () => {
     // Reset form when modal closes
-    setCardNumber('');
     setCardHolderName('');
     setIsDefault(false);
-    setExpiryDate(undefined);
+    setIsCardComplete(false);
+    setIsSubmitting(false);
     onClose();
   };
 
-  const formatCardNumber = (text: string): string => {
-    // Remove all non-digits
-    const cleaned = text.replace(/\D/g, '');
-    // Add spaces every 4 digits
-    const formatted = cleaned.match(/.{1,4}/g)?.join(' ') || cleaned;
-    return formatted.slice(0, 19); // Max 16 digits + 3 spaces
-  };
-
-  const handleCardNumberChange = (text: string) => {
-    const formatted = formatCardNumber(text);
-    setCardNumber(formatted);
-  };
-
-  const formatExpiry = (month: number, year: number): string => {
-    if (month === undefined || month === null || year === undefined || year === null) {
-      return '';
-    }
-    const formattedMonth = String(month + 1).padStart(2, '0');
-    const formattedYear = String(year).slice(-2);
-    return `${formattedMonth}/${formattedYear}`;
-  };
-
-  const handleAddCard = () => {
-    // Validation
-    if (!cardNumber || cardNumber.replace(/\s/g, '').length < 16) {
-      // TODO: Show error message
+  const handleAddCard = async () => {
+    if (isSubmitting) {
       return;
     }
+
     if (!cardHolderName.trim()) {
-      // TODO: Show error message
+      Alert.alert('Missing Details', 'Please enter the card holder name.');
       return;
     }
-    if (!expiryDate || expiryDate.month === undefined || expiryDate.year === undefined) {
-      // TODO: Show error message
+    if (!isCardComplete) {
+      Alert.alert('Incomplete Card', 'Please complete card number, expiry date, and CVC.');
       return;
     }
 
-    onAddCard({
-      cardNumber: cardNumber.replace(/\s/g, ''),
-      cardHolderName: cardHolderName.trim(),
-      isDefault,
-      expiry: formatExpiry(expiryDate.month, expiryDate.year),
-    });
-    // Reset form after successful card addition
-    setCardNumber('');
-    setCardHolderName('');
-    setIsDefault(false);
-    setExpiryDate(undefined);
+    setIsSubmitting(true);
+    try {
+      const { paymentMethod, error } = await createPaymentMethod({
+        paymentMethodType: 'Card',
+        paymentMethodData: {
+          billingDetails: {
+            name: cardHolderName.trim(),
+          },
+        },
+      });
+
+      if (error || !paymentMethod?.id) {
+        const message = error?.message || 'Could not create payment method. Please try again.';
+        const normalized = message.toLowerCase();
+        if (normalized.includes('invalid api key')) {
+          Alert.alert(
+            'Card Error',
+            'Stripe is using an invalid publishable key. Restart the app after setting EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY to a real pk_test/pk_live key.',
+          );
+        } else {
+          Alert.alert('Card Error', message);
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
+      await onAddCard({
+        paymentMethodId: paymentMethod.id,
+        cardHolderName: cardHolderName.trim(),
+        isDefault,
+      });
+
+      setCardHolderName('');
+      setIsDefault(false);
+      setIsCardComplete(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFormValid =
-    cardNumber.replace(/\s/g, '').length >= 16 &&
     cardHolderName.trim().length > 0 &&
-    expiryDate !== undefined;
+    isCardComplete;
 
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
@@ -145,17 +149,6 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
                 keyboardShouldPersistTaps="handled"
                 nestedScrollEnabled={true}
               >
-                {/* Card Number */}
-                <FormInput
-                  label="Card Number"
-                  placeholder="XXXX XXXX XXXX XXXX"
-                  value={cardNumber}
-                  onChangeText={handleCardNumberChange}
-                  keyboardType="number-pad"
-                  maxLength={19}
-                  containerStyle={styles.inputContainer}
-                />
-
                 {/* Card Holder Name */}
                 <FormInput
                   label="Card Holder Name"
@@ -166,12 +159,25 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
                   containerStyle={styles.inputContainer}
                 />
 
-                {/* Expiry Date */}
-                <ExpiryDateInput
-                  label="Expiry Date"
-                  value={expiryDate}
-                  onSelect={(month, year) => setExpiryDate({ month, year })}
-                  containerStyle={styles.inputContainer}
+                <TextDs style={styles.cardFieldLabel}>Card Details</TextDs>
+                <CardField
+                  postalCodeEnabled={false}
+                  placeholders={{
+                    number: '4242 4242 4242 4242',
+                  }}
+                  cardStyle={{
+                    backgroundColor: '#FFFFFF',
+                    textColor: '#000000',
+                    placeholderColor: '#6B6B6B',
+                    borderWidth: 1,
+                    borderColor: '#D7D7D7',
+                    borderRadius: 12,
+                    fontSize: 16,
+                  }}
+                  style={styles.cardField}
+                  onCardChange={(cardDetails) => {
+                    setIsCardComplete(!!cardDetails.complete);
+                  }}
                 />
 
                 {/* Set as Default Card */}
@@ -188,15 +194,15 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
                 style={[styles.addButton, isFormValid && styles.addButtonActive]}
                 onPress={handleAddCard}
                 activeOpacity={0.8}
-                disabled={!isFormValid}
+                disabled={!isFormValid || isSubmitting}
               >
                 <TextDs
                   style={[
                     styles.addButtonText,
-                    !isFormValid && styles.addButtonTextDisabled,
+                    (!isFormValid || isSubmitting) && styles.addButtonTextDisabled,
                   ]}
                 >
-                  Add Card
+                  {isSubmitting ? 'Saving Card...' : 'Add Card'}
                 </TextDs>
               </TouchableOpacity>
             </TouchableOpacity>

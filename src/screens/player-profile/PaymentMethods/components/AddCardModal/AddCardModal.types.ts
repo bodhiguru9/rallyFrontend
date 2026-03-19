@@ -2,10 +2,9 @@ export interface AddCardModalProps {
   visible: boolean;
   onClose: () => void;
   onAddCard: (cardData: {
-    cardNumber: string;
+    paymentMethodId: string;
     cardHolderName: string;
     isDefault: boolean;
-    expiry: string; // Format: MM/YY
-  }) => void;
+  }) => void | Promise<void>;
 }
 
