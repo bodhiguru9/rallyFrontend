@@ -7,7 +7,7 @@
  */
 
 export const ENV = {
-  API_BASE_URL: 'https://backend1.rallysports.ae/',
+  API_BASE_URL: 'https://backend2.rallysports.ae/',
   /** Base URL for event share links. Used for rich preview in messaging apps (requires OG meta on web). */
   RALLY_WEB_BASE_URL: 'https://rally.app/',
 } as const;
