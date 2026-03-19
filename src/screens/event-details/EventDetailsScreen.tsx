@@ -226,7 +226,7 @@ export const EventDetailsScreen: React.FC = () => {
                   value={String(guestsCount)}
                   onSelect={(value) => setGuestsCount(Number(value))}
                   disabled={!event.spotsInfo?.spotsLeft || event.spotsInfo.spotsLeft === 0}
-                  containerStyle={{ marginBottom: spacing.sm, width: 140 }}
+                  containerStyle={{ marginBottom: spacing.sm, width: 120 }}
                 />
               ) : (
                 <TextDs style={[styles.guestsCount, { textAlign: 'left', marginHorizontal: 0, marginBottom: spacing.sm, flex: 1 }]}>
@@ -266,11 +266,11 @@ export const EventDetailsScreen: React.FC = () => {
 
         {/* Refund Policy Card - show for paid events (uses organiser's policy or default) */}
         {isPaidEvent && refundPolicyText != null && (
-            <Card style={{ marginBottom: spacing.base }}>
-              <TextDs style={styles.cardTitle}>Refund Policy</TextDs>
-              <TextDs style={styles.refundPolicyText}>{refundPolicyText}</TextDs>
-            </Card>
-          )}
+          <Card style={{ marginBottom: spacing.base }}>
+            <TextDs style={styles.cardTitle}>Refund Policy</TextDs>
+            <TextDs style={styles.refundPolicyText}>{refundPolicyText}</TextDs>
+          </Card>
+        )}
 
         {/* Payment Details Card */}
         {event.isJoined && (

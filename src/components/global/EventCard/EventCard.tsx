@@ -304,9 +304,9 @@ export const EventCard: React.FC<EventCardProps> = ({
             <FlexView flexDirection="row" justifyContent="space-between" alignItems="flex-start">
               <FlexView flex={1} gap={spacing.xs}>
                 <Title variant="cardTitle" numberOfLines={1}>{displayEvent.eventName}</Title>
-                {!hideCreator && (eventToDisplay.eventCreatorName || displayEvent.creator?.fullName) &&
+                {!hideCreator && ((displayEvent.creator as any)?.communityName || (eventToDisplay as any).communityName || eventToDisplay.eventCreatorName || displayEvent.creator?.fullName) &&
                   <Subtitle variant="small">
-                    by {eventToDisplay.eventCreatorName || displayEvent.creator?.fullName}
+                    by {(displayEvent.creator as any)?.communityName || (eventToDisplay as any).communityName || eventToDisplay.eventCreatorName || displayEvent.creator?.fullName}
                   </Subtitle>}
               </FlexView>
 
