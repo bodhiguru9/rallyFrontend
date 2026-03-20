@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { PlanHeader } from './components/PlanHeader';
 import { PlanSection } from './components/PlanSection';
 import { PlanTags } from './components/PlanTags';
@@ -15,7 +16,9 @@ import { PaymentFooter } from './components/PaymentFooter';
 import { colors, spacing, getFontStyle, borderRadius } from '@theme';
 import { logger } from '@dev-tools';
 import { ORGANISER_DATA } from '../data/organiserEventDetails.data';
-import { usePackageDetails, usePurchasePackage } from '@hooks';
+import { usePackageDetails, usePlayerPurchasedPackages, usePurchasePackage } from '@hooks';
+import { useAuthStore } from '@store';
+import { findActivePurchaseForPackage } from '@utils';
 import { BookingModal } from '@screens/event-details/BookingModal';
 import type { BookingModalPaymentPayload } from '@screens/event-details/BookingModal/BookingModal.types';
 import { PlanPurchasedModal } from './components/PlanPurchasedModal';
@@ -29,6 +32,17 @@ export const PlanDetailsScreen: React.FC = () => {
   const navigation = useNavigation<PlanDetailsScreenNavigationProp>();
   const route = useRoute();
   const packageId = (route.params as { packageId?: string })?.packageId;
+  const queryClient = useQueryClient();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  const { data: myPackagesData } = usePlayerPurchasedPackages({
+    enabled: !!packageId && isAuthenticated,
+  });
+
+  const activePurchase = useMemo(
+    () => findActivePurchaseForPackage(myPackagesData, packageId),
+    [myPackagesData, packageId],
+  );
 
   // If no packageId provided, show error and navigate back
   React.useEffect(() => {
@@ -108,6 +122,12 @@ export const PlanDetailsScreen: React.FC = () => {
       creator.totalAttendees ?? p.attendeesCount ?? p.totalAttendees ?? ORGANISER_DATA.attendeesCount,
     );
 
+    const hasActivePurchaseFromApi = !!(
+      p.hasActivePurchase ??
+      p.userHasActivePurchase ??
+      (p.activePurchaseId != null && String(p.activePurchaseId).length > 0)
+    );
+
     return {
       title,
       tags,
@@ -123,8 +143,11 @@ export const PlanDetailsScreen: React.FC = () => {
       hostedCount,
       attendeesCount,
       total: Number.isFinite(price) ? price : 0,
+      hasActivePurchaseFromApi,
     };
   }, [data]);
+
+  const hasActivePurchase = !!activePurchase || details.hasActivePurchaseFromApi;
 
   const handleBuyNow = () => {
     logger.info('Buy Now pressed for package:', packageId);
@@ -152,9 +175,22 @@ export const PlanDetailsScreen: React.FC = () => {
         expiryMonth: payload?.expiryMonth ?? null,
         expiryYear: payload?.expiryYear ?? null,
       });
-    } catch {
-      // onError already shows an alert; reopen modal so user can retry
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      const alreadyOwned = /already have an active purchase/i.test(msg);
+      if (alreadyOwned) {
+        queryClient.invalidateQueries({ queryKey: ['player-my-packages'] });
+        return;
+      }
       setIsPurchaseModalVisible(true);
+    }
+  };
+
+  const handleViewOwnedPackage = () => {
+    if (activePurchase?.purchaseId) {
+      navigation.navigate('PackageDetail', { purchaseId: activePurchase.purchaseId });
+    } else {
+      navigation.navigate('PurchasedPackages');
     }
   };
 
@@ -229,6 +265,8 @@ export const PlanDetailsScreen: React.FC = () => {
             total={details.total}
             currency={details.currency}
             onBuyNow={handleBuyNow}
+            hasActivePurchase={hasActivePurchase}
+            onViewOwnedPackage={handleViewOwnedPackage}
           />
         </>
       )}

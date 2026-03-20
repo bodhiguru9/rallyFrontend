@@ -115,7 +115,8 @@ export type RootStackParamList = {
   PaymentMethods: undefined;
   Preferences: undefined;
   PurchasedPackages: undefined;
-  PackageDetail: { packageId: string };
+  /** GET /api/packages/my-packages/:purchaseId */
+  PackageDetail: { purchaseId: string };
   CreateEvent: undefined;
   OrganiserProfile: undefined;
   OrganiserSettings: undefined;

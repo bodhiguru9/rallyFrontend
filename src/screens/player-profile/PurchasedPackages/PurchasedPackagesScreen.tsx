@@ -1,53 +1,28 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { TextDs, FlexView } from '@components';
-import { ScrollView, FlatList } from 'react-native';
+import { ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors } from '@theme';
 import { SearchInput } from '@components/global';
 import type { RootStackParamList } from '@navigation';
-import type { PurchasedPackage } from './PurchasedPackagesScreen.types';
 import { PackageCard } from './components/PackageCard';
 import { styles } from './style/PurchasedPackagesScreen.styles';
+import { usePlayerPurchasedPackages } from '@hooks';
+import { mapPlayerPurchasesResponse } from '@utils';
 
 type PurchasedPackagesScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'PurchasedPackages'
 >;
 
-// Mock data - replace with actual API call
-const mockPackages: PurchasedPackage[] = [
-  {
-    id: '1',
-    title: 'Standard Offer',
-    organizerName: 'Berry Badminton',
-    organizerAvatar: undefined,
-    validity: '3 months',
-    sport: 'Pilates',
-    purchasedOn: '23 Oct, 25',
-    eventTypes: ['Social', 'Class'],
-    totalEvents: 10,
-    usedEvents: 2,
-  },
-  {
-    id: '2',
-    title: 'Standard Offer',
-    organizerName: 'Berry Badminton',
-    organizerAvatar: undefined,
-    validity: '3 months',
-    sport: 'Pilates',
-    purchasedOn: '23 Oct, 25',
-    eventTypes: ['Social', 'Class'],
-    totalEvents: 10,
-    usedEvents: 4,
-  },
-];
-
 export const PurchasedPackagesScreen: React.FC = () => {
   const navigation = useNavigation<PurchasedPackagesScreenNavigationProp>();
   const [searchQuery, setSearchQuery] = useState('');
-  const [packages] = useState<PurchasedPackage[]>(mockPackages);
+  const { data, isLoading, isError, error, refetch, isFetching } = usePlayerPurchasedPackages();
+
+  const packages = useMemo(() => mapPlayerPurchasesResponse(data), [data]);
 
   const filteredPackages = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -58,19 +33,18 @@ export const PurchasedPackagesScreen: React.FC = () => {
       (pkg) =>
         pkg.organizerName.toLowerCase().includes(query) ||
         pkg.title.toLowerCase().includes(query) ||
-        pkg.sport.toLowerCase().includes(query)
+        pkg.sport.toLowerCase().includes(query),
     );
   }, [packages, searchQuery]);
 
+  const errorMessage = error instanceof Error ? error.message : 'Something went wrong.';
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-
-      {/* Header */}
       <FlexView style={styles.header}>
         <TextDs style={styles.headerTitle}>Packages</TextDs>
       </FlexView>
 
-      {/* Search Bar */}
       <FlexView style={styles.searchContainer}>
         <SearchInput
           placeholder="Search Package by Organisers"
@@ -80,25 +54,39 @@ export const PurchasedPackagesScreen: React.FC = () => {
         />
       </FlexView>
 
-      {/* Package List */}
-      <FlatList
-        data={filteredPackages}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <PackageCard
-            package={item}
-            onPress={(id) => navigation.navigate('PackageDetail', { packageId: id })}
-          />
-        )}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <FlexView style={styles.emptyState}>
-            <TextDs style={styles.emptyStateText}>No packages found</TextDs>
-          </FlexView>
-        }
-      />
+      {isLoading ? (
+        <FlexView style={styles.emptyState}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </FlexView>
+      ) : isError ? (
+        <FlexView style={styles.emptyState}>
+          <TextDs style={styles.emptyStateText}>{errorMessage}</TextDs>
+          <TouchableOpacity onPress={() => refetch()} activeOpacity={0.7} style={{ marginTop: 8 }}>
+            <TextDs style={styles.emptyStateText}>Tap to retry</TextDs>
+          </TouchableOpacity>
+        </FlexView>
+      ) : (
+        <FlatList
+          data={filteredPackages}
+          keyExtractor={(item) => item.purchaseId}
+          extraData={isFetching}
+          renderItem={({ item }) => (
+            <PackageCard
+              package={item}
+              onPress={() => navigation.navigate('PackageDetail', { purchaseId: item.purchaseId })}
+            />
+          )}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <FlexView style={styles.emptyState}>
+              <TextDs style={styles.emptyStateText}>No packages found</TextDs>
+            </FlexView>
+          }
+          refreshing={isFetching && !isLoading}
+          onRefresh={() => refetch()}
+        />
+      )}
     </SafeAreaView>
   );
 };
-

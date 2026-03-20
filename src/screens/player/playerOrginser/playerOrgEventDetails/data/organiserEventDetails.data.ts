@@ -23,30 +23,6 @@ export interface PackageData {
   currency?: string;
 }
 
-// Dummy data for packages
-export const PACKAGES: PackageData[] = [
-  {
-    id: 'pkg-1',
-    title: 'Standard Offer',
-    validity: '3 months',
-    sport: 'Pilates',
-    eventType: 'Social, Class',
-    numberOfEvents: 10,
-    price: 100,
-    currency: '฿',
-  },
-  {
-    id: 'pkg-2',
-    title: 'Premium Offer',
-    validity: '6 months',
-    sport: 'Pilates',
-    eventType: 'All Events',
-    numberOfEvents: 10,
-    price: 100,
-    currency: '฿',
-  },
-];
-
 // Dummy data for filters
 export const FILTERS = [
   { id: 'sports', label: 'Sports' },

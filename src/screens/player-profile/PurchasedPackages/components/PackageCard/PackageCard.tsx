@@ -11,9 +11,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({
   onPress,
 }) => {
   const handlePress = () => {
-    if (onPress) {
-      onPress(packageData.id);
-    }
+    onPress?.();
   };
 
   return (
@@ -38,7 +36,9 @@ export const PackageCard: React.FC<PackageCardProps> = ({
         </FlexView>
         <FlexView style={styles.organizerInfo}>
           <TextDs style={styles.packageTitle}>{packageData.title}</TextDs>
-          <TextDs style={styles.organizerName}>by {packageData.organizerName}</TextDs>
+          {!!packageData.organizerName?.trim() && (
+            <TextDs style={styles.organizerName}>by {packageData.organizerName}</TextDs>
+          )}
         </FlexView>
       </FlexView>
 
@@ -63,7 +63,9 @@ export const PackageCard: React.FC<PackageCardProps> = ({
           </FlexView>
           <FlexView style={styles.infoItem}>
             <TextDs style={styles.infoLabel}>Event Type</TextDs>
-            <TextDs style={styles.infoValue}>{packageData.eventTypes.join(', ')}</TextDs>
+            <TextDs style={styles.infoValue}>
+              {packageData.eventTypes.length ? packageData.eventTypes.join(', ') : '—'}
+            </TextDs>
           </FlexView>
           <FlexView style={styles.infoItem}>
             <TextDs style={styles.infoLabel}>No of Events</TextDs>

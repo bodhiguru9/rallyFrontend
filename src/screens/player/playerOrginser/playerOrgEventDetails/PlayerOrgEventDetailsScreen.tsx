@@ -18,7 +18,7 @@ import { DateFilter } from '@components/private/home/DateFilter';
 import { EventDateGroup } from '@components/private/home/player-home-content/sections/EventDateGroup';
 
 // Assets/Theme/Utils
-import { PACKAGES } from './data/organiserEventDetails.data';
+import type { PackageData } from './data/organiserEventDetails.data';
 import { colors, spacing, getFontStyle, borderRadius } from '@theme';
 import { logger } from '@dev-tools';
 import { userService } from '@services/user-service';
@@ -27,6 +27,7 @@ import {
   useFilterOptions,
   useOrganiserEventsByUserId,
 } from '@hooks/use-events';
+import { useOrganiserPackages } from '@hooks/organiser';
 import { getDateFilters } from '@screens/home/context/Home.data';
 import { useHome } from '@screens/home/context/Home.context';
 import { expandRecurringEvents } from '@utils/recurrence-utils';
@@ -324,7 +325,49 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
     !!organiserIdNum,
   );
 
+  const {
+    data: packagesData,
+    isLoading: isLoadingPackages,
+    error: packagesError,
+  } = useOrganiserPackages(organiserIdNum ?? 0, {
+    enabled: !!organiserIdNum && !isPrivateCommunity && activeTab === 'packages',
+  });
 
+  const packages: PackageData[] = useMemo(() => {
+    const raw: any = packagesData as any;
+    const list: any[] =
+      raw?.data?.packages ??
+      raw?.data?.data?.packages ??
+      raw?.packages ??
+      [];
+    if (!Array.isArray(list)) {
+      return [];
+    }
+    return list.map((pkg) => {
+      const validityMonths = pkg.validityMonths;
+      const validity =
+        typeof validityMonths === 'number' && validityMonths > 0
+          ? `${validityMonths} ${validityMonths === 1 ? 'month' : 'months'}`
+          : typeof pkg.validity === 'string'
+            ? pkg.validity
+            : '—';
+      const eventTypeRaw = pkg.eventType ?? pkg.eventTypes;
+      const eventTypeStr = Array.isArray(eventTypeRaw)
+        ? eventTypeRaw.filter(Boolean).map(String).join(', ')
+        : String(eventTypeRaw || 'All Events');
+      return {
+        id: String(pkg.packageId ?? pkg.id ?? ''),
+        title: String(pkg.packageName ?? pkg.name ?? 'Package'),
+        validity,
+        sport:
+          Array.isArray(pkg.sports) && pkg.sports.length > 0 ? pkg.sports.join(', ') : 'All Sports',
+        eventType: eventTypeStr,
+        numberOfEvents: Number(pkg.maxEvents ?? pkg.credits ?? 0),
+        price: Number(pkg.packagePrice ?? pkg.price ?? 0),
+        currency: String(pkg.currency ?? 'AED'),
+      };
+    });
+  }, [packagesData]);
 
   const allEvents = useMemo(() => {
     const orgPic = communityDetailsResponse?.data?.organiser?.profilePic;
@@ -572,7 +615,24 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
               )}
             </FlexView>
           ) : (
-            <PackagesSection packages={PACKAGES} onPackagePress={handlePackagePress} />
+            <FlexView style={styles.contentZIndex}>
+              {isLoadingPackages ? (
+                <FlexView style={styles.emptyBox}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <TextDs style={{ marginTop: spacing.sm }}>Loading packages...</TextDs>
+                </FlexView>
+              ) : packagesError ? (
+                <FlexView style={styles.emptyBox}>
+                  <TextDs>Failed to load packages</TextDs>
+                </FlexView>
+              ) : packages.length === 0 ? (
+                <FlexView style={styles.emptyBox}>
+                  <TextDs>No packages available</TextDs>
+                </FlexView>
+              ) : (
+                <PackagesSection packages={packages} onPackagePress={handlePackagePress} />
+              )}
+            </FlexView>
           )
         )}
       </ScrollView>

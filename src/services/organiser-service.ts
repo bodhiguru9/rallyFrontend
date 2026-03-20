@@ -329,6 +329,13 @@ export interface OrganiserPackagePurchaseDetailsResponse {
   data?: any;
 }
 
+/** GET /api/packages/my-packages/:purchaseId */
+export interface PlayerMyPackagePurchaseDetailResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+}
+
 export interface UserJoinedEventsResponse {
   success: boolean;
   message: string;
@@ -1242,14 +1249,83 @@ export const organiserService = {
       );
       return data;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message;
       const statusCode = error.response?.status;
+      const body = error.response?.data ?? {};
+      const errField = body.error;
+      const detailFromError =
+        typeof errField === 'string'
+          ? errField
+          : Array.isArray(errField)
+            ? errField.filter(Boolean).join('\n')
+            : '';
+      const fallbackMessage = typeof body.message === 'string' ? body.message : '';
 
       let userMessage = 'Failed to purchase package. Please try again.';
       if (statusCode === 401) {
         userMessage = 'Session expired. Please log in again.';
       } else if (statusCode === 404) {
         userMessage = 'Package not found.';
+      } else if (detailFromError) {
+        userMessage = detailFromError;
+      } else if (fallbackMessage) {
+        userMessage = fallbackMessage;
+      }
+
+      const customError = new Error(userMessage) as any;
+      customError.response = error.response;
+      throw customError;
+    }
+  },
+
+  /**
+   * List packages purchased by the signed-in user (JWT).
+   * GET /api/packages/my-packages?page=
+   */
+  getPlayerMyPackages: async (page: number = 1): Promise<OrganiserPackagePurchasesResponse> => {
+    try {
+      const { data } = await apiClient.get<OrganiserPackagePurchasesResponse>('/api/packages/my-packages', {
+        params: { page },
+      });
+      return data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message;
+      const statusCode = error.response?.status;
+
+      let userMessage = 'Failed to load your packages. Please try again.';
+      if (statusCode === 401) {
+        userMessage = 'Session expired. Please log in again.';
+      } else if (errorMessage) {
+        userMessage = errorMessage;
+      }
+
+      const customError = new Error(userMessage) as any;
+      customError.response = error.response;
+      throw customError;
+    }
+  },
+
+  /**
+   * One purchase (details) for the signed-in user (JWT).
+   * GET /api/packages/my-packages/:purchaseId
+   */
+  getPlayerMyPackagePurchaseDetail: async (
+    purchaseId: string,
+  ): Promise<PlayerMyPackagePurchaseDetailResponse> => {
+    try {
+      const id = encodeURIComponent(String(purchaseId).trim());
+      const { data } = await apiClient.get<PlayerMyPackagePurchaseDetailResponse>(
+        `/api/packages/my-packages/${id}`,
+      );
+      return data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message;
+      const statusCode = error.response?.status;
+
+      let userMessage = 'Failed to load package details. Please try again.';
+      if (statusCode === 401) {
+        userMessage = 'Session expired. Please log in again.';
+      } else if (statusCode === 404) {
+        userMessage = 'Purchase not found.';
       } else if (errorMessage) {
         userMessage = errorMessage;
       }

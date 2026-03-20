@@ -29,12 +29,19 @@ export const usePurchasePackage = (packageId: string, options?: UsePurchasePacka
       }
       queryClient.invalidateQueries({ queryKey: ['package-details', packageId] });
       queryClient.invalidateQueries({ queryKey: ['organiser-package-details', packageId] });
+      queryClient.invalidateQueries({ queryKey: ['player-my-packages'] });
       // Pass the response data to the caller's onSuccess handler
       options?.onSuccess?.(data);
     },
     onError: (error: unknown) => {
       const { title, message } = formatErrorForAlert(error, 'Purchase Package');
       Alert.alert(title, message);
+      if (
+        error instanceof Error &&
+        /already have an active purchase/i.test(error.message)
+      ) {
+        queryClient.invalidateQueries({ queryKey: ['player-my-packages'] });
+      }
     },
   });
 

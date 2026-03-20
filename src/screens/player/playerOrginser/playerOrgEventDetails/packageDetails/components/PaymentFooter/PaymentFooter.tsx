@@ -8,12 +8,17 @@ interface PaymentFooterProps {
   total: number;
   currency?: string;
   onBuyNow: () => void;
+  /** User already has an active purchase for this package */
+  hasActivePurchase?: boolean;
+  onViewOwnedPackage?: () => void;
 }
 
 export const PaymentFooter: React.FC<PaymentFooterProps> = ({
   total,
   currency = '฿',
   onBuyNow,
+  hasActivePurchase = false,
+  onViewOwnedPackage,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -48,13 +53,18 @@ export const PaymentFooter: React.FC<PaymentFooterProps> = ({
 
       <Pressable
         style={({ pressed }) => [
-          styles.buyButton,
+          hasActivePurchase ? styles.ownedButton : styles.buyButton,
           Platform.OS === 'ios' && pressed && { opacity: 0.8 },
         ]}
-        onPress={onBuyNow}
-        android_ripple={{ color: `${colors.text.white  }80`, borderless: false }}
+        onPress={hasActivePurchase ? onViewOwnedPackage ?? onBuyNow : onBuyNow}
+        android_ripple={{
+          color: hasActivePurchase ? `${colors.primary}30` : `${colors.text.white}80`,
+          borderless: false,
+        }}
       >
-        <TextDs style={styles.buyButtonText}>Buy Now</TextDs>
+        <TextDs style={hasActivePurchase ? styles.ownedButtonText : styles.buyButtonText}>
+          {hasActivePurchase ? 'View my package' : 'Buy Now'}
+        </TextDs>
       </Pressable>
     </FlexView>
   );
@@ -105,5 +115,18 @@ const styles = StyleSheet.create({
   buyButtonText: {
     ...getFontStyle(14, 'semibold'),
     color: colors.text.white,
+  },
+  ownedButton: {
+    backgroundColor: colors.surface.card,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ownedButtonText: {
+    ...getFontStyle(14, 'semibold'),
+    color: colors.primary,
   },
 });

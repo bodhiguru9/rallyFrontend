@@ -11,4 +11,6 @@ export * from './use-top-organisers';
 export * from './use-organiser-events';
 export * from './use-package-details';
 export * from './use-purchase-package';
+export { usePlayerPurchasedPackages } from './use-player-purchased-packages';
+export { usePlayerMyPackagePurchaseDetail } from './use-player-my-package-purchase-detail';
 export { useBottomNavigationPadding } from './use-bottom-navigation-padding';
