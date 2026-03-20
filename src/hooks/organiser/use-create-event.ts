@@ -7,6 +7,7 @@ import { eventService } from '@services/event-service';
 import { useOrganiserBankAccounts } from './use-organiser-bank-accounts';
 import { formatErrorForAlert, logError } from '@utils/error-handler';
 import { logger } from '@dev-tools/logger';
+import { appendEventDraft } from '@utils/event-drafts-storage';
 import type { RootStackParamList } from '@navigation';
 import type { CreateEventFormData } from '@screens/organiser/create-event';
 
@@ -222,6 +223,14 @@ export const useCreateOrganiserEvent = () => {
         imageUri: formData.imageUri ?? null,
       };
       await createEventMutation.mutateAsync(payload);
+
+      if (formData.saveToDrafts) {
+        try {
+          await appendEventDraft(formData);
+        } catch (e) {
+          logError(e, 'CreateEvent - appendEventDraft');
+        }
+      }
 
       Alert.alert('Success', 'Event created successfully!', [
         {

@@ -20,94 +20,12 @@ import { CompleteProfileModal } from './components/CompleteProfileModal';
 import { EventLocationSearch } from './components/EventLocationSearch';
 import { styles } from './style/CreateEventScreen.styles';
 import type { EventLocation } from '@app-types/location.types';
-import { useCreateOrganiserEvent } from '@hooks/organiser';
+import { useCreateOrganiserEvent, useEventDrafts } from '@hooks/organiser';
 import { Card } from '@components/global/Card';
 import { IconTag } from '@components/global/IconTag';
 import { Users } from 'lucide-react-native';
 import { EventCard } from '@components/global/EventCard';
 import type { PlayerBooking } from '@services/booking-service';
-
-// Hardcoded draft events
-const DRAFT_EVENTS: PlayerBooking[] = [
-  {
-    eventId: 'draft-1',
-    mongoId: 'draft-mongo-1',
-    eventName: 'Morning Football Match',
-    eventImages: [],
-    eventVideo: null,
-    eventType: 'social',
-    eventSports: ['Football'],
-    eventDateTime: new Date('2026-02-25T09:00:00').toISOString(),
-    eventEndDateTime: null,
-    eventFrequency: [],
-    eventLocation: 'Dubai Sports City',
-    eventDescription: 'Friendly football match',
-    eventGender: 'mixed',
-    eventSportsLevel: 'intermediate',
-    eventMinAge: null,
-    eventMaxAge: null,
-    eventLevelRestriction: null,
-    eventMaxGuest: 20,
-    eventPricePerGuest: 50,
-    IsPrivateEvent: false,
-    eventOurGuestAllowed: true,
-    eventApprovalReq: false,
-    eventRegistrationStartTime: null,
-    eventRegistrationEndTime: null,
-    eventStatus: 'upcoming',
-    eventTotalAttendNumber: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    booking: {
-      bookingId: null,
-      joinedAt: new Date().toISOString(),
-      bookingStatus: 'upcoming',
-      bookingStatusValue: null,
-      isPast: false,
-      isOngoing: false,
-      isUpcoming: true,
-    },
-  },
-  {
-    eventId: 'draft-2',
-    mongoId: 'draft-mongo-2',
-    eventName: 'Tennis Practice Session',
-    eventImages: [],
-    eventVideo: null,
-    eventType: 'training',
-    eventSports: ['Tennis'],
-    eventDateTime: new Date('2026-02-28T16:00:00').toISOString(),
-    eventEndDateTime: null,
-    eventFrequency: [],
-    eventLocation: 'Al Wasl Sports Club',
-    eventDescription: 'Tennis practice for intermediate players',
-    eventGender: 'mixed',
-    eventSportsLevel: 'intermediate',
-    eventMinAge: null,
-    eventMaxAge: null,
-    eventLevelRestriction: null,
-    eventMaxGuest: 8,
-    eventPricePerGuest: 75,
-    IsPrivateEvent: false,
-    eventOurGuestAllowed: true,
-    eventApprovalReq: false,
-    eventRegistrationStartTime: null,
-    eventRegistrationEndTime: null,
-    eventStatus: 'upcoming',
-    eventTotalAttendNumber: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    booking: {
-      bookingId: null,
-      joinedAt: new Date().toISOString(),
-      bookingStatus: 'upcoming',
-      bookingStatusValue: null,
-      isPast: false,
-      isOngoing: false,
-      isUpcoming: true,
-    },
-  },
-];
 
 // Hardcoded recurring events
 const RECURRING_EVENTS: PlayerBooking[] = [
@@ -277,6 +195,8 @@ export const CreateEventContent: React.FC = () => {
     handleCompleteProfileSubmit,
     isLoading,
   } = useCreateOrganiserEvent();
+
+  const { draftCards } = useEventDrafts();
 
   return (
     <SafeAreaView style={{ flex: 1, experimental_backgroundImage: colors.gradient.mainBackground }} edges={['top']}>
@@ -584,8 +504,8 @@ export const CreateEventContent: React.FC = () => {
           {/* Drafts Tab */}
           {activeTab === 1 && (
             <FlexView gap={spacing.base}>
-              {DRAFT_EVENTS.length > 0 ? (
-                DRAFT_EVENTS.map((event) => (
+              {draftCards.length > 0 ? (
+                draftCards.map((event) => (
                   <EventCard
                     key={event.eventId}
                     id={event.eventId}

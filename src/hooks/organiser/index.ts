@@ -1,5 +1,6 @@
 export { useOrganiserDashboard } from './use-organiser-dashboard';
 export { useCreateOrganiserEvent } from './use-create-event';
+export { useEventDrafts } from './use-event-drafts';
 export { useOrganiserPackages } from './use-organiser-packages';
 export { useOrganiserCreatedEvents } from './use-organiser-created-events';
 export { useOrganiserBookingsAnalytics } from './use-organiser-bookings-analytics';
