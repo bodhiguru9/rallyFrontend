@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { TextDs, FlexView, ImageDs } from '@components';
 import { ScrollView, TouchableOpacity, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { FormInput } from '@components/global';
+import { IconTag } from '@components/global/IconTag';
 import { Dropdown } from '@designSystem/molecules/dropdown';
-import { sportOptions } from '@data';
+import { spacing } from '@theme';
 import { styles } from './style/CreatePackageModal.styles';
 import { useCreatePackage } from '@hooks/organiser';
 
-type EventType = 'social' | 'class' | 'tournament';
+type EventType = 'social' | 'class' | 'tournament' | 'training';
 
 export interface CreatePackageModalProps {
   visible: boolean;
@@ -23,22 +24,37 @@ const VALIDITY_OPTIONS = [
   { label: 'Custom', value: 'custom' },
 ];
 
-const EVENT_TYPE_OPTIONS: Array<{ label: string; value: EventType }> = [
-  { label: 'Social', value: 'social' },
-  { label: 'Class', value: 'class' },
-  { label: 'Tournament', value: 'tournament' },
+const EVENT_TYPE_OPTIONS: Array<{ label: string; value: EventType; customLabel?: React.ReactNode }> = [
+  { label: 'Social', value: 'social', customLabel: <IconTag title="Social" /> },
+  { label: 'Class', value: 'class', customLabel: <IconTag title="Class" /> },
+  { label: 'Tournament', value: 'tournament', customLabel: <IconTag title="Tournament" /> },
+  { label: 'Training', value: 'training', customLabel: <IconTag title="Training" /> },
+];
+
+const SPORT_OPTIONS = [
+  { label: 'Football', value: 'football', icon: 'footballBlue', color: '#3D6F92' },
+  { label: 'Tennis', value: 'tennis', icon: 'tennisBlue', color: '#3D6F92' },
+  { label: 'Table Tennis', value: 'table-tennis', icon: 'tableTennisBlue', color: '#3D6F92' },
+  { label: 'Basketball', value: 'basketball', icon: 'basketballBlue', color: '#3D6F92' },
+  { label: 'Badminton', value: 'badminton', icon: 'badmintonBlue', color: '#3D6F92' },
+  { label: 'Cricket', value: 'cricket', icon: 'cricketBlue', color: '#3D6F92' },
+  { label: 'Indoor Cricket', value: 'indoor-cricket', icon: 'indoorCricketBlue', color: '#3D6F92' },
+  { label: 'Padel', value: 'padel', icon: 'padelBlue', color: '#3D6F92' },
+  { label: 'Pickleball', value: 'pickleball', icon: 'pickleballBlue', color: '#3D6F92' },
+  { label: 'Pilates', value: 'pilates', icon: 'pilatesBlue', color: '#3D6F92' },
+  { label: 'Running', value: 'running', icon: 'runningBlue', color: '#3D6F92' },
 ];
 
 export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ visible, onClose }) => {
   const createPackageMutation = useCreatePackage();
   const [packageName, setPackageName] = useState('');
-  const [sport, setSport] = useState('');
+  const [sports, setSports] = useState<string[]>([]);
   const [validity, setValidity] = useState('all-time');
   const [description, setDescription] = useState('');
   const [eventsCount, setEventsCount] = useState('');
   const [price, setPrice] = useState('');
 
-  const [eventType, setEventType] = useState<EventType>('social');
+  const [eventTypes, setEventTypes] = useState<string[]>([]);
 
   // Reset form each time the modal opens so the next open doesn't get "stuck"
   useEffect(() => {
@@ -47,12 +63,12 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ visible,
     }
     const timeoutId = setTimeout(() => {
       setPackageName('');
-      setSport('');
+      setSports([]);
       setValidity('all-time');
       setDescription('');
       setEventsCount('');
       setPrice('');
-      setEventType('social');
+      setEventTypes([]);
     }, 0);
     return () => clearTimeout(timeoutId);
   }, [visible]);
@@ -63,8 +79,8 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ visible,
 
     await createPackageMutation.mutateAsync({
       packageName: packageName.trim(),
-      sports: sport ? [sport] : [],
-      eventType: [eventType],
+      sports: sports,
+      eventType: eventTypes as EventType[],
       validity,
       packageDescription: description.trim(),
       events: Number.isFinite(events) ? events : 0,
@@ -96,7 +112,7 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ visible,
           column
           style={[styles.sheetBackground, styles.sheetContent, { maxHeight: '90%', minHeight: '60%' }]}
         >
-          <FlexView style={styles.header}>
+          <FlexView style={[styles.header, { marginTop: spacing.md }]}>
             <TextDs style={styles.title}>Create Package</TextDs>
           </FlexView>
 
@@ -124,10 +140,11 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ visible,
               <FlexView style={styles.col}>
                 <Dropdown
                   placeholder="Sport"
-                  options={sportOptions}
+                  options={SPORT_OPTIONS}
                   leftIcon={<ImageDs image="sportIcon" size={20} />}
-                  value={sport}
-                  onSelect={setSport}
+                  multiSelect
+                  value={sports}
+                  onSelect={setSports}
                   containerStyle={styles.input}
                   labelStyle={styles.dropdownLabel}
                   triggerTextStyle={styles.dropdownTriggerText}
@@ -139,8 +156,9 @@ export const CreatePackageModal: React.FC<CreatePackageModalProps> = ({ visible,
                   placeholder="Event Type"
                   leftIcon={<ImageDs image="sportIcon" size={20} />}
                   options={EVENT_TYPE_OPTIONS}
-                  value={eventType}
-                  onSelect={(v) => setEventType(v as EventType)}
+                  multiSelect
+                  value={eventTypes}
+                  onSelect={setEventTypes}
                   containerStyle={styles.input}
                   labelStyle={styles.dropdownLabel}
                   triggerTextStyle={styles.dropdownTriggerText}

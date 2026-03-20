@@ -89,7 +89,7 @@ export const styles = StyleSheet.create({
   },
   deleteButton: {
     flex: 1,
-    backgroundColor: withOpaqueForAndroid('rgba(231, 76, 60, 0.18)'),
+    backgroundColor: '#EAD9CF',
     borderRadius: borderRadius.full,
     paddingVertical: spacing.md,
     alignItems: 'center',
