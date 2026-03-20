@@ -110,7 +110,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   const hasParticipants = (event as EventData).participants && (event as EventData).participants!.length > 0;
 
   const { data: fullEvent } = useEvent(id, {
-    enabled: isMembersModalVisible && (!hasParticipants || (event as EventData).eventMaxGuest == null),
+    enabled: !!id && (showRevenue || isMembersModalVisible || (event as EventData).eventMaxGuest == null),
     forPlayer: true,
     allowPrivate: true,
   });
@@ -391,15 +391,15 @@ export const EventCard: React.FC<EventCardProps> = ({
               </TextDs>
             ) : (
               (() => {
-                const eventData = event as EventData;
-                const playerBooking = event as PlayerBooking;
-                const spotsFull = eventData.spotsInfo?.spotsFull ??
-                  ((playerBooking.eventTotalAttendNumber ?? 0) >= (playerBooking.eventMaxGuest ?? 0));
-                const spotsLeft = eventData.spotsInfo?.spotsLeft ??
-                  eventData.availableSpots ??
-                  ((playerBooking.eventMaxGuest ?? 0) - (playerBooking.eventTotalAttendNumber ?? 0));
+                const eventData = eventToDisplay;
+                const playerBooking = displayEvent as PlayerBooking;
+                const spotsBooked = eventData.spotsInfo?.spotsBooked ?? (playerBooking as any).bookedCount ?? playerBooking.eventTotalAttendNumber ?? 0;
+                const capacity = eventData.spotsInfo?.totalSpots ?? playerBooking.eventMaxGuest ?? Math.max(spotsBooked, eventData.participantsCount || 0);
+                
+                const spotsFull = spotsBooked >= capacity;
+                const spotsLeft = Math.max(0, capacity - spotsBooked);
 
-                const isPastEvent = new Date(event.eventDateTime) < new Date();
+                const isPastEvent = event.eventDateTime ? new Date(event.eventDateTime) < new Date() : false;
 
                 if (spotsFull && !isPastEvent) {
                   return (
@@ -475,7 +475,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         totalSpots={
           eventToDisplay.spotsInfo?.totalSpots ??
           (displayEvent as PlayerBooking).eventMaxGuest ??
-          0
+          Math.max(calculateSpotsFilled(eventToDisplay), (event as EventData).participantsCount || 0)
         }
         onClose={handleCloseMembersModal}
       />

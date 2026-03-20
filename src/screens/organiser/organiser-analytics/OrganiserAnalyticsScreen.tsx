@@ -38,7 +38,7 @@ const mapBookingEventToEventCard = (event: OrganiserBookingsAnalyticsEvent) => (
   eventMinAge: null,
   eventMaxAge: null,
   eventLevelRestriction: null,
-  eventMaxGuest: ((event as any).eventMaxGuest ?? (event as any).totalSpots ?? event.participantsCount) || 0,
+  eventMaxGuest: (event as any).eventMaxGuest ?? (event as any).totalSpots ?? undefined,
   eventPricePerGuest: event.price || 0,
   IsPrivateEvent: false,
   eventOurGuestAllowed: false,
@@ -68,15 +68,15 @@ const mapBookingEventToEventCard = (event: OrganiserBookingsAnalyticsEvent) => (
   waitlist: [],
   waitlistCount: 0,
   spotsInfo: {
-    totalSpots: ((event as any).eventMaxGuest ?? (event as any).totalSpots ?? event.participantsCount) || 0,
+    totalSpots: (event as any).eventMaxGuest ?? (event as any).totalSpots ?? undefined,
     spotsBooked: event.bookedCount || 0,
-    spotsLeft: Math.max(0, (((event as any).eventMaxGuest ?? (event as any).totalSpots ?? event.participantsCount) || 0) - (event.bookedCount || 0)),
-    spotsFull: (((event as any).eventMaxGuest ?? (event as any).totalSpots ?? event.participantsCount) || 0) - (event.bookedCount || 0) <= 0,
+    spotsLeft: Math.max(0, ((event as any).eventMaxGuest ?? (event as any).totalSpots ?? 0) - (event.bookedCount || 0)),
+    spotsFull: ((event as any).eventMaxGuest ?? (event as any).totalSpots ?? 0) - (event.bookedCount || 0) <= 0,
   },
   counts: null,
   userJoinStatus: null,
-  availableSpots: Math.max(0, (((event as any).eventMaxGuest ?? (event as any).totalSpots ?? event.participantsCount) || 0) - (event.bookedCount || 0)),
-  isFull: (((event as any).eventMaxGuest ?? (event as any).totalSpots ?? event.participantsCount) || 0) - (event.bookedCount || 0) <= 0,
+  availableSpots: Math.max(0, ((event as any).eventMaxGuest ?? (event as any).totalSpots ?? 0) - (event.bookedCount || 0)),
+  isFull: ((event as any).eventMaxGuest ?? (event as any).totalSpots ?? 0) - (event.bookedCount || 0) <= 0,
 });
 
 export const OrganiserAnalyticsScreen: React.FC = () => {

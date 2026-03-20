@@ -83,6 +83,8 @@ export interface OrganiserBookingsAnalyticsEvent {
   bookedCount: number;
   bookedRevenue: number;
   eventType?: string;
+  eventMaxGuest?: number;
+  totalSpots?: number;
 }
 
 export interface OrganiserBookingsAnalytics {
@@ -526,17 +528,22 @@ const mapAnyEventToBookingsAnalyticsEvent = (event: any): OrganiserBookingsAnaly
     }))
     : [];
 
-  const participantsCount = Number(
-    event?.participantsCount ?? event?.eventMaxGuest ?? event?.spotsInfo?.totalSpots ?? 0,
-  );
-
   const bookedCount = Number(
     event?.bookedCount ??
     event?.eventTotalAttendNumber ??
     event?.spotsInfo?.spotsBooked ??
-    event?.participantsCount ??
     0,
   );
+
+  const capacityRaw = Number(
+    event?.eventMaxGuest ??
+    event?.totalSpots ??
+    event?.spotsInfo?.totalSpots ??
+    0
+  );
+
+  // unique users
+  const participantsCount = Number(event?.participantsCount || 0);
 
   return {
     eventId: String(event?.eventId ?? event?.id ?? ''),
@@ -559,6 +566,8 @@ const mapAnyEventToBookingsAnalyticsEvent = (event: any): OrganiserBookingsAnaly
     bookedCount,
     bookedRevenue: Number(event?.bookedRevenue ?? bookedCount * Number(event?.price ?? event?.eventPricePerGuest ?? 0)),
     eventType: event?.eventType,
+    eventMaxGuest: capacityRaw || undefined,
+    totalSpots: capacityRaw || undefined,
   };
 };
 
