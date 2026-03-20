@@ -2,17 +2,19 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { TextDs,  FlexView } from '@components';
 import {ActivityIndicator, Alert, ScrollView, TouchableOpacity} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Plus } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@store';
-import { colors } from '@theme';
+import { colors, spacing } from '@theme';
+import { useFilterOptions } from '@hooks';
 import { sportOptions } from '@data';
 import { useUpdateProfile } from '@hooks/use-update-profile';
 import { useUpdateProfileImage } from '@hooks/use-update-profile-image';
 import { Avatar, FormInput, Select, UpdateableField } from '@components/global';
+import { Dropdown } from '@designSystem/molecules/dropdown';
 import { DocumentUpload } from '../create-event/components/DocumentUpload/DocumentUpload';
 import { showImagePickerOptions } from '@utils/image-picker';
 import { getUserInitials } from '@utils';
@@ -57,14 +59,79 @@ export const OrganiserProfileEditScreen: React.FC = () => {
 
   const [sport1, setSport1] = useState<string>('');
   const [sport2, setSport2] = useState<string>('');
+  const [showAdditionalSport, setShowAdditionalSport] = useState<boolean>(false);
+  const [additionalSportText, setAdditionalSportText] = useState<string>('');
 
   const [emiratesIdFront, setEmiratesIdFront] = useState<string | null>(null);
   const [emiratesIdBack, setEmiratesIdBack] = useState<string | null>(null);
 
   const sportsPayload = useMemo(() => {
-    const list = [sport1, sport2].filter(Boolean);
+    const list = [sport1, sport2, additionalSportText].filter(Boolean);
     return list.length ? list : undefined;
-  }, [sport1, sport2]);
+  }, [sport1, sport2, additionalSportText]);
+
+  const { data: filterOptions } = useFilterOptions();
+
+  const sportIconLookup: Record<string, string> = {
+    'tennis': 'tennisBlue',
+    'badminton': 'badmintonBlue',
+    'basketball': 'basketballBlue',
+    'padel': 'padelBlue',
+    'football': 'footballBlue',
+    'cricket': 'cricketBlue',
+    'indoor-cricket': 'indoorCricketBlue',
+    'pilates': 'pilatesBlue',
+    'running': 'runningBlue',
+    'table-tennis': 'tableTennisBlue',
+    'pickleball': 'pickleballBlue'
+  };
+
+  const dynamicSportOptions = React.useMemo(() => {
+    const PRIMARY_SPORTS = [
+      'Padel', 'Badminton', 'Cricket', 'Indoor Cricket', 'Pickleball',
+      'Tennis', 'Football', 'Table-tennis', 'Pilates', 'Basketball',
+      'Running'
+    ];
+
+    const backendSports = filterOptions?.sports || [];
+    const combinedSports = [...PRIMARY_SPORTS];
+
+    backendSports.forEach(bs => {
+      if (!combinedSports.some(cs => cs.toLowerCase() === bs.toLowerCase())) {
+        combinedSports.push(bs);
+      }
+    });
+
+    return combinedSports.map(sport => {
+      const sportValue = sport.toLowerCase().replace(/\s+/g, '-');
+      const lookupKey = sportValue === 'table-tennis' ? 'table-tennis' : sportValue;
+      const iconKey = sportIconLookup[lookupKey] || sportIconLookup[sport.toLowerCase()];
+
+      return {
+        label: sport,
+        value: sportValue,
+        icon: iconKey || 'basketballBlue',
+        color: '#3D6F92',
+      };
+    }).sort((a, b) => {
+      const indexA = PRIMARY_SPORTS.indexOf(a.label);
+      const indexB = PRIMARY_SPORTS.indexOf(b.label);
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return a.label.localeCompare(b.label);
+    });
+  }, [filterOptions]);
+
+  const primarySportOptions = React.useMemo(
+    () => sport2 ? dynamicSportOptions.filter((opt) => opt.value !== sport2) : dynamicSportOptions,
+    [dynamicSportOptions, sport2]
+  );
+
+  const secondarySportOptions = React.useMemo(
+    () => sport1 ? dynamicSportOptions.filter((opt) => opt.value !== sport1) : dynamicSportOptions,
+    [dynamicSportOptions, sport1]
+  );
 
   useEffect(() => {
     // We defer the updates using queueMicrotask to avoid React's cascading render warning
@@ -80,8 +147,13 @@ export const OrganiserProfileEditScreen: React.FC = () => {
 
         const s1 = fetchedUser.sport1 || fetchedUser.sports?.[0] || '';
         const s2 = fetchedUser.sport2 || fetchedUser.sports?.[1] || '';
+        const s3 = fetchedUser.sports?.[2] || '';
         setSport1(normalizeSportValue(s1));
         setSport2(normalizeSportValue(s2));
+        if (s3) {
+          setShowAdditionalSport(true);
+          setAdditionalSportText(s3);
+        }
         return;
       }
 
@@ -96,8 +168,13 @@ export const OrganiserProfileEditScreen: React.FC = () => {
 
         const s1 = user.sport1 || user.sports?.[0] || '';
         const s2 = user.sport2 || user.sports?.[1] || '';
+        const s3 = user.sports?.[2] || '';
         setSport1(normalizeSportValue(s1));
         setSport2(normalizeSportValue(s2));
+        if (s3) {
+          setShowAdditionalSport(true);
+          setAdditionalSportText(s3);
+        }
       }
     });
   }, [fetchedUser, user]);
@@ -299,43 +376,55 @@ export const OrganiserProfileEditScreen: React.FC = () => {
 
           <TextDs style={styles.sectionTitle}>Sport</TextDs>
 
-          <FlexView style={styles.sportRow}>
-            <TextDs style={styles.sportLabel}>Sport 1</TextDs>
-            {!!sport1 && (
-              <TouchableOpacity
-                style={styles.removePill}
-                onPress={() => setSport1('')}
-                activeOpacity={0.7}
-              >
-                <TextDs style={styles.removePillText}>Remove</TextDs>
-              </TouchableOpacity>
-            )}
-          </FlexView>
-          <Select
-            value={sport1}
-            onValueChange={setSport1}
-            options={sportOptions}
-            placeholder="Select Sport 1"
-          />
+          <FlexView gap={spacing.base} mb={spacing.lg}>
+            <FlexView>
+              <FlexView row justifyContent="space-between" alignItems="center" mb={spacing.xs}>
+                <TextDs size={14} weight="semibold">Sport 1</TextDs>
+                {!showAdditionalSport && (
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: colors.primary,
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 100,
+                    }}
+                    onPress={() => setShowAdditionalSport(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Plus size={14} color={colors.text.white} />
+                    <TextDs style={{ color: colors.text.white, marginLeft: 4, fontSize: 14, fontWeight: '500' }}>Add Sport</TextDs>
+                  </TouchableOpacity>
+                )}
+              </FlexView>
+              <Dropdown
+                placeholder="Select Sport"
+                options={primarySportOptions}
+                value={sport1}
+                onSelect={setSport1}
+              />
+            </FlexView>
 
-          <FlexView style={styles.sportRow}>
-            <TextDs style={styles.sportLabel}>Sport 2</TextDs>
-            {!!sport2 && (
-              <TouchableOpacity
-                style={styles.removePill}
-                onPress={() => setSport2('')}
-                activeOpacity={0.7}
-              >
-                <TextDs style={styles.removePillText}>Remove</TextDs>
-              </TouchableOpacity>
+            <Dropdown
+              label="Sport 2"
+              placeholder="Select Sport"
+              options={secondarySportOptions}
+              value={sport2}
+              onSelect={setSport2}
+            />
+
+            {showAdditionalSport && (
+              <FlexView mt={spacing.md}>
+                <FormInput
+                  label="Additional Sport"
+                  placeholder="Enter another sport (e.g. Golf)"
+                  value={additionalSportText}
+                  onChangeText={setAdditionalSportText}
+                />
+              </FlexView>
             )}
           </FlexView>
-          <Select
-            value={sport2}
-            onValueChange={setSport2}
-            options={sportOptions}
-            placeholder="Select Sport 2"
-          />
         </FlexView>
         </ScrollView>
       )}
