@@ -198,6 +198,52 @@ export const CreateEventContent: React.FC = () => {
 
   const { draftCards } = useEventDrafts();
 
+  const populateFromDraft = (draft: PlayerBooking) => {
+    updateFormData('eventName', draft.eventName || '');
+    updateFormData('description', draft.eventDescription || '');
+
+    const sportName = draft.eventSports?.[0] || '';
+    const sportOption = SPORT_OPTIONS.find((o) => o.label.toLowerCase() === sportName.toLowerCase());
+    updateFormData('sport', sportOption ? sportOption.value : '');
+
+    const eventTypeOption = EVENT_TYPE_OPTIONS.find((o) => o.value === draft.eventType);
+    updateFormData('eventType', eventTypeOption ? eventTypeOption.value : '');
+
+    updateFormData('maxGuests', draft.eventMaxGuest ? String(draft.eventMaxGuest) : '');
+    updateFormData('pricePerGuest', draft.eventPricePerGuest ? String(draft.eventPricePerGuest) : '');
+
+    updateFormData('isPrivate', !!draft.IsPrivateEvent);
+    updateFormData('disallowGuests', !draft.eventOurGuestAllowed);
+    updateFormData('approvalRequired', !!draft.eventApprovalReq);
+
+    const restrictions = {
+      gender: (draft.eventGender && draft.eventGender !== 'mixed') ? draft.eventGender : 'open',
+      sportsLevel: draft.eventSportsLevel ? draft.eventSportsLevel.toLowerCase() : 'all',
+      ageRange: { min: draft.eventMinAge || 0, max: draft.eventMaxAge || 100 },
+      levelRestriction: draft.eventLevelRestriction || '',
+    };
+    updateFormData('restrictions', restrictions);
+
+    if (draft.eventLocation) {
+      updateFormData('locationRawInput', draft.eventLocation);
+      updateFormData('location', null);
+    }
+
+    // Reset date/times for the new event
+    updateFormData('dateTime', null);
+    updateFormData('endDateTime', null);
+    updateFormData('registrationStartTime', null);
+    updateFormData('registrationEndTime', null);
+
+    if (draft.eventImages?.[0]) {
+      updateFormData('imageUri', draft.eventImages[0]);
+    } else {
+      updateFormData('imageUri', undefined);
+    }
+
+    setActiveTab(0);
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, experimental_backgroundImage: colors.gradient.mainBackground }} edges={['top']}>
       <StatusBar barStyle="dark-content" />
@@ -510,7 +556,7 @@ export const CreateEventContent: React.FC = () => {
                     key={event.eventId}
                     id={event.eventId}
                     event={event}
-                    onPress={() => { }}
+                    onPress={() => populateFromDraft(event)}
                     onBookmark={() => { }}
                     hideCreator
                   />
