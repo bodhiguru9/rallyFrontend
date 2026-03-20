@@ -349,7 +349,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
-          <Animated.View
+        <Animated.View
           style={[
             styles.modalContainer,
             {
@@ -432,7 +432,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
                   )}
                 </FlexView>
               </TouchableOpacity>
-              
+
               <FlexView style={styles.paymentDetailsContent}>
                 {isPaymentDetailsExpanded && (
                   <>
@@ -532,7 +532,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
                     {/* Card Info */}
                     <FlexView style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <TextDs style={{ color: colors.text.primary, fontSize: 14 }}>
-                        {card.last4 ? `${card.last4.slice(0,2)}** **** **** **${card.last4.slice(-2)}` : '•••• •••• •••• ••••'}
+                        {card.last4 ? `${card.last4.slice(0, 2)}** **** **** **${card.last4.slice(-2)}` : '•••• •••• •••• ••••'}
                       </TextDs>
                       <TextDs style={{ color: colors.text.secondary, fontSize: 13 }}>
                         {formatCardExpiry(card.expMonth, card.expYear)}

@@ -410,6 +410,64 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
+const readOrganiserMemberAmount = (member: any): number =>
+  Number(
+    member?.totalBookingAmount ??
+    member?.total_booking_amount ??
+    member?.organiserBookingAmount ??
+    member?.organiser_booking_amount ??
+    0,
+  );
+
+const getOrganiserMembersRevenueSnapshot = async (filters?: {
+  period?: string;
+  sport?: string;
+}): Promise<{ totalRevenue: number; totalMembers: number }> => {
+  const params: Record<string, string | number> = { page: 1, perPage: 200 };
+  if (filters?.period && filters.period !== 'all-time') {
+    params.period = filters.period;
+  }
+  if (filters?.sport) {
+    params.sport = filters.sport;
+  }
+
+  const firstPage = await apiClient.get<OrganiserMembersResponse>('/api/organizers/members', {
+    params,
+  });
+
+  const firstData = firstPage.data?.data;
+  const firstMembers = firstData?.members || [];
+  let totalRevenue = firstMembers.reduce((sum, member) => sum + readOrganiserMemberAmount(member), 0);
+
+  const totalPages = Number(firstData?.pagination?.totalPages ?? 1);
+
+  if (totalPages > 1) {
+    const pageRequests: Promise<any>[] = [];
+    for (let page = 2; page <= totalPages; page++) {
+      pageRequests.push(
+        apiClient.get<OrganiserMembersResponse>('/api/organizers/members', {
+          params: { ...params, page },
+        }),
+      );
+    }
+
+    const otherPages = await Promise.all(pageRequests);
+    otherPages.forEach((pageResponse) => {
+      const members = pageResponse.data?.data?.members || [];
+      totalRevenue += members.reduce((sum: number, member: any) => sum + readOrganiserMemberAmount(member), 0);
+    });
+  }
+
+  return {
+    totalRevenue,
+    totalMembers:
+      Number(firstData?.pagination?.totalCount) ||
+      Number(firstData?.totalMembers) ||
+      firstMembers.length ||
+      0,
+  };
+};
+
 /**
  * Map API transaction to Transaction type
  */
@@ -544,50 +602,9 @@ export const organiserService = {
       // /api/organizers/members -> totalBookingAmount
       let totalMembers = Number(stats?.totalMembers ?? 0);
       try {
-        const firstPage = await apiClient.get<OrganiserMembersResponse>('/api/organizers/members', {
-          params: { page: 1, perPage: 200 },
-        });
-
-        const firstData = firstPage.data?.data;
-        const firstMembers = firstData?.members || [];
-
-        const readMemberAmount = (member: any) =>
-          Number(
-            member?.totalBookingAmount ??
-            member?.total_booking_amount ??
-            member?.organiserBookingAmount ??
-            member?.organiser_booking_amount ??
-            0,
-          );
-
-        let membersRevenue = firstMembers.reduce((sum, member) => sum + readMemberAmount(member), 0);
-
-        const totalPages = Number(firstData?.pagination?.totalPages ?? 1);
-
-        if (totalPages > 1) {
-          const pageRequests: Promise<any>[] = [];
-          for (let page = 2; page <= totalPages; page++) {
-            pageRequests.push(
-              apiClient.get<OrganiserMembersResponse>('/api/organizers/members', {
-                params: { page, perPage: 200 },
-              }),
-            );
-          }
-
-          const otherPages = await Promise.all(pageRequests);
-          otherPages.forEach((pageResponse) => {
-            const members = pageResponse.data?.data?.members || [];
-            membersRevenue += members.reduce((sum: number, member: any) => sum + readMemberAmount(member), 0);
-          });
-        }
-
-        totalRevenue = membersRevenue;
-
-        totalMembers =
-          Number(firstData?.pagination?.totalCount) ||
-          Number(firstData?.totalMembers) ||
-          Number(totalMembers) ||
-          0;
+        const membersSnapshot = await getOrganiserMembersRevenueSnapshot();
+        totalRevenue = membersSnapshot.totalRevenue;
+        totalMembers = Number(membersSnapshot.totalMembers) || Number(totalMembers) || 0;
       } catch {
         // If members API fails, keep analytics-derived totals.
       }
@@ -659,8 +676,28 @@ export const organiserService = {
         },
       );
       const bookings = response.data?.data?.bookings || response.data?.bookings;
+      let totalRevenue = Number(
+        bookings?.totalRevenue ??
+        response.data?.data?.stats?.totalRevenue ??
+        response.data?.data?.revenue?.total ??
+        0,
+      );
+
+      try {
+        const membersSnapshot = await getOrganiserMembersRevenueSnapshot({
+          period: filters?.revenuePeriod,
+          sport: filters?.sport,
+        });
+        totalRevenue = membersSnapshot.totalRevenue;
+      } catch {
+        // If members API fails, keep analytics-derived total.
+      }
+
       if (bookings) {
-        return bookings;
+        return {
+          ...bookings,
+          totalRevenue,
+        };
       }
 
       const analyticsData = response.data?.data;
@@ -680,7 +717,7 @@ export const organiserService = {
       const mappedEvents = rawEvents.map(mapAnyEventToBookingsAnalyticsEvent);
 
       return {
-        totalRevenue: Number(analyticsData.stats?.totalRevenue ?? analyticsData.revenue?.total ?? 0),
+        totalRevenue,
         totalBookings: Number(
           analyticsData.stats?.totalTransactions ??
           mappedEvents.reduce((sum, event) => sum + (event.bookedCount || 0), 0),
