@@ -2,6 +2,7 @@
   "expo": {
     "name": "Rally App",
     "slug": "rally-app",
+    "owner": "ayush04k",
     "version": "1.0.0",
     "scheme": "rally-app",
     "orientation": "portrait",
@@ -61,7 +62,6 @@
     "extra": {
       "eas": {
         "projectId": "5381cc57-a596-48f3-b013-4e9d88b3876c"
-
       },
       "googleOAuth": {
         "iosClientId": "204335986948-l22091iooiff6vn3m08k8cq2756tgpo6.apps.googleusercontent.com",

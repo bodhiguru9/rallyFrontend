@@ -219,6 +219,7 @@ export interface GoogleOAuthResponse {
       sport2?: string;
       sports?: string[];
       followingCount?: number;
+      profileVisibility?: 'public' | 'private';
     };
     token: string;
   };

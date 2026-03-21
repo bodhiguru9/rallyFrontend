@@ -12,6 +12,7 @@ import { formatErrorForAlert, logError } from '@utils';
 import type { RootStackParamList } from '@navigation';
 import { logger } from '@dev-tools/logger';
 import type { GoogleOAuthRequest, GoogleOAuthResponse } from '@app-types/api/auth.types';
+import React from 'react';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -32,14 +33,43 @@ export const useGoogleAuth = () => {
       (Constants.manifest as { extra?: { googleOAuth?: { [key: string]: string } } } | null)?.extra
         ?.googleOAuth ||
       {};
+
+    // For Expo Go, we MUST use the Web Client ID
+    if (Constants.appOwnership === 'expo') {
+      return googleOAuth.webClientId || '';
+    }
+
     if (Platform.OS === 'ios') {
       return googleOAuth.iosClientId || '';
     }
     if (Platform.OS === 'android') {
       return googleOAuth.androidClientId || '';
     }
-    return '';
+    return googleOAuth.webClientId || '';
   };
+
+  const discovery = {
+    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenEndpoint: 'https://oauth2.googleapis.com/token',
+    revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
+  };
+
+  const [request, response, promptAsync] = AuthSession.useAuthRequest(
+    {
+      clientId: getClientId(),
+      scopes: ['openid', 'profile', 'email'],
+      responseType: AuthSession.ResponseType.IdToken,
+      usePKCE: false,
+      redirectUri: Constants.appOwnership === 'expo'
+        ? `https://auth.expo.io/@${Constants.expoConfig?.owner || 'ayush04k'}/${Constants.expoConfig?.slug || 'rally-app'}`
+        : AuthSession.makeRedirectUri({ 
+            scheme: typeof Constants.expoConfig?.scheme === 'string' 
+              ? Constants.expoConfig.scheme 
+              : 'rally-app' 
+          }),
+    },
+    discovery
+  );
 
   const oauthMutation = useMutation({
     mutationFn: async (data: GoogleOAuthRequest): Promise<GoogleOAuthResponse> => {
@@ -89,51 +119,20 @@ export const useGoogleAuth = () => {
 
   const signInWithGoogle = async (userType: 'player' | 'organiser' = 'player') => {
     try {
-      setGlobalLoading(true, 'Signing in with Google...');
-
-      const useProxy = false;
-      const clientId = getClientId();
-
-      if (!clientId || clientId.includes('YOUR_')) {
-        setGlobalLoading(false);
-        Alert.alert(
-          'Google Sign In',
-          'Missing Google Client ID. Update app.json extra.googleOAuth with real client IDs.',
-        );
+      if (!request) {
+        Alert.alert('Google Sign In', 'Auth request not ready. Please try again.');
         return;
       }
 
-      const scheme = Constants.expoConfig?.scheme;
-      const schemeStr = typeof scheme === 'string' ? scheme : Array.isArray(scheme) ? scheme[0] : 'rally-app';
-      const rawRedirect = AuthSession.makeRedirectUri({
-        scheme: schemeStr,
-      });
-      const redirectUri = typeof rawRedirect === 'string' ? rawRedirect : rawRedirect?.[0] ?? '';
+      setGlobalLoading(true, 'Signing in with Google...');
 
-      const nonceBytes = await Crypto.getRandomBytesAsync(16);
-      const nonce = Array.from(nonceBytes)
-        .map((byte) => byte.toString(16).padStart(2, '0'))
-        .join('');
-
-      const request = new AuthSession.AuthRequest({
-        clientId,
-        scopes: ['openid', 'profile', 'email'],
-        responseType: AuthSession.ResponseType.IdToken,
-        redirectUri,
-        usePKCE: false,
-        extraParams: {
-          nonce,
-          prompt: 'select_account',
-        },
+      logger.info('Google OAuth hook request', { 
+        redirectUri: request?.redirectUri,
+        clientId: request?.clientId 
       });
 
-      const discovery = {
-        authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-        tokenEndpoint: 'https://oauth2.googleapis.com/token',
-        revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
-      };
-
-      const result = await request.promptAsync(discovery);
+      // Note: useProxy is true by default in Expo Go when using useAuthRequest
+      const result = await promptAsync();
 
       if (result.type === 'success') {
         const { id_token } = result.params;
