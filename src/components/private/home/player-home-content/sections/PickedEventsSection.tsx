@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { spacing } from '@theme';
 import { DateFilter, FilterDropdown, Seperator, TextDs } from '@components';
@@ -11,6 +11,7 @@ import { EventData } from '@app-types';
 import { useLocationStore } from '@store/location-store';
 import { expandRecurringEvents } from '@utils/recurrence-utils';
 import { parseLocalDate } from '@utils/date-utils';
+import { locationSearchService } from '@services/location-search-service';
 
 const isSameCalendarDay = (eventDateTime: string, fullDate: string): boolean => {
   const d1 = new Date(eventDateTime);
@@ -44,6 +45,85 @@ const getDistanceKm = (
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return EARTH_RADIUS_KM * c;
+};
+
+const getEventKey = (event: EventData): string => {
+  return String(event.mongoId ?? event.eventId ?? event.id);
+};
+
+const parseCoordinatesFromLocationText = (
+  locationText: string | null | undefined,
+): { latitude: number; longitude: number } | null => {
+  if (!locationText) {
+    return null;
+  }
+
+  // Matches: "28.67974,77.1738497" (with optional spaces)
+  const simplePair = locationText.match(/(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)/);
+  if (simplePair) {
+    const latitude = Number(simplePair[1]);
+    const longitude = Number(simplePair[2]);
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      return { latitude, longitude };
+    }
+  }
+
+  // Matches: "lat: 28.67 ... lng: 77.17" and variants
+  const latLngPair = locationText.match(
+    /(?:lat|latitude)\s*[:=]\s*(-?\d{1,2}(?:\.\d+)?).*?(?:lng|lon|longitude)\s*[:=]\s*(-?\d{1,3}(?:\.\d+)?)/i,
+  );
+  if (latLngPair) {
+    const latitude = Number(latLngPair[1]);
+    const longitude = Number(latLngPair[2]);
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      return { latitude, longitude };
+    }
+  }
+
+  return null;
+};
+
+const toFiniteNumber = (value: unknown): number | null => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const getEventCoordinates = (event: EventData): { latitude: number; longitude: number } | null => {
+  const eventWithFallbacks = event as EventData & {
+    latitude?: unknown;
+    longitude?: unknown;
+    lat?: unknown;
+    lng?: unknown;
+    geojson?: { coordinates?: unknown };
+    coordinates?: unknown;
+  };
+
+  const latitude = toFiniteNumber(event.eventLatitude ?? eventWithFallbacks.latitude ?? eventWithFallbacks.lat);
+  const longitude = toFiniteNumber(event.eventLongitude ?? eventWithFallbacks.longitude ?? eventWithFallbacks.lng);
+
+  if (latitude == null || longitude == null) {
+    const coordsFromText = parseCoordinatesFromLocationText(event.eventLocation);
+    if (coordsFromText) {
+      return coordsFromText;
+    }
+
+    const coordsCandidate =
+      (eventWithFallbacks.geojson as { coordinates?: unknown } | undefined)?.coordinates ??
+      eventWithFallbacks.coordinates;
+
+    if (Array.isArray(coordsCandidate) && coordsCandidate.length >= 2) {
+      // GeoJSON usually stores [longitude, latitude]
+      const lng = toFiniteNumber(coordsCandidate[0]);
+      const lat = toFiniteNumber(coordsCandidate[1]);
+      if (lat != null && lng != null) {
+        return { latitude: lat, longitude: lng };
+      }
+    }
+
+    return null;
+  }
+
+  return { latitude, longitude };
 };
 
 interface PickedEventsSectionProps {
@@ -84,6 +164,10 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
   showPastEvents = false,
 }) => {
   const { lastCoordinates } = useLocationStore();
+  const [resolvedEventCoordinates, setResolvedEventCoordinates] = useState<
+    Record<string, { latitude: number; longitude: number }>
+  >({});
+  const geocodeCacheRef = useRef<Record<string, { latitude: number; longitude: number } | null>>({});
 
   // Get selected IDs for each filter type (for UI display)
   const selectedSportsIds = useMemo(
@@ -137,37 +221,31 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
     [dateFilters],
   );
 
-  // Filter events by all selected filters
-  const filteredEvents = useMemo(() => {
-    // Expand recurring events into instances for each matching date in the visible range
+  // Run all filters except distance; distance is applied after optional geocode fallback resolves.
+  const eventsBeforeDistance = useMemo(() => {
     const expanded = expandRecurringEvents(pickedEvents, dateRangeStrings);
     let filtered = expanded;
 
-    // Filter out past events - only show future and currently ongoing events
     const now = new Date();
     if (!showPastEvents) {
       filtered = filtered.filter((event) => {
         const eventStartDate = new Date(event.eventDateTime);
         const eventEndDate = event.eventEndDateTime ? new Date(event.eventEndDateTime) : null;
 
-        // If event has an end date, check if it hasn't ended yet (includes ongoing and future events)
         if (eventEndDate) {
           return eventEndDate >= now;
         }
 
-        // If event has no end date, check if start date is today or in the future
         return eventStartDate >= now;
       });
     }
 
-    // Filter by date (when a date is selected)
     if (selectedDateFullDate) {
       filtered = filtered.filter((event) =>
         isSameCalendarDay(event.eventDateTime, selectedDateFullDate),
       );
     }
 
-    // Filter by sports (if any selected)
     if (selectedSportsValues.length > 0) {
       filtered = filtered.filter((event) => {
         const eventSportsLower = event.eventSports.map((sport) => sport.toLowerCase());
@@ -177,7 +255,6 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
       });
     }
 
-    // Filter by event type (if any selected)
     if (selectedEventTypeValues.length > 0) {
       filtered = filtered.filter((event) => {
         const eventTypeLower = String(event.eventType).toLowerCase();
@@ -185,30 +262,6 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
       });
     }
 
-    // Filter by distance radius from user's last known coordinates.
-    // If coordinates are unavailable, we skip distance filtering and show all.
-    if (
-      selectedDistanceKm != null &&
-      lastCoordinates?.latitude != null &&
-      lastCoordinates?.longitude != null
-    ) {
-      filtered = filtered.filter((event) => {
-        if (event.eventLatitude == null || event.eventLongitude == null) {
-          return false;
-        }
-
-        const distanceKm = getDistanceKm(
-          lastCoordinates.latitude,
-          lastCoordinates.longitude,
-          event.eventLatitude,
-          event.eventLongitude,
-        );
-
-        return distanceKm <= selectedDistanceKm;
-      });
-    }
-
-    // Filter by price (if any selected) - show events with price less than or equal to selected value
     if (selectedPriceValues.length > 0) {
       filtered = filtered.filter((event) => {
         return selectedPriceValues.some((selectedPrice) => event.eventPricePerGuest <= selectedPrice);
@@ -219,11 +272,136 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
   }, [
     pickedEvents,
     dateRangeStrings,
+    showPastEvents,
     selectedDateFullDate,
     selectedSportsValues,
     selectedEventTypeValues,
-    selectedDistanceKm,
     selectedPriceValues,
+  ]);
+
+  const eventsNeedingGeocode = useMemo(() => {
+    if (
+      selectedDistanceKm == null ||
+      lastCoordinates?.latitude == null ||
+      lastCoordinates?.longitude == null
+    ) {
+      return [] as EventData[];
+    }
+
+    return eventsBeforeDistance.filter((event) => {
+      if (getEventCoordinates(event)) {
+        return false;
+      }
+
+      const key = getEventKey(event);
+      if (resolvedEventCoordinates[key]) {
+        return false;
+      }
+
+      return Boolean(event.eventLocation?.trim());
+    });
+  }, [
+    selectedDistanceKm,
+    lastCoordinates?.latitude,
+    lastCoordinates?.longitude,
+    eventsBeforeDistance,
+    resolvedEventCoordinates,
+  ]);
+
+  useEffect(() => {
+    if (eventsNeedingGeocode.length === 0) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const geocodeMissingEvents = async () => {
+      for (const event of eventsNeedingGeocode) {
+        if (isCancelled) {
+          return;
+        }
+
+        const locationText = event.eventLocation?.trim();
+        if (!locationText) {
+          continue;
+        }
+
+        const eventKey = getEventKey(event);
+
+        const cached = geocodeCacheRef.current[locationText];
+        if (cached !== undefined) {
+          if (cached) {
+            setResolvedEventCoordinates((prev) => {
+              if (prev[eventKey]) {
+                return prev;
+              }
+              return { ...prev, [eventKey]: cached };
+            });
+          }
+          continue;
+        }
+
+        try {
+          const results = await locationSearchService.search({ query: locationText });
+          const first = results[0];
+          const coords = first
+            ? { latitude: first.latitude, longitude: first.longitude }
+            : null;
+
+          geocodeCacheRef.current[locationText] = coords;
+
+          if (coords && !isCancelled) {
+            setResolvedEventCoordinates((prev) => ({ ...prev, [eventKey]: coords }));
+          }
+        } catch {
+          geocodeCacheRef.current[locationText] = null;
+        }
+
+        // Respect public Nominatim limits (~1 req/sec)
+        await new Promise((resolve) => setTimeout(resolve, 1100));
+      }
+    };
+
+    geocodeMissingEvents();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [eventsNeedingGeocode]);
+
+  // Filter events by all selected filters
+  const filteredEvents = useMemo(() => {
+    let filtered = eventsBeforeDistance;
+
+    // Filter by distance radius from user's last known coordinates.
+    // If coordinates are unavailable, we skip distance filtering and show all.
+    if (
+      selectedDistanceKm != null &&
+      lastCoordinates?.latitude != null &&
+      lastCoordinates?.longitude != null
+    ) {
+      filtered = filtered.filter((event) => {
+        const eventCoordinates = getEventCoordinates(event) ?? resolvedEventCoordinates[getEventKey(event)];
+        if (!eventCoordinates) {
+          return false;
+        }
+
+        const distanceKm = getDistanceKm(
+          lastCoordinates.latitude,
+          lastCoordinates.longitude,
+          eventCoordinates.latitude,
+          eventCoordinates.longitude,
+        );
+
+        return distanceKm <= selectedDistanceKm;
+      });
+    }
+
+    return filtered;
+  }, [
+    eventsBeforeDistance,
+    selectedDistanceKm,
+    resolvedEventCoordinates,
     lastCoordinates?.latitude,
     lastCoordinates?.longitude,
   ]);

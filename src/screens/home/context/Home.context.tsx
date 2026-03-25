@@ -124,7 +124,7 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
   // Transform API data to FilterOption format using useMemo
   const [sportsFilterStates, setSportsFilterStates] = useState<Record<string, boolean>>({ 'all-sports': true });
   const [eventTypeFilterStates, setEventTypeFilterStates] = useState<Record<string, boolean>>({ 'all-event-types': true });
-  const [locationFilterStates, setLocationFilterStates] = useState<Record<string, boolean>>({ 'distance-everywhere': true });
+  const [locationFilterStates, setLocationFilterStates] = useState<Record<string, boolean>>({});
   const [priceFilterStates, setPriceFilterStates] = useState<Record<string, boolean>>({});
 
   // Initialize date filters with 30 days from today
@@ -493,7 +493,7 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
     setLocationFilterStates((prev) => {
       const isAlreadyActive = !!prev[id];
       if (isAlreadyActive) {
-        return prev;
+        return {};
       }
       return { [id]: true };
     });
