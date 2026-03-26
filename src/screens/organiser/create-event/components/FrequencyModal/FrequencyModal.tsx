@@ -19,6 +19,7 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
   onClose,
   onConfirm,
   initialFrequency,
+  baseDate,
 }) => {
   const [weeklyDays, setWeeklyDays] = useState<number[]>(
     initialFrequency?.weeklyDays ?? [],
@@ -48,20 +49,29 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
   );
 
   useEffect(() => {
-    if (visible && initialFrequency) {
-      setWeeklyDays(initialFrequency.weeklyDays ?? []);
-      setEndsNever(initialFrequency.ends === 'never');
-      const onDate = initialFrequency.ends !== 'never' && typeof initialFrequency.ends === 'object'
+    if (visible) {
+      let initialDays = initialFrequency?.weeklyDays ?? [];
+      
+      if (baseDate) {
+        const baseDayIndex = baseDate.getDay();
+        if (!initialDays.includes(baseDayIndex)) {
+            initialDays = [...initialDays, baseDayIndex].sort((a, b) => a - b);
+        }
+      }
+
+      setWeeklyDays(initialDays);
+      setEndsNever(initialFrequency?.ends === 'never' || !initialFrequency?.ends);
+      const onDate = initialFrequency?.ends !== 'never' && typeof initialFrequency?.ends === 'object'
         ? initialFrequency.ends.on
         : new Date();
       setEndsOnDate(onDate);
       setEndDateCalendarMonth(onDate.getMonth());
       setEndDateCalendarYear(onDate.getFullYear());
-      setShowCustom(!!initialFrequency.customValue);
-      setCustomValue(initialFrequency.customValue ?? '');
+      setShowCustom(!!initialFrequency?.customValue);
+      setCustomValue(initialFrequency?.customValue ?? '');
       setShowEndDateCalendar(false);
     }
-  }, [visible, initialFrequency]);
+  }, [visible, initialFrequency, baseDate]);
 
   const toggleDay = (dayIndex: number) => {
     setWeeklyDays((prev) =>
@@ -146,7 +156,7 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
             {/* Select Days (Weekly) - FIRST per Figma design */}
             <FlexView style={styles.selectDaysSection}>
               <TextDs style={styles.sectionTitle}>Select Days (Weekly)</TextDs>
-              <FlexView style={styles.daysRow}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.daysRow}>
                 {DAY_LABELS.map((label, index) => {
                   const isSelected = weeklyDays.includes(index);
                   return (
@@ -170,7 +180,7 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
                     </TouchableOpacity>
                   );
                 })}
-              </FlexView>
+              </ScrollView>
             </FlexView>
 
             {/* Ends - SECOND per Figma design */}

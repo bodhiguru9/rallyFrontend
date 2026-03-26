@@ -6,7 +6,9 @@ const DAY_ABBREVS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 export function frequencyToFormValue(selection: FrequencySelection): string[] {
   const addEnds = (base: string[]) => {
     if (selection.ends !== 'never' && typeof selection.ends === 'object') {
-      const dateStr = selection.ends.on.toISOString().split('T')[0]; // YYYY-MM-DD
+      const d = selection.ends.on;
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; // YYYY-MM-DD
+
       return [...base, 'ends', dateStr];
     }
     return base;

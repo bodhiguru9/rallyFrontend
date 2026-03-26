@@ -324,28 +324,22 @@ export const CreateEventContent: React.FC = () => {
                 >
                   <FlexView flex={1} gap={4}>
                     {formData.dateTime ? (
-                      <>
-                        <TextDs size={14} weight="medium" color="primary">
-                          Start: {formData.dateTime.toLocaleString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: 'numeric',
-                            minute: '2-digit',
-                          })}
-                        </TextDs>
-                        <TextDs size={14} weight="medium" color="primary">
-                          End: {(formData.endDateTime ?? new Date(formData.dateTime!.getTime() + 3600000)).toLocaleString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: 'numeric',
-                            minute: '2-digit',
-                          })}
-                        </TextDs>
-                      </>
+                      <TextDs size={14} weight="regular" color="primary">
+                        {formData.dateTime.toLocaleString('en-US', {
+                          weekday: 'short',
+                          day: 'numeric',
+                          month: 'short'
+                        })},{' '}
+                        {formData.dateTime.toLocaleString('en-US', {
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        })} - {(formData.endDateTime ?? new Date(formData.dateTime.getTime() + 3600000)).toLocaleString('en-US', {
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        })}
+                      </TextDs>
                     ) : (
-                      <TextDs size={16} weight="regular" color="secondary">
+                      <TextDs size={14} weight="regular" color="secondary">
                         Date & Time
                       </TextDs>
                     )}
@@ -382,9 +376,9 @@ export const CreateEventContent: React.FC = () => {
                 placeholder="Event Description"
                 value={formData.description}
                 onChangeText={(text) => updateFormData('description', text)}
-                leftIcon={<ImageDs image="BallpointPen" size={20} />}
+                leftIcon={<ImageDs image="BallpointPen" size={16} />}
                 multiline
-                style={{ maxHeight: 100, textAlignVertical: 'top' }}
+                style={{ fontSize: 14, maxHeight: 100, textAlignVertical: 'top' }}
               />
 
               <FlexView isFullWidth height={1} backgroundColor={colors.background.white} my={14} />

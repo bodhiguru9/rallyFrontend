@@ -299,8 +299,31 @@ export const DateTimePickerModal: React.FC<DateTimePickerModalProps> = ({
             <FrequencyModal
               visible={showFrequencyModal}
               onClose={() => setShowFrequencyModal(false)}
-              onConfirm={(selection) => setFrequency(selection)}
+              onConfirm={(selection) => {
+                setFrequency(selection);
+                if (selection.type === 'weekly' && selection.weeklyDays && selection.weeklyDays.length > 0) {
+                  const currentDay = selectedDate.getDay();
+                  if (!selection.weeklyDays.includes(currentDay)) {
+                    // Find the closest upcoming day in weeklyDays
+                    let minDiff = 7;
+                    for (const day of selection.weeklyDays) {
+                      const diff = (day - currentDay + 7) % 7;
+                      if (diff > 0 && diff < minDiff) { 
+                        minDiff = diff; 
+                      }
+                    }
+                    if (minDiff < 7) {
+                      const newDate = new Date(selectedDate);
+                      newDate.setDate(selectedDate.getDate() + minDiff);
+                      setSelectedDate(newDate);
+                      setCurrentMonth(newDate.getMonth());
+                      setCurrentYear(newDate.getFullYear());
+                    }
+                  }
+                }
+              }}
               initialFrequency={frequency}
+              baseDate={selectedDate}
             />
 
             {/* Action Buttons */}

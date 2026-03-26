@@ -31,6 +31,7 @@ import { useOrganiserPackages } from '@hooks/organiser';
 import { getDateFilters } from '@screens/home/context/Home.data';
 import { useHome } from '@screens/home/context/Home.context';
 import { expandRecurringEvents } from '@utils/recurrence-utils';
+import { useAsyncExpandedEvents } from '@hooks/use-async-expanded-events';
 import { parseLocalDate } from '@utils/date-utils';
 
 // Types
@@ -440,9 +441,10 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
     [dateFilters],
   );
 
+  const { expandedEvents = [] } = useAsyncExpandedEvents(allEvents);
+
   const filteredEvents = useMemo(() => {
-    const expanded = expandRecurringEvents(allEvents, dateRangeStrings);
-    let filtered = expanded;
+    let filtered = expandedEvents;
 
     if (selectedDateFullDate) {
       const d2 = parseLocalDate(selectedDateFullDate);
@@ -482,7 +484,7 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
     }
 
     return filtered;
-  }, [allEvents, dateRangeStrings, selectedDateFullDate, selectedSportsValues, selectedEventTypeValues, selectedLocationValues, selectedPriceValues]);
+  }, [expandedEvents, dateRangeStrings, selectedDateFullDate, selectedSportsValues, selectedEventTypeValues, selectedLocationValues, selectedPriceValues]);
 
   const eventsByDate = useMemo(() => {
     const grouped: Record<string, EventData[]> = {};

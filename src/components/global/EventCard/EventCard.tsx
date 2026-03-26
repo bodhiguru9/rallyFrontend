@@ -115,7 +115,12 @@ export const EventCard: React.FC<EventCardProps> = ({
     allowPrivate: true,
   });
 
-  const displayEvent = (fullEvent || event) as EventData | PlayerBooking;
+  const displayEvent = {
+    ...((fullEvent || event) as Record<string, any>),
+    // Preserve the dates from the actual prop, as it might be a generated recurrence instance
+    eventDateTime: (event as any).eventDateTime,
+    eventEndDateTime: (event as any).eventEndDateTime,
+  } as EventData | PlayerBooking;
   const eventToDisplay = displayEvent as EventData; // Cast for easier access to participants/spotsInfo
 
   const handlePress = () => {
@@ -326,6 +331,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                   variant="orange"
                   searchType="sport"
                   size="small"
+                  disabled={isOrganiserUser}
                 />
               )}
               {(displayEvent.eventType || isPrivate) && (
@@ -334,6 +340,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                   icon={EventTypeIcon}
                   searchType="eventType"
                   size="small"
+                  disabled={isOrganiserUser}
                 />
               )}
             </FlexView>

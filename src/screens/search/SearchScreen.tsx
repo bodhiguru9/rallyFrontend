@@ -8,6 +8,7 @@ import { colors, spacing } from '@theme';
 import { SearchInput, EventCard } from '@components/global';
 import type { RootStackParamList } from '@navigation';
 import { usePlayerEvents } from '@hooks/use-events';
+import { useAsyncExpandedEvents } from '@hooks/use-async-expanded-events';
 import { useTopOrganisers } from '@hooks/use-top-organisers';
 import type { Organiser } from '@screens/home/Home.types';
 import { styles } from './style/SearchScreen.styles';
@@ -45,18 +46,20 @@ export const SearchScreen: React.FC = () => {
     isError: isErrorOrganisers,
   } = useTopOrganisers();
 
+  const { expandedEvents } = useAsyncExpandedEvents(allEventsData?.events);
+
   // Client-side filtering for events
   const events = useMemo(() => {
-    if (!allEventsData?.events) { return []; }
+    if (!expandedEvents) { return []; }
 
     // If no search query, return all events
     if (!debouncedQuery.trim()) {
-      return allEventsData.events;
+      return expandedEvents;
     }
 
     const lowerQuery = debouncedQuery.toLowerCase();
 
-    return allEventsData.events.filter((event) => {
+    return expandedEvents.filter((event) => {
       // Match 1: Event name contains query
       const eventNameMatch = (event.eventName || '').toLowerCase().includes(lowerQuery);
 

@@ -4,7 +4,7 @@ import { colors, spacing, borderRadius, getFontStyle } from '@theme';
 export const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: colors.surface.overlay,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },

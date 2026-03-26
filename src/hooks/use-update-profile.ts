@@ -59,7 +59,10 @@ export const useUpdateProfile = () => {
       }
 
       // Invalidate any related queries if needed
-      await queryClient.invalidateQueries({ queryKey: ['user', user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['user'] });
+      await queryClient.invalidateQueries({ queryKey: ['organiser-user'] });
+      await queryClient.invalidateQueries({ queryKey: ['organiser-profile-edit'] });
+      await queryClient.invalidateQueries({ queryKey: ['community-details'] });
       console.log('🔄 [useUpdateProfile] Invalidated queries for user:', user?.id);
     },
     onError: (error: unknown) => {

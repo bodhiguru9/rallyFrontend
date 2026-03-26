@@ -19,7 +19,7 @@ export const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    ...getFontStyle(16, 'regular'),
+    ...getFontStyle(14, 'regular'),
     color: colors.text.primary,
     paddingVertical: 0,
   },

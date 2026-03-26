@@ -57,7 +57,10 @@ export const useUpdateProfileImage = () => {
       }
 
       // Invalidate and refetch user queries
-      queryClient.invalidateQueries({ queryKey: ['user', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ['organiser-user'] });
+      queryClient.invalidateQueries({ queryKey: ['organiser-profile-edit'] });
+      queryClient.invalidateQueries({ queryKey: ['community-details'] });
       // Also refetch user details
       if (user?.id) {
         await queryClient.refetchQueries({ queryKey: ['user', user.id] });

@@ -10,6 +10,7 @@ import { FlexView } from '@designSystem/atoms/FlexView';
 import { EventData } from '@app-types';
 import { useLocationStore } from '@store/location-store';
 import { expandRecurringEvents } from '@utils/recurrence-utils';
+import { useAsyncExpandedEvents } from '@hooks/use-async-expanded-events';
 import { parseLocalDate } from '@utils/date-utils';
 import { locationSearchService } from '@services/location-search-service';
 
@@ -163,6 +164,8 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
   onBookmark,
   showPastEvents = false,
 }) => {
+  const { expandedEvents = [] } = useAsyncExpandedEvents(pickedEvents);
+  
   const { lastCoordinates } = useLocationStore();
   const [resolvedEventCoordinates, setResolvedEventCoordinates] = useState<
     Record<string, { latitude: number; longitude: number }>
@@ -223,8 +226,7 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
 
   // Run all filters except distance; distance is applied after optional geocode fallback resolves.
   const eventsBeforeDistance = useMemo(() => {
-    const expanded = expandRecurringEvents(pickedEvents, dateRangeStrings);
-    let filtered = expanded;
+    let filtered = expandedEvents;
 
     const now = new Date();
     if (!showPastEvents) {
@@ -270,7 +272,7 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
 
     return filtered;
   }, [
-    pickedEvents,
+    expandedEvents,
     dateRangeStrings,
     showPastEvents,
     selectedDateFullDate,

@@ -249,9 +249,9 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
     // Only apply date filter if not showing "All Time" or if a date is explicitly selected
     const selectedDate = dateFilters.find((f) => f.isSelected)?.fullDate;
     if (selectedDate && (selectedPeriod === 'all-time' || selectedPeriod === 'today')) {
-      const selectedDateObj = /^\d{4}-\d{2}-\d{2}$/.test(selectedDate)
-        ? (() => { const [y, m, d] = selectedDate.split('-').map(Number); return new Date(y, m - 1, d); })()
-        : new Date(selectedDate);
+      const selectedDateObj = new Date(selectedDate);
+      const selDateStr = `${selectedDateObj.getFullYear()}-${String(selectedDateObj.getMonth() + 1).padStart(2, '0')}-${String(selectedDateObj.getDate()).padStart(2, '0')}`;
+      
       filtered = filtered
         .filter((event) => {
           if (!event.eventDateTime) return false;
@@ -261,7 +261,6 @@ export const OrganiserEventsHostedScreen: React.FC = () => {
           }
           const eventDate = new Date(event.eventDateTime);
           const eDateStr = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
-          const selDateStr = selectedDate.startsWith('2') ? selectedDate.split('T')[0].split(' ')[0] : selectedDate;
           return eDateStr === selDateStr;
         })
         .map((event) => {

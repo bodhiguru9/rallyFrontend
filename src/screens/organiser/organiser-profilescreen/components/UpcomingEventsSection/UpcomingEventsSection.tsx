@@ -4,17 +4,20 @@ import type { UpcomingEventsSectionProps } from './UpcomingEventsSection.types';
 import type { EventData } from '@app-types';
 import { styles } from './style/UpcomingEventsSection.styles';
 import { EventCard,  TextDs,  FlexView } from '@components';
+import { useAsyncExpandedEvents } from '@hooks/use-async-expanded-events';
 
 export const UpcomingEventsSection: React.FC<UpcomingEventsSectionProps> = ({
   events,
   onEventPress,
   onEventShare,
 }) => {
+  const { expandedEvents = [] } = useAsyncExpandedEvents(events);
+
   const eventsByDate = useMemo(() => {
     const grouped: Record<string, EventData[]> = {};
     
     // Sort events chronologically first
-    const sortedEvents = [...events].sort((a, b) => 
+    const sortedEvents = [...expandedEvents].sort((a, b) => 
       new Date(a.eventDateTime).getTime() - new Date(b.eventDateTime).getTime()
     );
 
@@ -26,7 +29,7 @@ export const UpcomingEventsSection: React.FC<UpcomingEventsSectionProps> = ({
     });
 
     return Object.entries(grouped);
-  }, [events]);
+  }, [expandedEvents]);
 
   const getDayLabel = (dateStr: string): string => {
     try {
@@ -43,7 +46,7 @@ export const UpcomingEventsSection: React.FC<UpcomingEventsSectionProps> = ({
     } catch { return ''; }
   };
 
-  if (events.length === 0) {
+  if (expandedEvents.length === 0) {
     return null;
   }
 

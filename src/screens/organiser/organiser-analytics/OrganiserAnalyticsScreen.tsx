@@ -104,7 +104,11 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
 
   const analyticsFilters = useMemo(() => {
     const isAllTime = selectedPeriod === 'all-time';
-    const startDate = !isAllTime && selectedDate ? new Date(selectedDate).toISOString().split('T')[0] : undefined;
+    let startDate: string | undefined = undefined;
+    if (!isAllTime && selectedDate) {
+      const d = new Date(selectedDate);
+      startDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
 
     return {
       revenuePeriod: periodToApiMap[selectedPeriod] || 'lifetime',
@@ -322,10 +326,12 @@ export const OrganiserAnalyticsScreen: React.FC = () => {
 
     // Filter by date
     if (selectedDate && selectedPeriod !== 'all-time') {
-      const selectedDateOnly = new Date(selectedDate).toISOString().split('T')[0];
+      const selD = new Date(selectedDate);
+      const selectedDateOnly = `${selD.getFullYear()}-${String(selD.getMonth() + 1).padStart(2, '0')}-${String(selD.getDate()).padStart(2, '0')}`;
       filtered = filtered.filter((event) => {
         if (!event.eventDateTime) return false;
-        const eventDateOnly = new Date(event.eventDateTime).toISOString().split('T')[0];
+        const evtD = new Date(event.eventDateTime);
+        const eventDateOnly = `${evtD.getFullYear()}-${String(evtD.getMonth() + 1).padStart(2, '0')}-${String(evtD.getDate()).padStart(2, '0')}`;
         return eventDateOnly === selectedDateOnly;
       });
     }

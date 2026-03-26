@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TextDs, FlexView } from '@components';
-import { ScrollView, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { ScrollView, Alert, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 import type { RootStackParamList } from '@navigation';
@@ -27,17 +27,38 @@ export const OrganiserProfileScreen: React.FC = () => {
   const userId = useAuthStore((state) => state.user?.userId || 0);
   const [pendingProfileImage, setPendingProfileImage] = useState<string | null>(null);
 
-  const { data: userResponse, isLoading: isLoadingUser } = useQuery({
+  const { data: userResponse, isLoading: isLoadingUser, refetch: refetchUser } = useQuery({
     queryKey: ['user-profile', userId],
     queryFn: () => userService.getUserById(userId),
     enabled: userId > 0,
   });
 
-  const { data: createdEventsData, isLoading: isLoadingEvents } = useOrganiserCreatedEvents(
+  const { data: createdEventsData, isLoading: isLoadingEvents, refetch: refetchEvents } = useOrganiserCreatedEvents(
     1,
     10,
     { enabled: userId > 0 },
   );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (userId > 0) {
+        refetchUser();
+      }
+    }, [userId, refetchUser])
+  );
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      if (userId > 0) {
+        await Promise.all([refetchUser(), refetchEvents()]);
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }, [userId, refetchUser, refetchEvents]);
 
   const { updateProfileImage, isLoading: isUpdatingImage } = useUpdateProfileImage();
 
@@ -150,6 +171,9 @@ export const OrganiserProfileScreen: React.FC = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+        }
       >
         <ProfileHeader
           logoUri={pendingProfileImage || user.profilePic || undefined}

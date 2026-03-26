@@ -208,12 +208,12 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
         onPress={() => handleSelectSuggestion(item)}
         hitSlop={{ top: 4, bottom: 4, left: 0, right: 0 }}
       >
-        <TextDs size={14} weight="medium" color="primary" numberOfLines={1}>
+        <TextDs size={12} weight="regular" color="primary" numberOfLines={1}>
           {item.name}
         </TextDs>
         {item.displayName !== item.name && (
           <TextDs
-            size={12}
+            size={10}
             weight="regular"
             color="secondary"
             numberOfLines={1}
@@ -247,7 +247,7 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
       </FlexView>
 
       {showDropdown && (
-        <View 
+        <View
           style={styles.dropdown}
         >
           {isLoading && (

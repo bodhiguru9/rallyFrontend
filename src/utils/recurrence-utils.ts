@@ -136,3 +136,78 @@ export function expandRecurringEvents<T extends EventWithRecurrence>(
 
   return result;
 }
+
+/**
+ * Expands recurring events from their start date (or recent past) up to maxMonthsFuture into the future
+ * or their specified end date. Automatically sorts the result chronologically.
+ */
+export function expandEventsForward<T extends EventWithRecurrence>(
+  events: T[],
+  maxMonthsFuture: number = 2,
+  maxMonthsPast: number = 2
+): T[] {
+  const result: T[] = [];
+  const now = new Date();
+  
+  const pastLimit = new Date();
+  pastLimit.setMonth(pastLimit.getMonth() - maxMonthsPast);
+  pastLimit.setHours(0, 0, 0, 0);
+
+  const futureLimit = new Date();
+  futureLimit.setMonth(futureLimit.getMonth() + maxMonthsFuture);
+  futureLimit.setHours(23, 59, 59, 999);
+
+  for (const event of events) {
+    if (!isRecurringEvent(event)) {
+      result.push(event);
+      continue;
+    }
+
+    const eventStart = new Date(event.eventDateTime);
+    
+    // We only want to generate instances starting from either the event start date OR the pastLimit, whichever is later.
+    const startWindow = eventStart > pastLimit ? new Date(eventStart) : new Date(pastLimit);
+    startWindow.setHours(0, 0, 0, 0);
+
+    // End window is either the futureLimit (e.g. +2 months) or the event's actual recurrence end date, whichever is earlier.
+    let endWindow = new Date(futureLimit);
+    const freqEndStr = getRecurrenceEndDate(event);
+    if (freqEndStr) {
+      const freqEnd = new Date(freqEndStr);
+      freqEnd.setHours(23, 59, 59, 999);
+      if (freqEnd < endWindow) {
+        endWindow = freqEnd;
+      }
+    }
+
+    const currentDay = new Date(startWindow);
+    const endMs = endWindow.getTime();
+    
+    // Safety limit to prevent extreme infinite loops (e.g. max 400 days)
+    let iterations = 0;
+    const MAX_ITERATIONS = 400; 
+    
+    while (currentDay.getTime() <= endMs && iterations < MAX_ITERATIONS) {
+      if (isRecurringEventOnDate(event, currentDay)) {
+        const instanceDateTime = getRecurringEventInstanceDateTime(event, currentDay);
+        // Ensure the instance is entirely valid and on/after the real eventStart
+        if (new Date(instanceDateTime) >= eventStart) {
+          let newEndDateTime = (event as any).eventEndDateTime;
+          if (newEndDateTime) {
+            const durationMs = new Date(newEndDateTime).getTime() - eventStart.getTime();
+            newEndDateTime = new Date(new Date(instanceDateTime).getTime() + durationMs).toISOString();
+          }
+          result.push({
+            ...event,
+            eventDateTime: instanceDateTime,
+            eventEndDateTime: newEndDateTime,
+          } as T);
+        }
+      }
+      currentDay.setDate(currentDay.getDate() + 1);
+      iterations++;
+    }
+  }
+
+  return result.sort((a, b) => new Date(a.eventDateTime).getTime() - new Date(b.eventDateTime).getTime());
+}

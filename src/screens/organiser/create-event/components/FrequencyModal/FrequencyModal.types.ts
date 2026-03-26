@@ -3,6 +3,7 @@ export interface FrequencyModalProps {
   onClose: () => void;
   onConfirm: (frequency: FrequencySelection) => void;
   initialFrequency?: FrequencySelection;
+  baseDate?: Date;
 }
 
 export type FrequencyType = 'never' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
