@@ -76,6 +76,19 @@ export const useSignIn = () => {
     return phoneRegex.test(phone);
   };
 
+  const sanitizePhoneNumber = (phone: string): string => {
+    const cleaned = phone.trim().replace(/[\s()-]/g, '');
+    if (!cleaned) {
+      return '';
+    }
+
+    if (cleaned.startsWith('+')) {
+      return `+${cleaned.slice(1).replace(/\D/g, '')}`;
+    }
+
+    return cleaned.replace(/\D/g, '');
+  };
+
   /**
    * Validates sign in form data
    */
@@ -116,7 +129,8 @@ export const useSignIn = () => {
     // Format phone number with country code if not using email
     let formattedPhone: string | undefined;
     if (!useEmail && phoneNumber) {
-      formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+971${phoneNumber}`; // Default to India if no country code
+      const sanitizedPhone = sanitizePhoneNumber(phoneNumber);
+      formattedPhone = sanitizedPhone.startsWith('+') ? sanitizedPhone : `+971${sanitizedPhone}`;
 
       // Validate phone number format
       if (!validatePhoneNumber(formattedPhone)) {

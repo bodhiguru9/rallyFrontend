@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { FlexView } from '@designSystem/atoms/FlexView';
 import { ImageDs } from '@designSystem/atoms/image';
 import { TextDs } from '@designSystem/atoms/TextDs';
@@ -20,6 +20,7 @@ export const WhatsAppInput: React.FC<WhatsAppInputProps> = ({
   onUseEmailPress,
 }) => {
   const [selectedCode, setSelectedCode] = useState<CountryCode>(defaultCountry);
+  const [localNumber, setLocalNumber] = useState('');
   const [showCodePicker, setShowCodePicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -34,6 +35,51 @@ export const WhatsAppInput: React.FC<WhatsAppInputProps> = ({
         country.country.toLowerCase().includes(query)
     );
   }, [searchQuery]);
+
+  useEffect(() => {
+    const incomingValue = value.trim();
+
+    if (!incomingValue) {
+      setLocalNumber('');
+      return;
+    }
+
+    const normalized = incomingValue.replace(/[\s()-]/g, '');
+
+    if (!normalized.startsWith('+')) {
+      setLocalNumber(normalized.replace(/\D/g, ''));
+      return;
+    }
+
+    const matchedCountry = [...countryCodes]
+      .sort((a, b) => b.code.length - a.code.length)
+      .find((country) => normalized.startsWith(country.code));
+
+    if (matchedCountry && matchedCountry.code !== selectedCode.code) {
+      setSelectedCode(matchedCountry);
+    }
+
+    if (matchedCountry) {
+      const digits = normalized.slice(matchedCountry.code.length).replace(/\D/g, '');
+      setLocalNumber(digits);
+      return;
+    }
+
+    setLocalNumber(normalized.replace(/^\+/, '').replace(/\D/g, ''));
+  }, [value, selectedCode.code]);
+
+  const handleNumberChange = (text: string) => {
+    const digits = text.replace(/\D/g, '');
+    setLocalNumber(digits);
+    onChangeText(digits ? `${selectedCode.code}${digits}` : '');
+  };
+
+  const handleCountrySelect = (country: CountryCode) => {
+    setSelectedCode(country);
+    setShowCodePicker(false);
+    setSearchQuery('');
+    onChangeText(localNumber ? `${country.code}${localNumber}` : '');
+  };
 
   return (
     <FlexView style={styles.container}>
@@ -62,8 +108,8 @@ export const WhatsAppInput: React.FC<WhatsAppInputProps> = ({
           style={styles.input}
           placeholder="50 123 4567"
           placeholderTextColor={colors.text.tertiary}
-          value={value}
-          onChangeText={onChangeText}
+          value={localNumber}
+          onChangeText={handleNumberChange}
           keyboardType="phone-pad"
         />
       </FlexView>
@@ -104,9 +150,7 @@ export const WhatsAppInput: React.FC<WhatsAppInputProps> = ({
                 <TouchableOpacity
                   style={styles.codeItem}
                   onPress={() => {
-                    setSelectedCode(item);
-                    setShowCodePicker(false);
-                    setSearchQuery('');
+                    handleCountrySelect(item);
                   }}
                   activeOpacity={0.7}
                 >
