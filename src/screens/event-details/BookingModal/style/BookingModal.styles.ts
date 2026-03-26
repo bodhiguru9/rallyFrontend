@@ -166,6 +166,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: spacing.xs,
+    paddingRight: spacing.md,
   },
   totalLabel: {
     ...getFontStyle(14, 'semibold'),
@@ -173,7 +174,8 @@ export const styles = StyleSheet.create({
   },
   totalPrice: {
     ...getFontStyle(16, 'bold'),
-    color: colors.secondary,
+    color: colors.primary,
+    // marginRight: spacing.md,
   },
   priceIcon: {
     marginRight: spacing.xs,

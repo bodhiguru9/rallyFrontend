@@ -171,7 +171,7 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
       'Pilates': 'pilatesIcon',
       'Basketball': 'basketballIcon',
       'Running': 'runningIcon',
-      'Volleyball': 'basketballIcon', // Placeholder icon if volleyball specific is missing
+      // 'Volleyball': 'volleyballIcon', // Placeholder icon if volleyball specific is missing
     };
 
     // 3. Merge backend sports with our primary list for resilience
@@ -224,7 +224,13 @@ export const HomeProvider: React.FC<IHomeProviderProps> = ({ children }) => {
     ];
   }, [filterOptionsData, sportsFilterStates]);
   const eventTypeFilters = useMemo(() => {
-    const defaultTypes = filterOptionsData?.eventTypes || [];
+    // Only allow specific valid event types, ignoring dirty data like 'Cricket'
+    const VALID_EVENT_TYPES = ['tournament', 'social', 'class', 'training'];
+    const backendTypes = filterOptionsData?.eventTypes || [];
+    const defaultTypes = backendTypes.filter(type => 
+      VALID_EVENT_TYPES.includes(type.toLowerCase().trim())
+    );
+
     const getEventIcon = (eventType: string): string | undefined => {
       const eventTypeLower = eventType.toLowerCase().replace(/\s+/g, '');
       const iconMap: Record<string, string> = {

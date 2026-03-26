@@ -4,22 +4,7 @@ import { StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { colors, spacing, borderRadius, getFontStyle } from '@theme';
 import { PickedOrganiserCard, type IconType } from '../PickedOrganiserCard';
 import { FilterDropdown } from '@components/global/filter-dropdown/FilterDropdown';
-
-// --- ADD YOUR COMPLETE MASTER LIST OF SPORTS HERE ---
-// The 'icon' string MUST match exactly what your ImageDs expects (e.g., 'TennisIcon', 'padel', etc.)
-// --- COMPLETE MASTER LIST OF SPORTS ---
-// Generated directly from your getSportIcon mapping
-const APP_SPORTS_OPTIONS = [
-  { id: 'all-sports', label: 'All Sports', value: 'all' },
-  { id: 'padel', label: 'Padel', value: 'padel', icon: 'padelIcon' },
-  { id: 'badminton', label: 'Badminton', value: 'badminton', icon: 'badmintonIcon' },
-  { id: 'cricket', label: 'Cricket', value: 'cricket', icon: 'cricketIcon' },
-  { id: 'pickleball', label: 'Pickleball', value: 'pickleball', icon: 'pickleballIcon' },
-  { id: 'tennis', label: 'Tennis', value: 'tennis', icon: 'tennisIcon' },
-  { id: 'football', label: 'Football', value: 'football', icon: 'footballIcon' },
-  { id: 'table-tennis', label: 'Table Tennis', value: 'table-tennis', icon: 'tableTennisIcon' },
-  { id: 'basketball', label: 'Basketball', value: 'basketball', icon: 'basketballIcon' },
-];
+import { useFilterOptions } from '@hooks/use-events';
 
 
 export interface PickedOrganiserData {
@@ -81,6 +66,30 @@ export const PickedForYouSection: React.FC<PickedForYouSectionProps> = ({
   // 1. STATE: Start with 'all-sports' checked.
   const [selectedSportIds, setSelectedSportIds] = useState<string[]>(['all-sports']);
 
+  // Fetch dynamic sports options
+  const { data: filterOptions } = useFilterOptions();
+  
+  const sportsOptions = useMemo(() => {
+    const defaultOption = { id: 'all-sports', label: 'All Sports', value: 'all' };
+    if (!filterOptions?.sports) return [defaultOption];
+    
+    const apiOptions = filterOptions.sports.map(sport => {
+      const id = sport.toLowerCase().replace(/\s+/g, '-');
+      const words = sport.split(/[- ]+/);
+      const camel = words[0].toLowerCase() + words.slice(1).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
+      const icon = camel + 'Icon';
+
+      return {
+        id,
+        label: sport,
+        value: id,
+        icon
+      };
+    });
+
+    return [defaultOption, ...apiOptions];
+  }, [filterOptions?.sports]);
+
   const communitiesData = useMemo(() => {
     if (!communities || communities.length === 0) return [];
 
@@ -105,7 +114,7 @@ export const PickedForYouSection: React.FC<PickedForYouSectionProps> = ({
   }, [communities]);
 
   const displayData = communitiesData.length > 0 ? communitiesData : organisers || [];
-  console.log('OPTIONS PASSED:', APP_SPORTS_OPTIONS.map(o => o.id));
+  console.log('OPTIONS PASSED:', sportsOptions.map(o => o.id));
   // 2. TRUE MULTI-SELECT FILTER LOGIC
   const filteredData = useMemo(() => {
     // If "All Sports" is checked or nothing is checked, show everything
@@ -124,14 +133,14 @@ export const PickedForYouSection: React.FC<PickedForYouSectionProps> = ({
       if (id === 'all-sports') {
         return ['all-sports'];
       }
-      
+
       let next = [...prev].filter(item => item !== 'all-sports');
       if (next.includes(id)) {
         next = next.filter((item) => item !== id);
       } else {
         next.push(id);
       }
-      
+
       if (next.length === 0) return ['all-sports'];
       return next;
     });
@@ -143,7 +152,7 @@ export const PickedForYouSection: React.FC<PickedForYouSectionProps> = ({
 
     // Map the selected IDs back to their display labels
     const selectedLabels = selectedSportIds.map(id => {
-      const sport = APP_SPORTS_OPTIONS.find(opt => opt.id === id);
+      const sport = sportsOptions.find(opt => opt.id === id);
       return sport ? sport.label : id;
     });
 
@@ -154,23 +163,24 @@ export const PickedForYouSection: React.FC<PickedForYouSectionProps> = ({
     <FlexView style={styles.container}>
       <FlexView style={styles.header}>
         <TextDs style={styles.title}>Picked for you</TextDs>
-      </FlexView>
-
-      {/* 3. MULTI-SELECT DROPDOWN ROW */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
-        style={styles.filtersScroll}
-        contentContainerStyle={styles.filtersScrollContainer}
-      >
         <FilterDropdown
           label="Sports"
-          options={APP_SPORTS_OPTIONS}
+          options={sportsOptions}
           selectedIds={selectedSportIds}
           onToggle={handleToggleSport}
           align="right"
           isMultiSelect={true}
         />
+      </FlexView>
+
+      {/* 3. MULTI-SELECT DROPDOWN ROW */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filtersScroll}
+        contentContainerStyle={styles.filtersScrollContainer}
+      >
+
       </ScrollView>
 
       {isLoadingCommunities ? (

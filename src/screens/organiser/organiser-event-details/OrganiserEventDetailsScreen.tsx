@@ -210,6 +210,7 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
 
   // About Tab Content (read-only)
   const renderAboutTab = () => (
+    console.log("EVEBNT IBFO:", event),
     <ScrollView
       style={styles.scrollView}
       showsVerticalScrollIndicator={false}
@@ -359,8 +360,8 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
       )}
       {!isReadOnly && activeTab === 'invite' && (
         <FlexView style={{ flex: 1, paddingHorizontal: spacing.base, paddingTop: spacing.sm }}>
-          <InviteTab 
-            event={event as EventData} 
+          <InviteTab
+            event={event as EventData}
             invitedUserIds={invitedUserIds}
             setInvitedUserIds={setInvitedUserIds}
           />

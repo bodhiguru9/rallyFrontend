@@ -402,7 +402,6 @@ export const CreateEventContent: React.FC = () => {
                   >
                     <ImageDs image="GenderIcon" size={16} />
                     <TextDs size={12} weight="medium" color="white">
-                      Add Restrictions
                       {formData.restrictions &&
                         ((formData.restrictions.gender && formData.restrictions.gender !== 'open') ||
                           (formData.restrictions.sportsLevel && formData.restrictions.sportsLevel !== 'all') ||
