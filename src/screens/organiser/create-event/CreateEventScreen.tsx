@@ -169,10 +169,10 @@ const EVENT_TYPE_OPTIONS = [
   { label: 'Training', value: 'training', customLabel: <IconTag title="Training" /> },
 ];
 
-const REGISTRATION_POLICY_OPTIONS = [
+const REFUND_POLICY_OPTIONS = [
   { label: 'Only Allowed before the day of the event', value: 'before-event' },
-  { label: 'Allowed until event starts', value: 'until-start' },
-  { label: 'No restrictions', value: 'no-restrictions' },
+  // { label: 'Allowed until event starts', value: 'until-start' },
+  { label: 'Not Allowed', value: 'no-refund' },
 ];
 
 // Separate content component that can be used in different contexts
@@ -530,7 +530,7 @@ export const CreateEventContent: React.FC = () => {
 
                 <Dropdown
                   placeholder="Only Allowed before the day of the event"
-                  options={REGISTRATION_POLICY_OPTIONS}
+                  options={REFUND_POLICY_OPTIONS}
                   value={formData.registrationPolicy}
                   onSelect={(value) => updateFormData('registrationPolicy', value)}
                 />

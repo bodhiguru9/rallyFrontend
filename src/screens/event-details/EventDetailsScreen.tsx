@@ -28,11 +28,11 @@ import { BackdropBlur } from '@components/global/BackdropBlur';
 const getRefundPolicyText = (policyJoind?: string | null): string | null => {
   switch (policyJoind) {
     case 'before-event':
-      return 'Refund allowed before the day of the event. Cancel before the event day to receive a full refund.';
-    case 'until-start':
-      return 'Refund allowed until event starts. Cancel anytime before the event starts to receive a full refund.';
-    case 'no-restrictions':
-      return 'No restrictions. Refunds are allowed as per the organiser\'s discretion.';
+      return 'Refunds are available up to 24 hours before the event. Cancellations made within 24 hours of the event are non-refundable.';
+    // case 'until-start':
+    //   return 'Refund allowed until event starts. Cancel anytime before the event starts to receive a full refund.';
+    case 'no-refund':
+      return 'Users can cancel at anytime but No refunds are given irrespective of time';
     default:
       return null;
   }
@@ -44,6 +44,36 @@ const getRefundPolicyForDisplay = (policyJoind?: string | null, isPaidEvent?: bo
   if (text) return text;
   // Backend may not return policyJoind yet; show default (matches create-event placeholder)
   return isPaidEvent ? getRefundPolicyText('before-event') : null;
+};
+
+/** Formats event restrictions for display */
+const getRestrictionsText = (event: any): string => {
+  const restrictions: string[] = [];
+
+  if (event.eventGender && event.eventGender !== 'mixed') {
+    restrictions.push(`${event.eventGender.charAt(0).toUpperCase() + event.eventGender.slice(1)} Only`);
+  }
+
+  if (event.eventMinAge || event.eventMaxAge) {
+    if (event.eventMinAge && event.eventMaxAge) {
+      restrictions.push(`${event.eventMinAge}-${event.eventMaxAge} yrs`);
+    } else if (event.eventMinAge) {
+      restrictions.push(`${event.eventMinAge}+ yrs`);
+    } else if (event.eventMaxAge) {
+      restrictions.push(`Up to ${event.eventMaxAge} yrs`);
+    }
+  }
+
+  const level = event.eventSportsLevel || event.eventLevelRestriction;
+  if (level) {
+    restrictions.push(`${level.charAt(0).toUpperCase() + level.slice(1)} Level`);
+  }
+
+  if (restrictions.length === 0) {
+    return 'No restrictions for this event';
+  }
+
+  return restrictions.join(', ');
 };
 type EventDetailsScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -261,7 +291,7 @@ export const EventDetailsScreen: React.FC = () => {
           <Seperator />
           {/* Restrictions Card */}
           <TextDs style={styles.cardTitle}>Restrictions</TextDs>
-          <TextDs style={styles.restrictionsText}>Male Only, 12-24 yrs, Intermediate Level</TextDs>
+          <TextDs style={styles.restrictionsText}>{getRestrictionsText(event)}</TextDs>
         </Card>
 
         {/* Refund Policy Card - show for paid events (uses organiser's policy or default) */}
