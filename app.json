@@ -1,14 +1,14 @@
 {
   "expo": {
+    "owner": "rally-sports",
     "name": "Rally App",
     "slug": "rally-app",
-    "owner": "ayush04k",
-    "version": "1.0.0",
+    "version": "1.0.12",
     "scheme": "rally-app",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -23,8 +23,9 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.rally.app",
-      "softwareKeyboardLayoutMode": "resize"
+      "package": "com.rallysports.app",
+      "softwareKeyboardLayoutMode": "resize",
+      "versionCode": 22
     },
     "web": {
       "favicon": "./assets/favicon.png",

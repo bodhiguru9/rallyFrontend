@@ -76,3 +76,7 @@ yarn-error.log
 
 .env
 .env.local
+
+*.jks
+credentials.json
+upload_certificate.pem
