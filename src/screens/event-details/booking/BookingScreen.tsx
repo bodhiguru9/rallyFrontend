@@ -260,7 +260,7 @@ export const BookingScreen: React.FC = () => {
           disabled={isBookingEvent}
         >
           <TextDs style={styles.bookEventButtonText}>
-            {isBookingEvent ? 'Processing...' : 'Book Event'}
+            {isBookingEvent ? 'Processing...' : 'Book Now'}
           </TextDs>
         </TouchableOpacity>
         <TouchableOpacity style={styles.applePayButton} onPress={handleApplePay} activeOpacity={0.8} disabled={isBookingEvent}>

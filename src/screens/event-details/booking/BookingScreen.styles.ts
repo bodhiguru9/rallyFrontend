@@ -23,6 +23,7 @@ export const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sectionTitle: {
+    backgroundColor: colors.primary,
     ...getFontStyle(14, 'semibold'),
     color: colors.text.primary,
     marginBottom: spacing.md,
@@ -145,9 +146,10 @@ export const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.base,
     paddingBottom: spacing.xl,
+    backgroundColor: colors.primary,
   },
   bookEventButton: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primary,
     borderRadius: borderRadius.full,
     paddingVertical: spacing.md,
     alignItems: 'center',

@@ -6,14 +6,14 @@ export const styles = StyleSheet.create({
   bottomFixedSection: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.base,
-    backgroundColor: colors.background.white,
+    backgroundColor: "#DDF5F4",
   },
   persistentFooter: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'white', // Or transparent if BackdropBlur covers it
+    // backgroundColor: 'white', // Or transparent if BackdropBlur covers it
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     // Add shadow to make it pop like the image
@@ -36,12 +36,12 @@ export const styles = StyleSheet.create({
   modalHeaderButtonContainer: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.sm,
-    backgroundColor: '#effcffff',
+    backgroundColor: '#DDF5F4',
   },
   // Ensure the modal container doesn't have extra padding at the top 
   // that would disconnect the button from the handle
   paymentSummaryCard: {
-    backgroundColor: "#effcffff",
+    backgroundColor: "#DDF5F4",
     borderRadius: borderRadius.xxl,
     padding: spacing.base,
     marginHorizontal: spacing.base,
@@ -69,7 +69,7 @@ export const styles = StyleSheet.create({
   },
   modalContainer: {
     padding: spacing.md,
-    backgroundColor: '#effcffff',
+    backgroundColor: '#DDF5F4',
     borderTopLeftRadius: borderRadius.xxl,
     borderTopRightRadius: borderRadius.xxl,
     maxHeight: '70%', // Takes up to 90% of screen height
@@ -224,9 +224,10 @@ export const styles = StyleSheet.create({
     gap: spacing.md,
   },
   bookEventButton: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primary,
     borderRadius: borderRadius.full,
     paddingVertical: spacing.md,
+    marginTop: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -241,6 +242,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginInline: spacing.md,
+    marginTop: spacing.md,
   },
   applePayButtonText: {
     ...getFontStyle(16, 'bold'),
