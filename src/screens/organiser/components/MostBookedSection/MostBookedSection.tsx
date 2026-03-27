@@ -5,7 +5,7 @@ import type { MostBookedSectionProps } from './MostBookedSection.types';
 import type { MostBookedMember } from '../../data/organiserDashboard.data';
 import { styles } from './style/MostBookedSection.styles';
 import { TextDs, FlexView, ImageDs } from '@components';
-import { useOrganiserMembers } from '@hooks/organiser';
+import { useOrganiserAttendees } from '@hooks/organiser';
 
 /**
  * Extract initials from a full name
@@ -28,16 +28,18 @@ export const MostBookedSection: React.FC<MostBookedSectionProps> = ({
   members: propMembers,
   onMemberPress,
 }) => {
-  const { data: membersData, isLoading, error } = useOrganiserMembers(1, 20);
+  const { data: attendeesData, isLoading, error } = useOrganiserAttendees(1, 20);
 
   // Transform API response to MostBookedMember format + keep full member for onMemberPress
   // Sort by most bookings (totalBookedEvents) so "Most Booked" section shows correct order
   const { apiMembers, apiMembersWithIds } = useMemo(() => {
-    if (!membersData?.data?.members) {
+    if (!attendeesData?.data?.attendees) {
       return { apiMembers: [] as MostBookedMember[], apiMembersWithIds: [] as Array<MostBookedMember & { userId: number }> };
     }
-    const sorted = [...membersData.data.members].sort(
-      (a, b) => (b.totalBookedEvents ?? (b as any).total_booked_events ?? 0) - (a.totalBookedEvents ?? (a as any).total_booked_events ?? 0),
+    const sorted = [...attendeesData.data.attendees].sort(
+      (a, b) =>
+        (b.totalBookedEvents ?? b.organiserBookedEvents ?? b.joinedEventsCount ?? 0) -
+        (a.totalBookedEvents ?? a.organiserBookedEvents ?? a.joinedEventsCount ?? 0),
     );
     const mapped = sorted.map((member) => ({
       id: member.userId?.toString() || '',
@@ -49,7 +51,7 @@ export const MostBookedSection: React.FC<MostBookedSectionProps> = ({
       apiMembers: mapped.map(({ id, name, avatar }) => ({ id, name, avatar })),
       apiMembersWithIds: mapped,
     };
-  }, [membersData]);
+  }, [attendeesData]);
 
   // Use API data if available, otherwise fall back to prop
   const members = apiMembers.length > 0 ? apiMembers : (propMembers || []);
