@@ -499,7 +499,6 @@ export const PickedEventsSection: React.FC<PickedEventsSectionProps> = ({
             selectedIds={selectedLocationIds}
             onToggle={toggleLocationFilter}
             align='right'
-            isMultiSelect={false}
             alwaysShowLabel
           />
         )}

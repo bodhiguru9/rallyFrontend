@@ -36,9 +36,20 @@ export const useGroupedEvents = ({
     const upcoming: PlayerBooking[] = [];
     const past: PlayerBooking[] = [];
 
-    // Use API booking flags: upcoming tab = !isPast (upcoming + ongoing), past tab = isPast
+    const now = new Date();
+
+    // Use local time comparison to determine if event is past
     filteredEvents.forEach((event) => {
-      if (event.booking.isPast) {
+      let isLocalPast = false;
+      if (event.eventEndDateTime) {
+        isLocalPast = new Date(event.eventEndDateTime) < now;
+      } else {
+        // Fallback: assume 1 hour duration if end time missing
+        const implicitEnd = new Date(new Date(event.eventDateTime).getTime() + 60 * 60 * 1000);
+        isLocalPast = implicitEnd < now;
+      }
+
+      if (isLocalPast) {
         past.push(event);
       } else {
         upcoming.push(event);

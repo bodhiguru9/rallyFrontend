@@ -508,7 +508,7 @@ export const generateDateFilters = (
       day: date.toLocaleDateString('en-US', { weekday: 'short' }),
       month: date.toLocaleDateString('en-US', { month: 'short' }),
       isSelected: selectedDate !== undefined ? dateNum === selectedDate : false,
-      fullDate: date.toISOString(),
+      fullDate: toLocalDateString(date),
     });
   }
 

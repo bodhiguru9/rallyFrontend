@@ -1,119 +1,72 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing, borderRadius, getFontStyle } from '@theme';
+import { borderRadius, colors, getFontStyle, spacing } from '@theme';
 
 export const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: colors.surface.overlay,
     justifyContent: 'center',
-    alignItems: 'center',
+    padding: spacing.lg,
   },
-  modalContainer: {
-    backgroundColor: colors.background.white,
-    borderRadius: borderRadius.xl,
-    padding: spacing.xl,
-    width: '90%',
-    maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  header: {
+  card: {
+    borderRadius: 20,
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.base,
   },
   iconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: `${colors.status.error}15`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.base,
+    marginBottom: spacing.lg,
   },
   title: {
     ...getFontStyle(20, 'bold'),
     color: colors.text.primary,
     textAlign: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
-  description: {
+  subtitle: {
     ...getFontStyle(14, 'regular'),
     color: colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 24,
+    marginBottom: spacing.base,
   },
-  warningSection: {
-    backgroundColor: colors.background.secondary,
-    borderRadius: borderRadius.lg,
-    padding: spacing.base,
-    marginBottom: spacing.xl,
-  },
-  warningTitle: {
-    ...getFontStyle(14, 'bold'),
-    color: colors.status.error,
-    marginBottom: spacing.sm,
-  },
-  warningText: {
-    ...getFontStyle(12, 'regular'),
+  timerText: {
+    ...getFontStyle(14, 'semibold'),
     color: colors.text.secondary,
-    lineHeight: 20,
-    marginBottom: spacing.xs,
+    textAlign: 'center',
+    marginBottom: spacing.base,
   },
-  infoList: {
-    marginTop: spacing.sm,
-  },
-  infoItem: {
+  buttonsRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing.xs,
+    width: '100%',
+    gap: spacing.sm,
   },
-  bullet: {
-    ...getFontStyle(12, 'regular'),
-    color: colors.text.secondary,
-    marginRight: spacing.xs,
-  },
-  infoText: {
-    ...getFontStyle(12, 'regular'),
-    color: colors.text.secondary,
+  button: {
     flex: 1,
-    lineHeight: 20,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: spacing.base,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: colors.background.secondary,
-    borderRadius: borderRadius.lg,
-    paddingVertical: spacing.base,
+    minWidth: 0,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 44,
   },
-  cancelButtonText: {
-    ...getFontStyle(14, 'medium'),
-    color: colors.text.primary,
+  closeButton: {
+    backgroundColor: colors.primaryDark,
   },
-  confirmButton: {
-    flex: 1,
-    backgroundColor: colors.status.error,
-    borderRadius: borderRadius.lg,
-    paddingVertical: spacing.base,
-    alignItems: 'center',
-    justifyContent: 'center',
+  deleteButton: {
+    backgroundColor: colors.button.cancel.background,
   },
-  confirmButtonDisabled: {
-    opacity: 0.6,
+  deleteButtonDisabled: {
+    opacity: 0.5,
   },
-  confirmButtonText: {
-    ...getFontStyle(14, 'medium'),
-    color: colors.background.white,
+  buttonText: {
+    ...getFontStyle(16, 'semibold'),
+  },
+  closeButtonText: {
+    color: colors.text.white,
+  },
+  deleteButtonText: {
+    color: colors.button.cancel.text,
   },
 });
-

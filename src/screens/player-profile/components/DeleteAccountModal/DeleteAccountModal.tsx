@@ -1,17 +1,59 @@
-import React from 'react';
-import { TextDs,  FlexView } from '@components';
-import {Modal, TouchableOpacity} from 'react-native';
-import { Trash2 } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { Modal, TouchableOpacity, View } from 'react-native';
+import { FlexView, ImageDs, TextDs } from '@components';
+import { useDeleteAccount } from '@hooks/use-delete-account';
 import { colors } from '@theme';
 import type { DeleteAccountModalProps } from './DeleteAccountModal.types';
 import { styles } from './style/DeleteAccountModal.styles';
 
+const COUNTDOWN_SECONDS = 5;
+
+/**
+ * Modal to confirm deleting the organiser account. Uses gradient main background,
+ * 5 second countdown before Delete is enabled, and rounded buttons.
+ */
 export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
   visible,
   onClose,
-  onConfirm,
-  isLoading = false,
+  onDeleteSuccess,
 }) => {
+  const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
+  const { deleteAccount, isLoading: isDeleting } = useDeleteAccount();
+
+  const canDelete = countdown <= 0;
+
+  // Reset and run countdown when modal opens
+  useEffect(() => {
+    if (!visible) {
+      setCountdown(COUNTDOWN_SECONDS);
+      return;
+    }
+    setCountdown(COUNTDOWN_SECONDS);
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [visible]);
+
+  const handleDelete = async () => {
+    if (!canDelete || isDeleting) return;
+    try {
+      const success = await deleteAccount();
+      if (success) {
+        onDeleteSuccess?.();
+        onClose();
+      }
+    } catch {
+      // deleteAccount already shows Alert on error
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -19,75 +61,56 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <FlexView style={styles.overlay}>
-        <FlexView style={styles.modalContainer}>
-          {/* Header */}
-          <FlexView style={styles.header}>
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
+        onPress={onClose}
+      >
+        <View>
+          <FlexView
+            style={[styles.card, { experimental_backgroundImage: colors.gradient.mainBackground }]}
+          >
             <FlexView style={styles.iconContainer}>
-              <Trash2 size={32} color={colors.status.error} />
+              <ImageDs image="removeBin" size={80} />
             </FlexView>
-            <TextDs style={styles.title}>Are you really delete your account?</TextDs>
-            <TextDs style={styles.description}>
-              This action cannot be undone. Please read the information below before proceeding.
+            <TextDs style={styles.title}>Delete Account</TextDs>
+            <TextDs style={styles.subtitle} numberOfLines={4}>
+              This action cannot be reversed. Your profile and all associated
+              data will be permanently deleted.
             </TextDs>
-          </FlexView>
-
-          {/* Warning Section */}
-          <FlexView style={styles.warningSection}>
-            <TextDs style={styles.warningTitle}>⚠️ Data Not Recoverable</TextDs>
-            <TextDs style={styles.warningText}>
-              Once you delete your account, all of your data will be permanently removed and cannot be recovered.
-            </TextDs>
-            
-            <FlexView style={styles.infoList}>
-              <TextDs style={styles.warningTitle}>What will be deleted:</TextDs>
-              <FlexView style={styles.infoItem}>
-                <TextDs style={styles.bullet}>•</TextDs>
-                <TextDs style={styles.infoText}>Your profile information and personal data</TextDs>
-              </FlexView>
-              <FlexView style={styles.infoItem}>
-                <TextDs style={styles.bullet}>•</TextDs>
-                <TextDs style={styles.infoText}>All your event participations and history</TextDs>
-              </FlexView>
-              <FlexView style={styles.infoItem}>
-                <TextDs style={styles.bullet}>•</TextDs>
-                <TextDs style={styles.infoText}>Your purchased packages and subscriptions</TextDs>
-              </FlexView>
-              <FlexView style={styles.infoItem}>
-                <TextDs style={styles.bullet}>•</TextDs>
-                <TextDs style={styles.infoText}>All your preferences and settings</TextDs>
-              </FlexView>
-              <FlexView style={styles.infoItem}>
-                <TextDs style={styles.bullet}>•</TextDs>
-                <TextDs style={styles.infoText}>Your payment methods and transaction history</TextDs>
-              </FlexView>
-            </FlexView>
-          </FlexView>
-
-          {/* Buttons */}
-          <FlexView style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={onClose}
-              activeOpacity={0.7}
-              disabled={isLoading}
-            >
-              <TextDs style={styles.cancelButtonText}>Cancel</TextDs>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.confirmButton, isLoading && styles.confirmButtonDisabled]}
-              onPress={onConfirm}
-              activeOpacity={0.7}
-              disabled={isLoading}
-            >
-              <TextDs style={styles.confirmButtonText}>
-                {isLoading ? 'Deleting...' : 'Yes, Delete Account'}
+            {countdown > 0 ? (
+              <TextDs style={styles.timerText}>
+                You can confirm in {countdown} second{countdown !== 1 ? 's' : ''}...
               </TextDs>
-            </TouchableOpacity>
+            ) : null}
+            <View style={styles.buttonsRow}>
+              <TouchableOpacity
+                onPress={onClose}
+                activeOpacity={0.7}
+                style={[styles.button, styles.closeButton]}
+              >
+                <TextDs style={[styles.buttonText, styles.closeButtonText]}>
+                  Close
+                </TextDs>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleDelete}
+                disabled={!canDelete || isDeleting}
+                activeOpacity={0.7}
+                style={[
+                  styles.button,
+                  styles.deleteButton,
+                  (!canDelete || isDeleting) && styles.deleteButtonDisabled,
+                ]}
+              >
+                <TextDs style={[styles.buttonText, styles.deleteButtonText]}>
+                  {isDeleting ? 'Deleting...' : canDelete ? 'Delete' : `Delete (${countdown}s)`}
+                </TextDs>
+              </TouchableOpacity>
+            </View>
           </FlexView>
-        </FlexView>
-      </FlexView>
+        </View>
+      </TouchableOpacity>
     </Modal>
   );
 };
-

@@ -64,7 +64,7 @@ export const CalendarScreen: React.FC = () => {
 
   return (
     <HomeContainer activeTab="calendar" userType="player">
-      <View style={{ paddingTop: insets.top }}>
+      <View>
         <DateFilter dates={dateFilters} onSelectDate={selectDate} />
       </View>
 

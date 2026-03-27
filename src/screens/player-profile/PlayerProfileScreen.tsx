@@ -7,7 +7,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '@store';
 import { colors } from '@theme';
 import { ProfileHeader, ProfileSection, ProfileMenuItem } from '@components/global';
-import { useDeleteAccount } from '@hooks/use-delete-account';
+
 import { useUpdateProfileImage } from '@hooks/use-update-profile-image';
 import { showImagePickerOptions } from '@utils/image-picker';
 import { DeleteAccountModal } from './components/DeleteAccountModal';
@@ -28,7 +28,7 @@ type PlayerProfileScreenNavigationProp = NativeStackNavigationProp<
 export const PlayerProfileScreen: React.FC = () => {
   const navigation = useNavigation<PlayerProfileScreenNavigationProp>();
   const { user, logout } = useAuthStore();
-  const { deleteAccount, isLoading: isDeleting } = useDeleteAccount();
+
   const { updateProfileImage } = useUpdateProfileImage();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
@@ -56,23 +56,7 @@ export const PlayerProfileScreen: React.FC = () => {
     setShowDeleteModal(true);
   };
 
-  const handleConfirmDelete = async () => {
-    const success = await deleteAccount();
-    if (success) {
-      setShowDeleteModal(false);
-      // Navigate to sign in screen after successful deletion
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'SignIn' }],
-      });
-    }
-  };
 
-  const handleCloseDeleteModal = () => {
-    if (!isDeleting) {
-      setShowDeleteModal(false);
-    }
-  };
 
   const handleChangePassword = () => {
     setShowChangePasswordModal(true);
@@ -213,9 +197,13 @@ export const PlayerProfileScreen: React.FC = () => {
       {/* Delete Account Modal */}
       <DeleteAccountModal
         visible={showDeleteModal}
-        onClose={handleCloseDeleteModal}
-        onConfirm={handleConfirmDelete}
-        isLoading={isDeleting}
+        onClose={() => setShowDeleteModal(false)}
+        onDeleteSuccess={() => {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'SignIn' }],
+          });
+        }}
       />
 
       {/* Change Password Modal */}

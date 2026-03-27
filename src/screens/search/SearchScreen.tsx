@@ -109,13 +109,13 @@ export const SearchScreen: React.FC = () => {
       }));
   }, [allOrganisersData, debouncedQuery]);
 
-  const handleOrganiserPress = (id: string) => {
+  const handleOrganiserPress = (id: string, communityName?: string) => {
     if (!id) {
       console.warn('Organiser ID is missing');
       return;
     }
     // Navigate to organiser profile screen
-    navigation.navigate('EventOrginserProfilePlayer', { organiserId: id });
+    navigation.navigate('PlayerOrgEventDetails', { organiserId: id, communityName });
   };
 
   const handleEventPress = (id: string) => {

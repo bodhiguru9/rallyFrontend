@@ -18,13 +18,31 @@ export const FeaturedEventsSection: React.FC<FeaturedEventsSectionProps> = ({
   onEventPress,
   onBookmark,
 }) => {
+  const filteredAndSortedEvents = useMemo(() => {
+    const now = new Date();
+    
+    // Filter out past events
+    const upcomingEvents = events.filter((event) => {
+      if (event.eventEndDateTime) {
+        return new Date(event.eventEndDateTime) >= now;
+      }
+      const implicitEnd = new Date(new Date(event.eventDateTime).getTime() + 60 * 60 * 1000);
+      return implicitEnd >= now;
+    });
+
+    // Sort chronologically (oldest upcoming to furthest future)
+    return upcomingEvents.sort((a, b) => {
+      return new Date(a.eventDateTime).getTime() - new Date(b.eventDateTime).getTime();
+    });
+  }, [events]);
+
   const { width: screenWidth } = useWindowDimensions();
-  // Compute the initial active index based on events
+  // Compute the initial active index based on derived events
   const initialActiveIndex = useMemo(() => {
-    const index = events.length > 0 ? Math.floor(events.length / 2) : 0
-    logger.debug('Computed initial active index', { value: index, eventsLength: events.length })
+    const index = filteredAndSortedEvents.length > 0 ? Math.floor(filteredAndSortedEvents.length / 2) : 0
+    logger.debug('Computed initial active index', { value: index, eventsLength: filteredAndSortedEvents.length })
     return index
-  }, [events.length])
+  }, [filteredAndSortedEvents.length])
   const [activeIndex, setActiveIndex] = useState(initialActiveIndex)
   const cardWidth = 250
   const overlapOffset = 20
@@ -41,7 +59,7 @@ export const FeaturedEventsSection: React.FC<FeaturedEventsSectionProps> = ({
       </FlexView>
 
       <Carousel
-        data={events}
+        data={filteredAndSortedEvents}
         itemWidth={cardWidth}
         itemSpacing={-overlapOffset}
         initialIndex={initialActiveIndex}

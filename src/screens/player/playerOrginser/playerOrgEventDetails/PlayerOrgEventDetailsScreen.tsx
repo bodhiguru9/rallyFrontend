@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -33,6 +33,55 @@ import { useHome } from '@screens/home/context/Home.context';
 import { expandRecurringEvents } from '@utils/recurrence-utils';
 import { useAsyncExpandedEvents } from '@hooks/use-async-expanded-events';
 import { parseLocalDate } from '@utils/date-utils';
+import { useLocationStore } from '@store/location-store';
+import { locationSearchService } from '@services/location-search-service';
+
+// --- Distance Calculation Utilities ---
+const EARTH_RADIUS_KM = 6371;
+const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
+const getDistanceKm = (fromLat: number, fromLng: number, toLat: number, toLng: number): number => {
+  const dLat = toRadians(toLat - fromLat);
+  const dLng = toRadians(toLng - fromLng);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRadians(fromLat)) * Math.cos(toRadians(toLat)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return EARTH_RADIUS_KM * c;
+};
+const getEventKey = (event: EventData): string => String(event.mongoId ?? event.eventId ?? event.id);
+const parseCoordinatesFromLocationText = (locationText: string | null | undefined): { latitude: number; longitude: number } | null => {
+  if (!locationText) return null;
+  const simplePair = locationText.match(/(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)/);
+  if (simplePair) {
+    const latitude = Number(simplePair[1]), longitude = Number(simplePair[2]);
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) return { latitude, longitude };
+  }
+  const latLngPair = locationText.match(/(?:lat|latitude)\s*[:=]\s*(-?\d{1,2}(?:\.\d+)?).*?(?:lng|lon|longitude)\s*[:=]\s*(-?\d{1,3}(?:\.\d+)?)/i);
+  if (latLngPair) {
+    const latitude = Number(latLngPair[1]), longitude = Number(latLngPair[2]);
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) return { latitude, longitude };
+  }
+  return null;
+};
+const toFiniteNumber = (value: unknown): number | null => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+const getEventCoordinates = (event: EventData): { latitude: number; longitude: number } | null => {
+  const e = event as EventData & { latitude?: unknown; longitude?: unknown; lat?: unknown; lng?: unknown; geojson?: { coordinates?: unknown }; coordinates?: unknown; };
+  const latitude = toFiniteNumber(event.eventLatitude ?? e.latitude ?? e.lat);
+  const longitude = toFiniteNumber(event.eventLongitude ?? e.longitude ?? e.lng);
+  if (latitude == null || longitude == null) {
+    const textCoords = parseCoordinatesFromLocationText(event.eventLocation);
+    if (textCoords) return textCoords;
+    const candidate = (e.geojson as { coordinates?: unknown } | undefined)?.coordinates ?? e.coordinates;
+    if (Array.isArray(candidate) && candidate.length >= 2) {
+      const clang = toFiniteNumber(candidate[0]), clat = toFiniteNumber(candidate[1]);
+      if (clat != null && clang != null) return { latitude: clat, longitude: clang };
+    }
+    return null;
+  }
+  return { latitude, longitude };
+};
+
 
 // Types
 import type { DateFilter as DateFilterType } from '@screens/home/Home.types';
@@ -57,10 +106,14 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
   // Filter states - Start with "All" checked for each
   const [sportsFilterStates, setSportsFilterStates] = useState<Record<string, boolean>>({ 'all-sports': true });
   const [eventTypeFilterStates, setEventTypeFilterStates] = useState<Record<string, boolean>>({ 'all-event-types': true });
-  const [locationFilterStates, setLocationFilterStates] = useState<Record<string, boolean>>({ 'all-locations': true });
+  const [locationFilterStates, setLocationFilterStates] = useState<Record<string, boolean>>({});
   const [priceFilterStates, setPriceFilterStates] = useState<Record<string, boolean>>({});
 
   const { data: filterOptionsData } = useFilterOptions();
+  
+  const { lastCoordinates } = useLocationStore();
+  const [resolvedEventCoordinates, setResolvedEventCoordinates] = useState<Record<string, { latitude: number; longitude: number }>>({});
+  const geocodeCacheRef = useRef<Record<string, { latitude: number; longitude: number } | null>>({});
 
   // --- Filter Memos ---
   const sportsFilters = useMemo(() => {
@@ -181,27 +234,19 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
   }, [filterOptionsData, eventTypeFilterStates]);
 
   const locationFilters = useMemo(() => {
-    const defaultLocations = filterOptionsData?.locations || [];
-    const mappedLocations = defaultLocations.map((loc, index) => {
-      const id = `location-${index}`;
-      return {
-        id,
-        label: loc,
-        value: loc.toLowerCase(),
-        isActive: locationFilterStates[id] ?? false,
-      };
-    });
-
-    return [
-      {
-        id: 'all-locations',
-        label: 'All Locations',
-        value: 'all',
-        isActive: locationFilterStates['all-locations'] ?? false,
-      },
-      ...mappedLocations
+    const distanceOptions = [
+      { id: 'distance-2', label: 'Nearby (<2 kms)', value: '2' },
+      { id: 'distance-5', label: 'Within 5 kms', value: '5' },
+      { id: 'distance-10', label: 'Within 10 kms', value: '10' },
+      { id: 'distance-20', label: 'Within 20 kms', value: '20' },
+      { id: 'distance-50', label: 'Within 50 kms', value: '50' },
+      { id: 'distance-everywhere', label: 'Everywhere', value: 'everywhere' },
     ];
-  }, [filterOptionsData, locationFilterStates]);
+    return distanceOptions.map((option) => ({
+      ...option,
+      isActive: locationFilterStates[option.id] ?? false,
+    }));
+  }, [locationFilterStates]);
 
   const priceFilters = useMemo(() => {
     const prices = [0, 30, 50, 100, 150, 300];
@@ -238,12 +283,9 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
 
   const toggleLocationFilter = (id: string) => {
     setLocationFilterStates((prev) => {
-      if (id === 'all-locations') return { 'all-locations': true };
-      const next = { ...prev };
-      next[id] = !prev[id];
-      delete next['all-locations'];
-      if (!Object.values(next).some(v => v)) return { 'all-locations': true };
-      return next;
+      const isAlreadyActive = !!prev[id];
+      if (isAlreadyActive) return {};
+      return { [id]: true };
     });
   };
 
@@ -423,10 +465,14 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
     () => eventTypeFilters.filter(f => f.isActive && f.id !== 'all-event-types').map(f => f.value.toLowerCase()),
     [eventTypeFilters],
   );
-  const selectedLocationValues = useMemo(
-    () => locationFilters.filter(f => f.isActive && f.id !== 'all-locations').map(f => f.value.toLowerCase()),
-    [locationFilters],
-  );
+  const selectedDistanceKm = useMemo(() => {
+    const activeLocationFilter = locationFilters.find(f => f.isActive);
+    if (!activeLocationFilter || activeLocationFilter.value === 'everywhere') {
+      return null;
+    }
+    const parsed = Number(activeLocationFilter.value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [locationFilters]);
   const selectedPriceValues = useMemo(
     () => priceFilters.filter(f => f.isActive).map(f => Number(f.value)),
     [priceFilters],
@@ -443,8 +489,20 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
 
   const { expandedEvents = [] } = useAsyncExpandedEvents(allEvents);
 
-  const filteredEvents = useMemo(() => {
+  // Base filtering (everything except distance)
+  const eventsBeforeDistance = useMemo(() => {
     let filtered = expandedEvents;
+    
+    // Filter out past events
+    const now = new Date();
+    filtered = filtered.filter(event => {
+      if (event.eventEndDateTime) {
+        return new Date(event.eventEndDateTime) >= now;
+      }
+      // Fallback: assume 1-hour duration if missing
+      const implicitEnd = new Date(new Date(event.eventDateTime).getTime() + 60 * 60 * 1000);
+      return implicitEnd >= now;
+    });
 
     if (selectedDateFullDate) {
       const d2 = parseLocalDate(selectedDateFullDate);
@@ -471,12 +529,6 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
       );
     }
 
-    if (selectedLocationValues.length > 0) {
-      filtered = filtered.filter(event =>
-        selectedLocationValues.some(loc => event.eventLocation.toLowerCase().includes(loc)),
-      );
-    }
-
     if (selectedPriceValues.length > 0) {
       filtered = filtered.filter(event =>
         selectedPriceValues.some(price => event.eventPricePerGuest <= price),
@@ -484,7 +536,84 @@ export const PlayerOrgEventDetailsScreen: React.FC = () => {
     }
 
     return filtered;
-  }, [expandedEvents, dateRangeStrings, selectedDateFullDate, selectedSportsValues, selectedEventTypeValues, selectedLocationValues, selectedPriceValues]);
+  }, [expandedEvents, dateRangeStrings, selectedDateFullDate, selectedSportsValues, selectedEventTypeValues, selectedPriceValues]);
+
+  // Find events strictly missing coordinates to geocode
+  const eventsNeedingGeocode = useMemo(() => {
+    if (selectedDistanceKm == null || lastCoordinates?.latitude == null || lastCoordinates?.longitude == null) {
+      return [] as EventData[];
+    }
+    return eventsBeforeDistance.filter((event) => {
+      if (getEventCoordinates(event)) return false;
+      const key = getEventKey(event);
+      if (resolvedEventCoordinates[key]) return false;
+      return Boolean(event.eventLocation?.trim());
+    });
+  }, [selectedDistanceKm, lastCoordinates?.latitude, lastCoordinates?.longitude, eventsBeforeDistance, resolvedEventCoordinates]);
+
+  // Execute async geocoding
+  useEffect(() => {
+    if (eventsNeedingGeocode.length === 0) return;
+    let isCancelled = false;
+
+    const geocodeMissingEvents = async () => {
+      for (const event of eventsNeedingGeocode) {
+        if (isCancelled) return;
+        const locationText = event.eventLocation?.trim();
+        if (!locationText) continue;
+
+        const eventKey = getEventKey(event);
+        const cached = geocodeCacheRef.current[locationText];
+        if (cached !== undefined) {
+          if (cached) {
+            setResolvedEventCoordinates((prev) => {
+              if (prev[eventKey]) return prev;
+              return { ...prev, [eventKey]: cached };
+            });
+          }
+          continue;
+        }
+
+        try {
+          const results = await locationSearchService.search({ query: locationText });
+          const first = results[0];
+          const coords = first ? { latitude: first.latitude, longitude: first.longitude } : null;
+          geocodeCacheRef.current[locationText] = coords;
+
+          if (coords && !isCancelled) {
+            setResolvedEventCoordinates((prev) => ({ ...prev, [eventKey]: coords }));
+          }
+        } catch {
+          geocodeCacheRef.current[locationText] = null;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1100));
+      }
+    };
+    geocodeMissingEvents();
+    return () => { isCancelled = true; };
+  }, [eventsNeedingGeocode]);
+
+  // Final filtered result encompassing standard filters + distance filter
+  const filteredEvents = useMemo(() => {
+    let filtered = eventsBeforeDistance;
+
+    if (selectedDistanceKm != null && lastCoordinates?.latitude != null && lastCoordinates?.longitude != null) {
+      filtered = filtered.filter((event) => {
+        const eventCoordinates = getEventCoordinates(event) ?? resolvedEventCoordinates[getEventKey(event)];
+        if (!eventCoordinates) return false;
+
+        const distanceKm = getDistanceKm(
+          lastCoordinates.latitude,
+          lastCoordinates.longitude,
+          eventCoordinates.latitude,
+          eventCoordinates.longitude,
+        );
+        return distanceKm <= selectedDistanceKm;
+      });
+    }
+
+    return filtered;
+  }, [eventsBeforeDistance, selectedDistanceKm, resolvedEventCoordinates, lastCoordinates?.latitude, lastCoordinates?.longitude]);
 
   const eventsByDate = useMemo(() => {
     const grouped: Record<string, EventData[]> = {};
