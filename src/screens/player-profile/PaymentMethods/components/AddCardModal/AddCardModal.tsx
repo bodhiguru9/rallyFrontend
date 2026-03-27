@@ -157,6 +157,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
                   onChangeText={setCardHolderName}
                   autoCapitalize="words"
                   containerStyle={styles.inputContainer}
+                  inputContainerStyle={styles.cardHolderInputContainer}
                 />
 
                 <TextDs style={styles.cardFieldLabel}>Card Details</TextDs>

@@ -41,9 +41,13 @@ export const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: spacing.base,
   },
+  cardHolderInputContainer: {
+    height: 52,
+  },
   cardFieldLabel: {
     ...getFontStyle(14, 'medium'),
     color: colors.text.primary,
+    marginTop: spacing.xs,
     marginBottom: spacing.xs,
   },
   cardField: {
