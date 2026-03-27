@@ -346,6 +346,69 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
     }
   };
 
+  const handleApplePayPress = async () => {
+    if (isProcessing) {
+      return;
+    }
+
+    if (!eventId) {
+      Alert.alert('Error', 'Event ID is required for Apple Pay booking.');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Step 1: Create booking and get Stripe Payment Intent
+      logger.info(`Creating booking for event: ${eventId}, guests: ${guestsCount} via Apple Pay`);
+      const bookingResponse = await paymentService.createBookingWithPayment(
+        eventId,
+        appliedPromoCode || (promoCode.trim() || null),
+        Math.max(1, guestsCount),
+      );
+
+      if (!bookingResponse.success) {
+        throw new Error(bookingResponse.message || 'Failed to create booking');
+      }
+
+      const { data } = bookingResponse;
+
+      // Check if it's a free event
+      if (data.isFreeEvent || !data.paymentRequired) {
+        logger.info('Free event - no payment required');
+        setIsProcessing(false);
+        onBookEvent({
+          promoCode: appliedPromoCode || (promoCode.trim() || null),
+          amount: 0,
+          currency,
+        });
+        return;
+      }
+
+      // Step 2: Call parent's onApplePay handler if provided
+      if (onApplePay) {
+        logger.info('Calling parent Apple Pay handler');
+        setIsProcessing(false);
+        onApplePay();
+        return;
+      }
+
+      logger.warn('Apple Pay not configured - no onApplePay handler provided');
+      Alert.alert(
+        'Apple Pay Not Configured',
+        'Apple Pay is not configured for this event. Please try another payment method.',
+      );
+      setIsProcessing(false);
+    } catch (error) {
+      logger.error('Apple Pay booking error:', error);
+      Alert.alert(
+        'Booking Failed',
+        error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.',
+      );
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
@@ -571,9 +634,16 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
             </TextDs>
 
             {/* Apple Pay stays at the bottom of the scroll or below */}
-            {onApplePay && Platform.OS === 'ios' && (
-              <TouchableOpacity style={styles.applePayButton} onPress={onApplePay}>
-                <TextDs style={styles.applePayButtonText}>Pay with Apple Pay</TextDs>
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity
+                style={[styles.applePayButton, isProcessing && { opacity: 0.6 }]}
+                onPress={handleApplePayPress}
+                activeOpacity={0.8}
+                disabled={isProcessing}
+              >
+                <TextDs style={styles.applePayButtonText}>
+                  {isProcessing ? 'Processing Payment...' : 'Pay with Apple Pay'}
+                </TextDs>
               </TouchableOpacity>
             )}
           </ScrollView>
