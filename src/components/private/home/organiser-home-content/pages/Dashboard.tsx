@@ -58,7 +58,7 @@ export const renderDashboard = ({
   const isRevenueCard = (label: string) => label.toLowerCase().includes('revenue');
   const isEventsHostedCard = (label: string) => label.toLowerCase().includes('events hosted');
   const isTotalMembersCard = (label: string) => label.toLowerCase().includes('member');
-  const safeTransactions = transactions || [];
+  const safeTransactions = (transactions || []).slice(0, 3);
 
   return (
     <ScrollView

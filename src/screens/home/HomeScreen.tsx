@@ -35,7 +35,7 @@ export const HomeScreen: React.FC = () => {
   const { data: organiserTransactions, isLoading: isLoadingTransactions } = useOrganiserTransactions(
     1,
     20,
-    true,
+    false,
     {
       enabled: isOrganiserUser,
     },

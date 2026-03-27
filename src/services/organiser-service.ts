@@ -51,6 +51,7 @@ export interface OrganiserAnalyticsResponse {
       bookedDate?: string;
       bookedTime?: string;
       amount?: number;
+      finalAmount?: number;
       currency?: string;
       eventId?: string;
       eventName?: string;
@@ -477,7 +478,7 @@ const mapTransaction = (
   apiTransaction: OrganiserAnalyticsResponse['data']['transactions'][0],
 ): Transaction => {
   const id = apiTransaction.id || apiTransaction.transactionId || apiTransaction.paymentId || '';
-  const amount = apiTransaction.amount || 0;
+  const amount = apiTransaction.finalAmount || apiTransaction.amount || 0;
   // Use symbol if available or default to AED
   const currency = apiTransaction.currency || 'AED';
 
@@ -761,7 +762,7 @@ export const organiserService = {
   getOrganiserTransactions: async (
     page: number = 1,
     perPage: number = 20,
-    includeDummy: boolean = true,
+    includeDummy: boolean = false,
   ): Promise<Transaction[]> => {
     try {
       const { data } = await apiClient.get<OrganiserTransactionsResponse>(
