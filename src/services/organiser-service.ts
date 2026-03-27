@@ -471,6 +471,20 @@ const getOrganiserMembersRevenueSnapshot = async (filters?: {
   };
 };
 
+const getOrganiserBookedPlayersCount = async (): Promise<number> => {
+  const { data } = await apiClient.get<OrganiserAttendeesResponse>('/api/organizers/attendees', {
+    params: { page: 1, perPage: 1 },
+  });
+
+  const attendeesData = data?.data;
+  return Number(
+    attendeesData?.totalAttendees ??
+      attendeesData?.pagination?.totalCount ??
+      attendeesData?.attendees?.length ??
+      0,
+  );
+};
+
 /**
  * Map API transaction to Transaction type
  */
@@ -614,9 +628,17 @@ export const organiserService = {
       try {
         const membersSnapshot = await getOrganiserMembersRevenueSnapshot();
         totalRevenue = membersSnapshot.totalRevenue;
-        totalMembers = Number(membersSnapshot.totalMembers) || Number(totalMembers) || 0;
       } catch {
         // If members API fails, keep analytics-derived totals.
+      }
+
+      // Source of truth for homepage member count:
+      // /api/organizers/attendees -> booked/joined players count
+      try {
+        const bookedPlayersCount = await getOrganiserBookedPlayersCount();
+        totalMembers = Number(bookedPlayersCount) || Number(totalMembers) || 0;
+      } catch {
+        // If attendees API fails, keep existing totalMembers fallback.
       }
 
       // Map summary cards
