@@ -202,7 +202,8 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   // Example fees (can be customized per event)
   const platformFee = 10.0; // Fixed platform fee
   const vatRate = 0.05; // 5% VAT rate
-  const subtotalBeforeVAT = reservationCharge - promoDiscount + platformFee;
+  const subtotalBeforeVAT = reservationCharge - promoDiscount;
+  // const subtotalBeforeVAT = reservationCharge - promoDiscount + platformFee;
   const vat = Math.round(subtotalBeforeVAT * vatRate * 100) / 100; // Calculate VAT
   const finalTotal = subtotalBeforeVAT + vat;
 
@@ -526,10 +527,10 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
                     )}
 
                     {/* Platform Fee */}
-                    <FlexView style={styles.paymentRow}>
+                    {/* <FlexView style={styles.paymentRow}>
                       <TextDs style={styles.paymentLabel}>Platform Fee</TextDs>
                       {renderAmount(platformFee.toFixed(2), styles.paymentAmount)}
-                    </FlexView>
+                    </FlexView> */}
 
                     {/* VAT */}
                     <FlexView style={styles.paymentRow}>

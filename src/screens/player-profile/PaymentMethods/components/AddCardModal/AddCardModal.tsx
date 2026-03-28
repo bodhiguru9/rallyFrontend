@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { TextDs,  FlexView } from '@components';
-import {Modal, TouchableOpacity, Animated, Platform, KeyboardAvoidingView, ScrollView, Alert} from 'react-native';
+import { TextDs, FlexView } from '@components';
+import { Modal, TouchableOpacity, Animated, Platform, KeyboardAvoidingView, ScrollView, Alert } from 'react-native';
 import { FormInput, Checkbox } from '@components/global';
 import { CardField, useStripe } from '@stripe/stripe-react-native';
 import type { AddCardModalProps } from './AddCardModal.types';
 import { styles } from './style/AddCardModal.styles';
+import { colors } from '@theme';
 
 export const AddCardModal: React.FC<AddCardModalProps> = ({
   visible,
@@ -167,13 +168,13 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
                     number: '4242 4242 4242 4242',
                   }}
                   cardStyle={{
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: colors.background.secondary,
                     textColor: '#000000',
                     placeholderColor: '#6B6B6B',
                     borderWidth: 1,
                     borderColor: '#D7D7D7',
                     borderRadius: 12,
-                    fontSize: 16,
+                    fontSize: 12,
                   }}
                   style={styles.cardField}
                   onCardChange={(cardDetails) => {

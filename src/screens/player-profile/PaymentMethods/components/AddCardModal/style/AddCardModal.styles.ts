@@ -4,7 +4,7 @@ import { colors, spacing, borderRadius, getFontStyle } from '@theme';
 export const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: colors.surface.overlay,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
@@ -42,6 +42,7 @@ export const styles = StyleSheet.create({
     marginBottom: spacing.base,
   },
   cardHolderInputContainer: {
+    backgroundColor: colors.background.secondary,
     height: 52,
   },
   cardFieldLabel: {

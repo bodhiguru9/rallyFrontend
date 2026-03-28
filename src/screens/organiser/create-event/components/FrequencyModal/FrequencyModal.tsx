@@ -24,13 +24,16 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
   const [weeklyDays, setWeeklyDays] = useState<number[]>(
     initialFrequency?.weeklyDays ?? [],
   );
-  const [endsNever, setEndsNever] = useState(
-    initialFrequency?.ends === 'never' || !initialFrequency?.ends,
-  );
+  const getDefaultEndDate = (base: Date | undefined) => {
+    const d = new Date(base || new Date());
+    d.setMonth(d.getMonth() + 2);
+    return d;
+  };
+
   const [endsOnDate, setEndsOnDate] = useState<Date>(
     initialFrequency?.ends !== 'never' && typeof initialFrequency?.ends === 'object'
       ? initialFrequency.ends.on
-      : new Date(),
+      : getDefaultEndDate(baseDate),
   );
   const [showCustom, setShowCustom] = useState(!!initialFrequency?.customValue);
   const [customValue, setCustomValue] = useState(
@@ -60,10 +63,9 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
       }
 
       setWeeklyDays(initialDays);
-      setEndsNever(initialFrequency?.ends === 'never' || !initialFrequency?.ends);
       const onDate = initialFrequency?.ends !== 'never' && typeof initialFrequency?.ends === 'object'
         ? initialFrequency.ends.on
-        : new Date();
+        : getDefaultEndDate(baseDate);
       setEndsOnDate(onDate);
       setEndDateCalendarMonth(onDate.getMonth());
       setEndDateCalendarYear(onDate.getFullYear());
@@ -127,7 +129,7 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
   const handleDone = () => {
     const selection: FrequencySelection = {
       type: showCustom ? 'custom' : weeklyDays.length > 0 ? 'weekly' : 'never',
-      ends: endsNever ? 'never' : { on: endsOnDate },
+      ends: { on: endsOnDate },
     };
     if (selection.type === 'weekly') {
       selection.weeklyDays = weeklyDays;
@@ -186,44 +188,7 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
             {/* Ends - SECOND per Figma design */}
             <FlexView style={styles.endsSection}>
               <TextDs style={styles.sectionTitle}>Ends</TextDs>
-              <FlexView style={styles.endsOptionsRow}>
-                <TouchableOpacity
-                  style={styles.endsOption}
-                  onPress={() => setEndsNever(true)}
-                  activeOpacity={0.7}
-                >
-                  <FlexView
-                    style={[
-                      styles.checkbox,
-                      endsNever && styles.checkboxSelected,
-                    ]}
-                  >
-                    {endsNever && <Check size={14} color="#FFFFFF" />}
-                  </FlexView>
-                  <TextDs size={14} weight="regular">
-                    Never
-                  </TextDs>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.endsOption}
-                  onPress={() => setEndsNever(false)}
-                  activeOpacity={0.7}
-                >
-                  <FlexView
-                    style={[
-                      styles.checkbox,
-                      !endsNever && styles.checkboxSelected,
-                    ]}
-                  >
-                    {!endsNever && <Check size={14} color="#FFFFFF" />}
-                  </FlexView>
-                  <TextDs size={14} weight="regular">
-                    On
-                  </TextDs>
-                </TouchableOpacity>
-              </FlexView>
-              {!endsNever && (
-                <FlexView style={styles.endsDateRow}>
+              <FlexView style={[styles.endsDateRow, { marginTop: 8 }]}>
                   <TouchableOpacity
                     style={styles.endsDateButton}
                     onPress={() => setShowEndDateCalendar((v) => !v)}
@@ -290,7 +255,6 @@ export const FrequencyModal: React.FC<FrequencyModalProps> = ({
                     </FlexView>
                   )}
                 </FlexView>
-              )}
             </FlexView>
 
             {/* Custom option - expandable */}

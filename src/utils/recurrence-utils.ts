@@ -24,12 +24,28 @@ export function isRecurringEvent(event: EventWithRecurrence): boolean {
 }
 
 /**
- * Get the recurrence end date as YYYY-MM-DD, or null if never ends.
+ * Get the recurrence end date, robustly handling any stored dates.
  */
 function getRecurrenceEndDate(event: EventWithRecurrence): string | null {
   const end = event.eventFrequencyEndDate;
-  if (!end || typeof end !== 'string') return null;
-  return end.split('T')[0];
+  if (!end || (typeof end === 'string' && end.toLowerCase() === 'never')) {
+    const startDate = new Date(event.eventDateTime);
+    startDate.setMonth(startDate.getMonth() + 2);
+    const y = startDate.getFullYear();
+    const m = String(startDate.getMonth() + 1).padStart(2, '0');
+    const d = String(startDate.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  if ((end as any) instanceof Date) {
+    const y = (end as any).getFullYear();
+    const m = String((end as any).getMonth() + 1).padStart(2, '0');
+    const d = String((end as any).getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  if (typeof end === 'string') {
+    return end.split('T')[0];
+  }
+  return null;
 }
 
 /**
@@ -49,11 +65,18 @@ export function isRecurringEventOnDate(
   const eventStart = new Date(event.eventDateTime);
   const first = freq[0];
 
-  // Filter out dates after recurrence end date (use local date for comparison)
+  // Robustly filter out dates after recurrence end date using native Date comparison
   const endDateStr = getRecurrenceEndDate(event);
   if (endDateStr) {
-    const checkDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    if (checkDateStr > endDateStr) return false;
+    // Parse the end date carefully to avoid timezone shift offsets
+    const endDateObj = new Date(endDateStr);
+    // Push the boundary to the absolute end of the local day to allow matching exactly on the end date
+    endDateObj.setHours(23, 59, 59, 999);
+    
+    // If the testing day (set to midnight local) is strictly greater than the end of the end-date day, abort.
+    if (d.getTime() > endDateObj.getTime()) {
+      return false;
+    }
   }
 
   if (first === 'daily') return true;
