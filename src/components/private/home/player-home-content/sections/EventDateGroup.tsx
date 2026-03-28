@@ -11,7 +11,7 @@ interface EventDateGroupProps {
   events: EventData[];
   isLast?: boolean;
   styleVariant?: 'default' | 'alt' | 'last';
-  onEventPress: (id: string) => void;
+  onEventPress: (id: string, occurrenceStart?: string, occurrenceEnd?: string) => void;
   onBookmark: (id: string) => void;
 }
 

@@ -87,7 +87,7 @@ export interface VerifyPaymentResponse {
 }
 
 export const paymentService: {
-  createBookingWithPayment: (eventId: string, promoCode?: string | null, guestsCount?: number) => Promise<BookEventPaymentResponse>;
+  createBookingWithPayment: (eventId: string, promoCode?: string | null, guestsCount?: number, occurrenceStart?: string | null, occurrenceEnd?: string | null) => Promise<BookEventPaymentResponse>;
   verifyPayment: (paymentIntentId: string) => Promise<VerifyPaymentResponse>;
 } = {
   /**
@@ -101,16 +101,18 @@ export const paymentService: {
     eventId: string,
     promoCode?: string | null,
     guestsCount: number = 1,
+    occurrenceStart?: string | null,
+    occurrenceEnd?: string | null,
   ): Promise<BookEventPaymentResponse> => {
     const params = new URLSearchParams();
     if (promoCode) params.set('promoCode', promoCode);
     if (guestsCount > 1) params.set('guestsCount', String(guestsCount));
+    if (occurrenceStart) params.set('occurrenceStart', occurrenceStart);
+    if (occurrenceEnd) params.set('occurrenceEnd', occurrenceEnd);
     const query = params.toString();
     const url = query ? `/api/bookings/book-event/${eventId}?${query}` : `/api/bookings/book-event/${eventId}`;
 
-    console.log('DEBUG: paymentService.createBookingWithPayment url:', url);
     const { data } = await apiClient.post<BookEventPaymentResponse>(url);
-    console.log('DEBUG: paymentService.createBookingWithPayment response data:', JSON.stringify(data, null, 2));
     return data;
   },
 

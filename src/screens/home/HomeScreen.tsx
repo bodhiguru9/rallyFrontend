@@ -98,8 +98,8 @@ export const HomeScreen: React.FC = () => {
   );
 
   // Event handlers
-  const handleEventPress = (id: string) => {
-    navigation.navigate('EventDetails', { eventId: id });
+  const handleEventPress = (id: string, occurrenceStart?: string, occurrenceEnd?: string) => {
+    navigation.navigate('EventDetails', { eventId: id, occurrenceStart, occurrenceEnd });
   };
 
   const handleOrganiserPress = (id: string) => {

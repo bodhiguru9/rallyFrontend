@@ -124,7 +124,9 @@ export const EventCard: React.FC<EventCardProps> = ({
   const eventToDisplay = displayEvent as EventData; // Cast for easier access to participants/spotsInfo
 
   const handlePress = () => {
-    onPress(id);
+    const occurrenceStart = (displayEvent as any).occurrenceStart || (displayEvent.booking as any)?.occurrenceStart;
+    const occurrenceEnd = (displayEvent as any).occurrenceEnd || (displayEvent.booking as any)?.occurrenceEnd;
+    onPress(id, occurrenceStart, occurrenceEnd);
   };
 
   const handleOpenMembersModal = () => {

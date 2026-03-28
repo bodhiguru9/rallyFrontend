@@ -141,7 +141,7 @@ interface PickedEventsSectionProps {
   selectDate: (fullDate: string | null) => void;
   loadMoreDates: () => void;
   canLoadMore: boolean;
-  onEventPress: (id: string) => void;
+  onEventPress: (id: string, occurrenceStart?: string, occurrenceEnd?: string) => void;
   onBookmark: (id: string) => void;
   showPastEvents?: boolean;
 }

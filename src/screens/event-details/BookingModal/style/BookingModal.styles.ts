@@ -114,7 +114,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border.default,
+    borderColor: colors.border.white,
     minHeight: 48,
   },
   promoCodeInput: {
@@ -135,6 +135,8 @@ export const styles = StyleSheet.create({
   paymentDetailsContent: {
     backgroundColor: '#effcffff',
     borderRadius: borderRadius.lg,
+    borderColor: colors.border.white,
+    borderWidth: 1,
     padding: spacing.base,
     marginBottom: spacing.md,
   },

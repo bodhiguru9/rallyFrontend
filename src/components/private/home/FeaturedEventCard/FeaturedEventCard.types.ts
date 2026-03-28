@@ -3,7 +3,7 @@ import type { CarouselAnimatedIndex } from '@components/global/Carousel';
 
 export interface FeaturedEventCardProps {
   id: string;
-  onPress: (id: string) => void;
+  onPress: (id: string, occurrenceStart?: string, occurrenceEnd?: string) => void;
   onBookmark?: (id: string) => void;
   event: EventData;
   width: number;

@@ -13,7 +13,7 @@ interface EventListProps {
   isLoading: boolean;
   error: unknown;
   activeTab: CalendarTab;
-  onEventPress: (id: string) => void;
+  onEventPress: (id: string, occurrenceStart?: string, occurrenceEnd?: string) => void;
   onBookmark: (id: string) => void;
   showTimeline?: boolean;
   showStatus?: boolean;

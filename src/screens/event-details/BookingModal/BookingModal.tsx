@@ -33,6 +33,8 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   onApplePay,
   primaryButtonText = 'Book Event',
   eventId,
+  occurrenceStart,
+  occurrenceEnd,
 }) => {
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
@@ -260,6 +262,8 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         eventId,
         appliedPromoCode || (promoCode.trim() || null),
         Math.max(1, guestsCount),
+        occurrenceStart ?? null,
+        occurrenceEnd ?? null,
       );
       console.log('DEBUG: bookingResponse:', JSON.stringify(bookingResponse, null, 2));
 
@@ -366,6 +370,8 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         eventId,
         appliedPromoCode || (promoCode.trim() || null),
         Math.max(1, guestsCount),
+        occurrenceStart ?? null,
+        occurrenceEnd ?? null,
       );
 
       if (!bookingResponse.success) {

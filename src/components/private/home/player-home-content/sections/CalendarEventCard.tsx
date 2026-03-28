@@ -14,7 +14,7 @@ import { useEvent } from '@hooks/use-events';
 
 interface CalendarEventCardProps {
   event: EventData;
-  onPress: (id: string) => void;
+  onPress: (id: string, occurrenceStart?: string, occurrenceEnd?: string) => void;
 }
 
 export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({ event, onPress }) => {
@@ -32,7 +32,7 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({ event, onP
   const displayEvent = fullEvent || event;
 
   const handlePress = () => {
-    onPress(event.id);
+    onPress(event.eventId || event.id, (event as any).occurrenceStart, (event as any).occurrenceEnd);
   };
 
   const handleOpenMembersModal = () => {

@@ -4,7 +4,7 @@ import type { PlayerBooking } from '@services/booking-service';
 export interface EventCardProps {
   id: string;
   event: EventData | PlayerBooking;
-  onPress: (id: string) => void;
+  onPress: (id: string, occurrenceStart?: string, occurrenceEnd?: string) => void;
   onBookmark: (id: string) => void;
   hidePrice?: boolean;
   hideCreator?: boolean;

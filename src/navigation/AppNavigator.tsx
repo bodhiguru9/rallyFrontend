@@ -78,7 +78,7 @@ export type RootStackParamList = {
     phoneNumber?: string;
     email?: string;
   };
-  EventDetails: { eventId: string };
+  EventDetails: { eventId: string; occurrenceStart?: string; occurrenceEnd?: string };
   Booking: {
     eventId: string;
     totalPrice: number;

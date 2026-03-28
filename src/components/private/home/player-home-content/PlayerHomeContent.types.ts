@@ -37,7 +37,7 @@ export interface PlayerHomeContentProps {
   canLoadMore: boolean;
 
   // Navigation handlers
-  onEventPress: (id: string) => void;
+  onEventPress: (id: string, occurrenceStart?: string, occurrenceEnd?: string) => void;
   onOrganiserPress: (id: string) => void;
   onBookmark: (id: string) => void;
 

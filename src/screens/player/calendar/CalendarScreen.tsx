@@ -54,8 +54,8 @@ export const CalendarScreen: React.FC = () => {
     );
   };
 
-  const handleEventPress = (id: string) => {
-    navigation.navigate('EventDetails', { eventId: id });
+  const handleEventPress = (id: string, occurrenceStart?: string, occurrenceEnd?: string) => {
+    navigation.navigate('EventDetails', { eventId: id, occurrenceStart, occurrenceEnd });
   };
 
   const handleBookmark = (id: string) => {

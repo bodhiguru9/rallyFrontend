@@ -224,6 +224,8 @@ export function expandEventsForward<T extends EventWithRecurrence>(
             ...event,
             eventDateTime: instanceDateTime,
             eventEndDateTime: newEndDateTime,
+            occurrenceStart: instanceDateTime,
+            occurrenceEnd: newEndDateTime,
           } as T);
         }
       }

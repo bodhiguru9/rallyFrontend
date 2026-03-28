@@ -9,7 +9,7 @@ import { styles } from './DateGroup.styles';
 
 interface DateGroupProps {
   events: PlayerBooking[];
-  onEventPress: (id: string) => void;
+  onEventPress: (id: string, occurrenceStart?: string, occurrenceEnd?: string) => void;
   onBookmark: (id: string) => void;
   showTimeline?: boolean;
   showStatus?: boolean;

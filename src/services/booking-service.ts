@@ -96,6 +96,8 @@ export interface PlayerBooking {
     isOngoing: boolean;
     isUpcoming: boolean;
     guestsCount?: number;
+    occurrenceStart?: string | null; // ISO date string for this occurrence's start
+    occurrenceEnd?: string | null;   // ISO date string for this occurrence's end
   };
   payment?: {
     paymentStatus: string;

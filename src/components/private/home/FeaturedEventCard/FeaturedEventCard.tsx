@@ -77,7 +77,7 @@ export const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
       ]}
     >
       <TouchableOpacity
-        onPress={() => onPress(id)}
+        onPress={() => onPress(id, (event as any).occurrenceStart, (event as any).occurrenceEnd)}
         style={styles.cardTouchable}
         activeOpacity={0.9}
       >

@@ -12,7 +12,7 @@ type YourCalendarSectionNavigationProp = NativeStackNavigationProp<RootStackPara
 
 interface YourCalendarSectionProps {
   events: EventData[];
-  onEventPress: (id: string) => void;
+  onEventPress: (id: string, occurrenceStart?: string, occurrenceEnd?: string) => void;
   onBookmark: (id: string) => void;
 }
 

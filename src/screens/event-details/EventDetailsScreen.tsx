@@ -116,6 +116,8 @@ export const EventDetailsScreen: React.FC = () => {
     cancelBookingId,
     cancelVariant,
     eventId,
+    occurrenceStart,
+    occurrenceEnd,
     pendingInvitation,
     acceptInvitationMutation,
     declineInvitationMutation,
@@ -500,6 +502,8 @@ export const EventDetailsScreen: React.FC = () => {
         currency="AED"
         guestsCount={guestsCount}
         eventId={eventId}
+        occurrenceStart={occurrenceStart}
+        occurrenceEnd={occurrenceEnd}
         onClose={handleCloseBookingModal}
         onBookEvent={handleBookEvent}
         onApplePay={handleApplePay}
