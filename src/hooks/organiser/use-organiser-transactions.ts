@@ -8,7 +8,7 @@ interface UseOrganiserTransactionsOptions {
 export const useOrganiserTransactions = (
   page: number = 1,
   perPage: number = 20,
-  includeDummy: boolean = true,
+  includeDummy: boolean = false,
   options?: UseOrganiserTransactionsOptions,
 ) => {
   return useQuery({

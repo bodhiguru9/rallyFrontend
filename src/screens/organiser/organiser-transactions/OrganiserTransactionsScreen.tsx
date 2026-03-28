@@ -13,7 +13,7 @@ import { getDateFilters } from '@screens/home/context/Home.data';
 import type { DateFilter as DateFilterType } from '@screens/home/Home.types';
 
 export const OrganiserTransactionsScreen: React.FC = () => {
-  const { data: transactions, isLoading } = useOrganiserTransactions(1, 20, true);
+  const { data: transactions, isLoading } = useOrganiserTransactions(1, 20, false);
   const [selectedSports, setSelectedSports] = useState<string[]>(['all-sports']);
   const [selectedSortBy, setSelectedSortBy] = useState<string[]>(['most-recent']);
   const [dateFilters, setDateFilters] = useState<DateFilterType[]>(getDateFilters());

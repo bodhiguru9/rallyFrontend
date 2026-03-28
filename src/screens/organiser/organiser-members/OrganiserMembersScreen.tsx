@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronDown } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -8,10 +8,23 @@ import type { RootStackParamList } from '@navigation';
 import { Card } from '@components/global/Card';
 import { FlexView, ImageDs, TextDs, Avatar } from '@components';
 import { FilterDropdown } from '@components/global/filter-dropdown';
+import { useOrganiserAttendees } from '@hooks/organiser';
 import { useOrganiserMembers } from '@hooks/organiser';
 import { resolveImageUri } from '@utils/image-utils';
 import { colors, spacing } from '@theme';
 import { styles } from './style/OrganiserMembersScreen.styles';
+
+type MemberRow = {
+  userId: number;
+  fullName: string;
+  profilePic: string | null;
+  totalBookedEvents: number;
+  totalBookingAmount: number;
+  lastBookedAt: string | null;
+  sports?: string[];
+  sport1?: string;
+  sport2?: string;
+};
 
 export const OrganiserMembersScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -43,11 +56,6 @@ export const OrganiserMembersScreen: React.FC = () => {
     { id: 'running', label: 'Running', value: 'running', icon: 'runningIcon' },
   ];
 
-  const activeSport = useMemo(() => {
-    const id = selectedSports.find((s) => s !== 'all-sports');
-    return id && id !== 'all' ? sportsOptions.find((o) => o.id === id)?.value : undefined;
-  }, [selectedSports]);
-
   const periodToApiMap: Record<string, string> = {
     'all-time': 'lifetime',
     'today': 'today',
@@ -56,7 +64,13 @@ export const OrganiserMembersScreen: React.FC = () => {
     'last-6-months': '6months',
   };
 
-  const { data, isLoading } = useOrganiserMembers(1, 50, {
+  const activeSport = useMemo(() => {
+    const id = selectedSports.find((s) => s !== 'all-sports');
+    return id && id !== 'all' ? sportsOptions.find((o) => o.id === id)?.value : undefined;
+  }, [selectedSports]);
+
+  const { data, isLoading } = useOrganiserAttendees(1, 200);
+  const { data: membersData } = useOrganiserMembers(1, 200, {
     period: periodToApiMap[selectedPeriod] || 'lifetime',
     sport: activeSport,
   });
@@ -84,7 +98,56 @@ export const OrganiserMembersScreen: React.FC = () => {
     setSelectedSortBy([sortId]);
   };
 
-  const members = useMemo(() => data?.data?.members || [], [data?.data?.members]);
+  const members = useMemo<MemberRow[]>(() => {
+    const membersById = new Map<number, any>();
+    for (const member of membersData?.data?.members || []) {
+      membersById.set(Number(member.userId ?? 0), member);
+    }
+
+    const attendees = data?.data?.attendees || [];
+    return attendees.map((member: any) => ({
+      ...(membersById.get(Number(member.userId ?? 0)) || {}),
+      userId: Number(member.userId ?? 0),
+      fullName: String(member.fullName ?? member.name ?? ''),
+      profilePic: member.profilePic ?? member.profile_pic ?? null,
+      totalBookedEvents: Number(
+        membersById.get(Number(member.userId ?? 0))?.organiserBookedEvents ??
+          membersById.get(Number(member.userId ?? 0))?.organiser_booked_events ??
+          member.organiserBookedEvents ??
+          member.organiser_booked_events ??
+          member.joinedEventsCount ??
+          membersById.get(Number(member.userId ?? 0))?.totalBookedEvents ??
+          membersById.get(Number(member.userId ?? 0))?.total_booked_events ??
+          member.totalBookedEvents ??
+          member.total_booked_events ??
+          0,
+      ),
+      totalBookingAmount: Number(
+        membersById.get(Number(member.userId ?? 0))?.organiserBookingAmount ??
+          membersById.get(Number(member.userId ?? 0))?.organiser_booking_amount ??
+          member.organiserBookingAmount ??
+          member.organiser_booking_amount ??
+          membersById.get(Number(member.userId ?? 0))?.totalBookingAmount ??
+          membersById.get(Number(member.userId ?? 0))?.total_booking_amount ??
+          member.totalBookingAmount ??
+          member.total_booking_amount ??
+          0,
+      ),
+      lastBookedAt:
+        membersById.get(Number(member.userId ?? 0))?.lastBookedAt ??
+        membersById.get(Number(member.userId ?? 0))?.last_booked_at ??
+        membersById.get(Number(member.userId ?? 0))?.organiserLastBookedAt ??
+        membersById.get(Number(member.userId ?? 0))?.organiser_last_booked_at ??
+        member.lastBookedAt ??
+        member.last_booked_at ??
+        member.organiserLastBookedAt ??
+        member.organiser_last_booked_at ??
+        null,
+      sports: Array.isArray(member.sports) ? member.sports : undefined,
+      sport1: member.sport1,
+      sport2: member.sport2,
+    }));
+  }, [data?.data?.attendees, membersData?.data?.members]);
 
   const filteredMembers = useMemo(() => {
     let filtered = [...members];
@@ -93,55 +156,50 @@ export const OrganiserMembersScreen: React.FC = () => {
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
-    // Filter by period (Ranges)
     if (selectedPeriod !== 'all-time') {
       let startDate: Date = todayStart;
       let endDate: Date = todayEnd;
 
-      if (selectedPeriod === 'today') {
-        startDate = todayStart;
-        endDate = todayEnd;
-      } else if (selectedPeriod === 'this-week') {
+      if (selectedPeriod === 'this-week') {
         const day = now.getDay();
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
         startDate = new Date(now.getFullYear(), now.getMonth(), diff);
         startDate.setHours(0, 0, 0, 0);
-        endDate = todayEnd;
       } else if (selectedPeriod === 'this-month') {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        endDate = todayEnd;
       } else if (selectedPeriod === 'last-6-months') {
         startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-        endDate = todayEnd;
       }
 
-      filtered = filtered.filter(m => {
-        const lastBookedAt = m.lastBookedAt;
-        if (!lastBookedAt) return false;
-        const bookingDate = new Date(lastBookedAt);
+      filtered = filtered.filter((member) => {
+        if (!member.lastBookedAt) return false;
+        const bookingDate = new Date(member.lastBookedAt);
         return bookingDate >= startDate && bookingDate <= endDate;
       });
     }
 
-    // Sports filter is applied via API (period + sport params)
-    // Client-side filter by member.sports if API returns it
     const activeSports = selectedSports.filter((id) => id !== 'all-sports');
-    if (activeSports.length > 0 && members.some((m: any) => m.sports || m.sport1 || m.sport2)) {
-      filtered = filtered.filter((m: any) => {
-        const memberSports = [m.sports, m.sport1, m.sport2].flat().filter(Boolean).map((s: string) => String(s).toLowerCase());
-        const opts = sportsOptions.filter((o) => activeSports.includes(o.id));
-        return opts.some((opt) => memberSports.includes(opt.value.toLowerCase()));
+    if (activeSports.length > 0) {
+      filtered = filtered.filter((member) => {
+        const memberSports = [member.sports, member.sport1, member.sport2]
+          .flat()
+          .filter(Boolean)
+          .map((s) => String(s).toLowerCase());
+        if (memberSports.length === 0) return true;
+        const optionValues = sportsOptions
+          .filter((o) => activeSports.includes(o.id))
+          .map((o) => o.value.toLowerCase());
+        return optionValues.some((value) => memberSports.includes(value));
       });
     }
 
-    // Sort members
     const sortBy = selectedSortBy[0];
     switch (sortBy) {
       case 'most-bookings':
-        filtered.sort((a, b) => (b.totalBookedEvents ?? 0) - (a.totalBookedEvents ?? 0));
+        filtered.sort((a, b) => b.totalBookedEvents - a.totalBookedEvents);
         break;
       case 'highest-amount':
-        filtered.sort((a, b) => (b.totalBookingAmount ?? 0) - (a.totalBookingAmount ?? 0));
+        filtered.sort((a, b) => b.totalBookingAmount - a.totalBookingAmount);
         break;
       case 'alphabetical':
         filtered.sort((a, b) => a.fullName.localeCompare(b.fullName));
@@ -149,15 +207,15 @@ export const OrganiserMembersScreen: React.FC = () => {
       case 'most-recent':
       default:
         filtered.sort((a, b) => {
-          const aDate = a.lastBookedAt ?? '';
-          const bDate = b.lastBookedAt ?? '';
-          return new Date(bDate).getTime() - new Date(aDate).getTime();
+          const aDate = a.lastBookedAt ? new Date(a.lastBookedAt).getTime() : 0;
+          const bDate = b.lastBookedAt ? new Date(b.lastBookedAt).getTime() : 0;
+          return bDate - aDate;
         });
         break;
     }
 
     return filtered;
-  }, [members, selectedSortBy, selectedSports, sportsOptions, selectedPeriod]);
+  }, [members, selectedPeriod, selectedSortBy, selectedSports, sportsOptions]);
 
   const totalCount = filteredMembers.length;
 
@@ -222,7 +280,7 @@ export const OrganiserMembersScreen: React.FC = () => {
                     navigation.navigate('OrganiserMemberJoinedEvents', {
                       userId: member.userId,
                       fullName: member.fullName,
-                      profilePic: member.profilePic,
+                      profilePic: member.profilePic ?? undefined,
                     })
                   }
                 >
@@ -237,14 +295,14 @@ export const OrganiserMembersScreen: React.FC = () => {
                         {member.fullName}
                       </TextDs>
                       <TextDs size={14} weight="regular" color="secondary">
-                        Booked: {member.totalBookedEvents ?? 0} Events
+                        Booked: {member.totalBookedEvents} Events
                       </TextDs>
                     </FlexView>
                   </FlexView>
                   <FlexView style={styles.memberPrice}>
                     <ImageDs image="DhiramIcon" style={styles.priceIcon} />
                     <TextDs size={16} weight="bold" color="blueGray">
-                      {member.totalBookingAmount ?? 0}
+                      {member.totalBookingAmount}
                     </TextDs>
                   </FlexView>
                 </TouchableOpacity>
@@ -284,7 +342,8 @@ export const OrganiserMembersScreen: React.FC = () => {
                 activeOpacity={0.7}
               >
                 <TextDs
-                  size={14} weight="regular"
+                  size={14}
+                  weight="regular"
                   color={selectedPeriod === option.value ? 'primary' : 'black'}
                 >
                   {option.label}

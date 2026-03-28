@@ -51,6 +51,7 @@ export interface OrganiserAnalyticsResponse {
       bookedDate?: string;
       bookedTime?: string;
       amount?: number;
+      finalAmount?: number;
       currency?: string;
       eventId?: string;
       eventName?: string;
@@ -470,6 +471,20 @@ const getOrganiserMembersRevenueSnapshot = async (filters?: {
   };
 };
 
+const getOrganiserBookedPlayersCount = async (): Promise<number> => {
+  const { data } = await apiClient.get<OrganiserAttendeesResponse>('/api/organizers/attendees', {
+    params: { page: 1, perPage: 1 },
+  });
+
+  const attendeesData = data?.data;
+  return Number(
+    attendeesData?.totalAttendees ??
+      attendeesData?.pagination?.totalCount ??
+      attendeesData?.attendees?.length ??
+      0,
+  );
+};
+
 /**
  * Map API transaction to Transaction type
  */
@@ -477,7 +492,7 @@ const mapTransaction = (
   apiTransaction: OrganiserAnalyticsResponse['data']['transactions'][0],
 ): Transaction => {
   const id = apiTransaction.id || apiTransaction.transactionId || apiTransaction.paymentId || '';
-  const amount = apiTransaction.amount || 0;
+  const amount = apiTransaction.finalAmount || apiTransaction.amount || 0;
   // Use symbol if available or default to AED
   const currency = apiTransaction.currency || 'AED';
 
@@ -613,9 +628,17 @@ export const organiserService = {
       try {
         const membersSnapshot = await getOrganiserMembersRevenueSnapshot();
         totalRevenue = membersSnapshot.totalRevenue;
-        totalMembers = Number(membersSnapshot.totalMembers) || Number(totalMembers) || 0;
       } catch {
         // If members API fails, keep analytics-derived totals.
+      }
+
+      // Source of truth for homepage member count:
+      // /api/organizers/attendees -> booked/joined players count
+      try {
+        const bookedPlayersCount = await getOrganiserBookedPlayersCount();
+        totalMembers = Number(bookedPlayersCount) || Number(totalMembers) || 0;
+      } catch {
+        // If attendees API fails, keep existing totalMembers fallback.
       }
 
       // Map summary cards
@@ -761,7 +784,7 @@ export const organiserService = {
   getOrganiserTransactions: async (
     page: number = 1,
     perPage: number = 20,
-    includeDummy: boolean = true,
+    includeDummy: boolean = false,
   ): Promise<Transaction[]> => {
     try {
       const { data } = await apiClient.get<OrganiserTransactionsResponse>(
