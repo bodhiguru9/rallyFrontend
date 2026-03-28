@@ -109,7 +109,7 @@ export const styles = StyleSheet.create({
   promoCodeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background.white,
+    backgroundColor: '#effcffff',
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.md,

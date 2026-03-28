@@ -56,11 +56,11 @@ export const styles = StyleSheet.create({
     paddingVertical: spacing.base,
     paddingHorizontal: spacing.base,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
-    backgroundColor: colors.background.white,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: 'transparent',
   },
   notificationItemUnread: {
-    backgroundColor: colors.background.lightYellow,
+    backgroundColor: 'rgba(91, 124, 153, 0.15)',
   },
   userAvatar: {
     width: avatarSize.md,
