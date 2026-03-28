@@ -40,13 +40,13 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
         <FlexView style={styles.tagsContainer}>
           <FlexView style={[styles.tag, { backgroundColor: sportStyle.bg }]}>
             <Activity size={12} color={sportStyle.text} />
-            <TextDs style={[styles.tagText, { color: sportStyle.text }]}>
+            <TextDs style={[styles.tagText, { color: sportStyle.text }]} numberOfLines={1}>
               {event.sport}
             </TextDs>
           </FlexView>
           <FlexView style={[styles.tag, { backgroundColor: eventTypeStyle.bg }]}>
             <Users size={12} color={eventTypeStyle.text} />
-            <TextDs style={[styles.tagText, { color: eventTypeStyle.text }]}>
+            <TextDs style={[styles.tagText, { color: eventTypeStyle.text }]} numberOfLines={1}>
               {event.eventType}
             </TextDs>
           </FlexView>

@@ -15,6 +15,7 @@ export interface Participant {
 
 export interface MembersModalProps {
   visible: boolean;
+  isLoading?: boolean;
   eventTitle: string;
   organizerName: string;
   participants: Participant[];

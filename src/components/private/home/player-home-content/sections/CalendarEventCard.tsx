@@ -83,7 +83,7 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({ event, onP
             </FlexView>
 
             {/* Tags */}
-            <FlexView flexDirection="row" alignItems="center" gap={spacing.sm}>
+            <FlexView style={styles.tagsContainer}>
               <IconTag title={displayEvent.eventSports?.[0]} variant="orange" />
               <IconTag title={displayEvent.eventType} variant="teal" />
             </FlexView>
@@ -109,6 +109,7 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({ event, onP
 
       <MembersModal
         visible={isMembersModalVisible}
+        isLoading={isFetchingEvent}
         eventTitle={displayEvent.eventName ?? 'Event'}
         organizerName={
           displayEvent.creator?.fullName ||

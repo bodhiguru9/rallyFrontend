@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { TextDs, FlexView, Avatar } from '@components';
-import { Modal, TouchableOpacity, Pressable, ScrollView } from 'react-native';
+import { Modal, TouchableOpacity, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { User, X } from 'lucide-react-native';
-import { colors } from '@theme';
+import { colors, spacing } from '@theme';
 import { useAuthStore } from '@store/auth-store';
 import type { MembersModalProps } from './MembersModal.types';
 import { styles } from './style/MembersModal.styles';
@@ -14,6 +14,7 @@ export const MembersModal: React.FC<MembersModalProps> = ({
   participants,
   spotsFilled,
   totalSpots,
+  isLoading,
   onClose,
 }) => {
   const user = useAuthStore((state) => state.user);
@@ -76,32 +77,39 @@ export const MembersModal: React.FC<MembersModalProps> = ({
             </FlexView>
 
             {/* Participants Grid - Show participants first, then empty spots, scrollable */}
-            <ScrollView
-              showsVerticalScrollIndicator={true}
-              showsHorizontalScrollIndicator={false}
-              style={styles.participantsScrollView}
-              contentContainerStyle={styles.participantsGrid}
-              nestedScrollEnabled={true}
-              scrollEnabled={true}
-            >
-              {displayItems.map((item) => (
-                <FlexView key={item.userId} style={styles.participantItem}>
-                  <FlexView style={styles.participantAvatarWrap}>
-                    <Avatar
-                      imageUri={item.profilePic}
-                      fullName={item.fullName}
-                      size="xl"
-                    />
+            {isLoading ? (
+              <FlexView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <TextDs style={{ marginTop: spacing.base, color: colors.text.secondary }}>Loading members...</TextDs>
+              </FlexView>
+            ) : (
+              <ScrollView
+                showsVerticalScrollIndicator={true}
+                showsHorizontalScrollIndicator={false}
+                style={styles.participantsScrollView}
+                contentContainerStyle={styles.participantsGrid}
+                nestedScrollEnabled={true}
+                scrollEnabled={true}
+              >
+                {displayItems.map((item) => (
+                  <FlexView key={item.userId} style={styles.participantItem}>
+                    <FlexView style={styles.participantAvatarWrap}>
+                      <Avatar
+                        imageUri={item.profilePic}
+                        fullName={item.fullName}
+                        size="xl"
+                      />
+                    </FlexView>
+                    <TextDs style={styles.participantName} numberOfLines={2}>
+                      {item.fullName}{(() => {
+                        const gCount = item.guestsCount ?? (item as any).guestCount ?? (item as any).guest_count ?? 0;
+                        return gCount - 1 > 0 ? ` (+${gCount - 1})` : '';
+                      })()}
+                    </TextDs>
                   </FlexView>
-                  <TextDs style={styles.participantName} numberOfLines={2}>
-                    {item.fullName}{(() => {
-                      const gCount = item.guestsCount ?? (item as any).guestCount ?? (item as any).guest_count ?? 0;
-                      return gCount - 1 > 0 ? ` (+${gCount - 1})` : '';
-                    })()}
-                  </TextDs>
-                </FlexView>
-              ))}
-            </ScrollView>
+                ))}
+              </ScrollView>
+            )}
           </FlexView>
         </Pressable>
       </Pressable>
