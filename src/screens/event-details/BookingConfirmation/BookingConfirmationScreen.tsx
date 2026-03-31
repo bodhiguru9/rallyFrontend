@@ -80,140 +80,139 @@ export const BookingConfirmationScreen: React.FC = () => {
   };
 
   const handleAddToCalendar = async () => {
-  if (isCalendarAdded) {
-    navigation.navigate('PlayerCalendar');
-    return;
-  }
-
-  if (!event?.eventDateTime) {
-    Alert.alert('Cannot Add Event', 'Event date is missing.');
-    return;
-  }
-
-  const clientId =
-    getGoogleCalendarClientId() ||
-    '204335986948-6hombupu358nsu7pgga7v2b6ume920vn.apps.googleusercontent.com';
-
-  if (!clientId) {
-    Alert.alert(
-      'Google Calendar',
-      'Missing Google OAuth client ID. Please update app configuration.',
-    );
-    return;
-  }
-
-  try {
-    setIsAddingToCalendar(true);
-
-    const scheme = Constants.expoConfig?.scheme;
-    const schemeStr =
-      typeof scheme === 'string'
-        ? scheme
-        : Array.isArray(scheme)
-        ? scheme[0]
-        : 'rally-app';
-
-    const redirectUri = AuthSession.makeRedirectUri({
-      scheme: schemeStr,
-    });
-
-    // ✅ Discovery endpoints
-    const discovery = {
-      authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-      tokenEndpoint: 'https://oauth2.googleapis.com/token',
-    };
-
-    // ✅ Create auth request (PKCE enabled)
-    const request = new AuthSession.AuthRequest({
-      clientId,
-      scopes: ['https://www.googleapis.com/auth/calendar.events'],
-      redirectUri,
-      responseType: AuthSession.ResponseType.Code,
-      usePKCE: true,
-      extraParams: {
-        prompt: 'consent',
-        access_type: 'offline',
-      },
-    });
-
-    // 👉 Step 1: Get authorization code
-    const result = await request.promptAsync(discovery);
-
-    if (result.type !== 'success' || !result.params.code) {
-      Alert.alert('Google Calendar', 'Authorization failed.');
+    if (isCalendarAdded) {
+      navigation.navigate('PlayerCalendar');
       return;
     }
 
-    // 👉 Step 2: Exchange code for access token
-    const tokenResponse = await fetch(discovery.tokenEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `client_id=${clientId}&grant_type=authorization_code&code=${result.params.code}&redirect_uri=${encodeURIComponent(
-        redirectUri
-      )}&code_verifier=${request.codeVerifier}`,
-    });
-
-    const tokenData = await tokenResponse.json();
-
-    if (!tokenData.access_token) {
-      logger.error('Token exchange failed', tokenData);
-      Alert.alert('Google Calendar', 'Failed to get access token.');
+    if (!event?.eventDateTime) {
+      Alert.alert('Cannot Add Event', 'Event date is missing.');
       return;
     }
 
-    // 👉 Step 3: Create calendar event
-    const startDate = new Date(event.eventDateTime);
-    const endDate = event.eventEndDateTime
-      ? new Date(event.eventEndDateTime)
-      : new Date(startDate.getTime() + 60 * 60 * 1000);
+    const clientId =
+      getGoogleCalendarClientId() ||
+      '204335986948-6hombupu358nsu7pgga7v2b6ume920vn.apps.googleusercontent.com';
 
-    const calendarPayload = {
-      summary: event.eventName ?? 'Rally Event',
-      location: event.eventLocation ?? '',
-      description: `Booked via Rally${
-        bookingId ? `\nBooking ID: ${bookingId}` : ''
-      }`,
-      start: {
-        dateTime: startDate.toISOString(),
-      },
-      end: {
-        dateTime: endDate.toISOString(),
-      },
-    };
+    if (!clientId) {
+      Alert.alert(
+        'Google Calendar',
+        'Missing Google OAuth client ID. Please update app configuration.',
+      );
+      return;
+    }
 
-    const calendarResponse = await fetch(
-      'https://www.googleapis.com/calendar/v3/calendars/primary/events',
-      {
+    try {
+      setIsAddingToCalendar(true);
+
+      const scheme = Constants.expoConfig?.scheme;
+      const schemeStr =
+        typeof scheme === 'string'
+          ? scheme
+          : Array.isArray(scheme)
+            ? scheme[0]
+            : 'rally-app';
+
+      const redirectUri = AuthSession.makeRedirectUri({
+        scheme: schemeStr,
+      });
+
+      // ✅ Discovery endpoints
+      const discovery = {
+        authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+        tokenEndpoint: 'https://oauth2.googleapis.com/token',
+      };
+
+      // ✅ Create auth request (PKCE enabled)
+      const request = new AuthSession.AuthRequest({
+        clientId,
+        scopes: ['https://www.googleapis.com/auth/calendar.events'],
+        redirectUri,
+        responseType: AuthSession.ResponseType.Code,
+        usePKCE: true,
+        extraParams: {
+          prompt: 'consent',
+          access_type: 'offline',
+        },
+      });
+
+      // 👉 Step 1: Get authorization code
+      const result = await request.promptAsync(discovery);
+
+      if (result.type !== 'success' || !result.params.code) {
+        Alert.alert('Google Calendar', 'Authorization failed.');
+        return;
+      }
+
+      // 👉 Step 2: Exchange code for access token
+      const tokenResponse = await fetch(discovery.tokenEndpoint, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${tokenData.access_token}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify(calendarPayload),
-      },
-    );
+        body: `client_id=${clientId}&grant_type=authorization_code&code=${result.params.code}&redirect_uri=${encodeURIComponent(
+          redirectUri
+        )}&code_verifier=${request.codeVerifier}`,
+      });
 
-    if (!calendarResponse.ok) {
-      const responseText = await calendarResponse.text();
-      logger.error('Calendar creation failed', responseText);
-      Alert.alert('Google Calendar', 'Failed to add event.');
-      return;
+      const tokenData = await tokenResponse.json();
+
+      if (!tokenData.access_token) {
+        logger.error('Token exchange failed', tokenData);
+        Alert.alert('Google Calendar', 'Failed to get access token.');
+        return;
+      }
+
+      // 👉 Step 3: Create calendar event
+      const startDate = new Date(event.eventDateTime);
+      const endDate = event.eventEndDateTime
+        ? new Date(event.eventEndDateTime)
+        : new Date(startDate.getTime() + 60 * 60 * 1000);
+
+      const calendarPayload = {
+        summary: event.eventName ?? 'Rally Event',
+        location: event.eventLocation ?? '',
+        description: `Booked via Rally${bookingId ? `\nBooking ID: ${bookingId}` : ''
+          }`,
+        start: {
+          dateTime: startDate.toISOString(),
+        },
+        end: {
+          dateTime: endDate.toISOString(),
+        },
+      };
+
+      const calendarResponse = await fetch(
+        'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(calendarPayload),
+        },
+      );
+
+      if (!calendarResponse.ok) {
+        const responseText = await calendarResponse.text();
+        logger.error('Calendar creation failed', responseText);
+        Alert.alert('Google Calendar', 'Failed to add event.');
+        return;
+      }
+
+      setIsCalendarAdded(true);
+      Alert.alert(
+        'Google Calendar',
+        'Event added successfully. Tap Done to open your calendar.'
+      );
+    } catch (error) {
+      logger.error('Add to calendar error', error);
+      Alert.alert('Google Calendar', 'Something went wrong.');
+    } finally {
+      setIsAddingToCalendar(false);
     }
-
-    setIsCalendarAdded(true);
-    Alert.alert(
-      'Google Calendar',
-      'Event added successfully. Tap Done to open your calendar.'
-    );
-  } catch (error) {
-    logger.error('Add to calendar error', error);
-    Alert.alert('Google Calendar', 'Something went wrong.');
-  } finally {
-    setIsAddingToCalendar(false);
-  }
-};
+  };
 
   const handleShare = () => {
     shareEvent({

@@ -17,7 +17,7 @@ import {
   useLeaveEvent,
 } from '@hooks/use-events';
 import { usePlayerBookings } from '@hooks/use-bookings';
-import { useMyEventInvitations, useAcceptEventInvitation, useDeclineEventInvitation } from '@hooks/use-event-invites'; 
+import { useMyEventInvitations, useAcceptEventInvitation, useDeclineEventInvitation } from '@hooks/use-event-invites';
 import { formatDate, shareEvent } from '@utils';
 import { logger } from '@dev-tools/logger';
 
@@ -41,7 +41,7 @@ export const useEventDetails = () => {
 
   // Fetch my invitations first so we can check if I'm invited
   const { data: invitesData, isLoading: isInvitesLoading } = useMyEventInvitations();
-  
+
   // Check for ANY invitation (pending or accepted) — not just pending
   const myInvitation = invitesData?.invitations?.find(
     (inv) => {
@@ -53,8 +53,8 @@ export const useEventDetails = () => {
 
   // Always allow private events — the backend handles access control.
   // The frontend should not block viewing private events for authenticated users.
-  const { data: event, isLoading, error } = useEvent(eventId, { 
-    forPlayer: true, 
+  const { data: event, isLoading, error } = useEvent(eventId, {
+    forPlayer: true,
     allowPrivate: true   // Backend is the source of truth for access control
   });
 
@@ -66,12 +66,12 @@ export const useEventDetails = () => {
   const joinedBooking = playerBookingsData?.data?.bookings?.find(b => {
     const matchEvent = b.eventId === eventId;
     if (!matchEvent) return false;
-    
+
     // If we are looking for a specific occurrence, match it
     if (occurrenceStart) {
       return (b.booking as any)?.occurrenceStart === occurrenceStart;
     }
-    
+
     // Otherwise match the parent/default (legacy or first instance)
     return !(b.booking as any)?.occurrenceStart || (b.booking as any)?.occurrenceStart === event?.eventDateTime;
   });
@@ -107,26 +107,26 @@ export const useEventDetails = () => {
   // Sync guestsCount with actual booking if already joined
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    
+
     if (playerBookingsData) {
-      logger.info('useEventDetails: playerBookingsData found', { 
+      logger.info('useEventDetails: playerBookingsData found', {
         count: playerBookingsData?.data?.bookings?.length,
         eventId,
-        found: !!joinedBooking 
+        found: !!joinedBooking
       });
     }
 
     if (joinedBooking) {
       const currentUserParticipant = event?.participants?.find(p => p.userId === user?.userId);
 
-      const bookedGuests = 
-        (joinedBooking as any)?.eventTotalAttendNumber ?? 
-        joinedBooking.booking?.guestsCount ?? 
-        (joinedBooking.booking as any)?.guestsCount ?? 
-        (joinedBooking.booking as any)?.guests ?? 
-        (joinedBooking.booking as any)?.guestCount ?? 
-        (joinedBooking as any)?.guestsCount ?? 
-        (joinedBooking as any)?.guests ?? 
+      const bookedGuests =
+        (joinedBooking as any)?.eventTotalAttendNumber ??
+        joinedBooking.booking?.guestsCount ??
+        (joinedBooking.booking as any)?.guestsCount ??
+        (joinedBooking.booking as any)?.guests ??
+        (joinedBooking.booking as any)?.guestCount ??
+        (joinedBooking as any)?.guestsCount ??
+        (joinedBooking as any)?.guests ??
         (joinedBooking as any)?.guestCount ??
         (currentUserParticipant as any)?.guestsCount ??
         (currentUserParticipant as any)?.guests ??
@@ -138,7 +138,7 @@ export const useEventDetails = () => {
         }, 0);
         return () => { if (timeoutId) clearTimeout(timeoutId); };
       }
-      return; 
+      return;
     }
 
     if (event) {
@@ -147,7 +147,7 @@ export const useEventDetails = () => {
       } else if (guestsCount === 0 && event.eventOurGuestAllowed === true) {
         timeoutId = setTimeout(() => setGuestsCount(1), 0);
       }
-      
+
       const spotsLeft = event.spotsInfo?.spotsLeft ?? event.availableSpots ?? (event.eventMaxGuest - (event.participantsCount ?? event.spotsInfo?.spotsBooked ?? 0));
       if (spotsLeft >= 0 && guestsCount > spotsLeft && !joinedBooking) {
         timeoutId = setTimeout(() => setGuestsCount(Math.max(1, spotsLeft)), 0);
@@ -188,7 +188,7 @@ export const useEventDetails = () => {
     if (!effectiveEventDateTime) return false;
     const now = new Date();
     const eventTime = new Date(effectiveEventDateTime);
-    
+
     // If the event session itself has started, registration is ended
     if (now > eventTime) {
       logger.info('isRegistrationEnded: True (Event started)', { now: now.toISOString(), eventTime: eventTime.toISOString() });
@@ -244,7 +244,7 @@ export const useEventDetails = () => {
     queryClient.invalidateQueries({ queryKey: ['event-details', eventId] });
     queryClient.invalidateQueries({ queryKey: ['event', eventId] });
     setIsBookingModalVisible(false);
-    
+
     navigation.navigate('BookingConfirmation', {
       eventId: event.eventId ?? eventId,
       bookingId: paymentData.bookingId || generateBookingId(),

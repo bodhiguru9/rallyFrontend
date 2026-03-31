@@ -472,44 +472,6 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
               </FlexView>
             </FlexView>
 
-            {/* Saved Cards Section */}
-            <FlexView style={styles.section}>
-              <FlexView style={styles.paymentDetailsHeader}>
-                <TextDs style={styles.sectionTitle}>Saved Cards</TextDs>
-                <TouchableOpacity onPress={() => setIsAddCardModalVisible(true)} activeOpacity={0.7}>
-                  <TextDs style={styles.addCardText}>+ Add New</TextDs>
-                </TouchableOpacity>
-              </FlexView>
-
-              {isLoadingCards ? (
-                <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
-              ) : savedCards.length > 0 ? (
-                savedCards.map((card) => (
-                  <Pressable
-                    key={card.cardId}
-                    style={[
-                      styles.cardItem,
-                      selectedCardId === card.cardId && styles.selectedCardItem,
-                    ]}
-                    onPress={() => setSelectedCardId(card.cardId)}
-                  >
-                    <FlexView flexDirection="row" alignItems="center" gap={spacing.sm} flex={1}>
-                      <TextDs style={styles.cardBrand}>{card.brand}</TextDs>
-                      <TextDs style={styles.cardLast4}>•••• {card.last4}</TextDs>
-                    </FlexView>
-                    <FlexView
-                      style={[
-                        styles.radioButton,
-                        selectedCardId === card.cardId && styles.radioButtonSelected,
-                      ]}
-                    />
-                  </Pressable>
-                ))
-              ) : (
-                <TextDs style={styles.noCardsText}>No cards saved yet.</TextDs>
-              )}
-            </FlexView>
-
             {/* Payment Details Section */}
             <FlexView style={styles.section}>
               <TouchableOpacity
@@ -585,6 +547,44 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
                   )}
                 </FlexView>
               </FlexView>
+            </FlexView>
+
+            {/* Saved Cards Section */}
+            <FlexView style={styles.section}>
+              <FlexView style={styles.paymentDetailsHeader}>
+                <TextDs style={styles.sectionTitle}>Saved Cards</TextDs>
+                <TouchableOpacity onPress={() => setIsAddCardModalVisible(true)} activeOpacity={0.7}>
+                  <TextDs style={styles.addCardText}>+ Add New</TextDs>
+                </TouchableOpacity>
+              </FlexView>
+
+              {isLoadingCards ? (
+                <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
+              ) : savedCards.length > 0 ? (
+                savedCards.map((card) => (
+                  <Pressable
+                    key={card.cardId}
+                    style={[
+                      styles.cardItem,
+                      selectedCardId === card.cardId && styles.selectedCardItem,
+                    ]}
+                    onPress={() => setSelectedCardId(card.cardId)}
+                  >
+                    <FlexView flexDirection="row" alignItems="center" gap={spacing.sm} flex={1}>
+                      <TextDs style={styles.cardBrand}>{card.brand}</TextDs>
+                      <TextDs style={styles.cardLast4}>•••• {card.last4}</TextDs>
+                    </FlexView>
+                    <FlexView
+                      style={[
+                        styles.radioButton,
+                        selectedCardId === card.cardId && styles.radioButtonSelected,
+                      ]}
+                    />
+                  </Pressable>
+                ))
+              ) : (
+                <TextDs style={styles.noCardsText}>No cards saved yet.</TextDs>
+              )}
             </FlexView>
 
             {/* Disclaimer */}

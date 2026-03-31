@@ -167,7 +167,7 @@ export const OrganiserCalendarScreen: React.FC = () => {
           activeTab={activeTab}
           onEventPress={handleEventPress}
           onBookmark={handleBookmark}
-          showStatus={true}
+          showStatus={false}
           displayTimeZone={DEFAULT_DISPLAY_TIME_ZONE}
         />
       </ScrollView>

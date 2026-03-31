@@ -8,8 +8,7 @@ import type { PlayerBooking } from '@services/booking-service';
 export const adaptEventDataToPlayerBooking = (event: EventData): PlayerBooking => {
   const now = new Date();
   const eventDate = new Date(event.eventDateTime);
-  const isCancelled = event.eventStatus === 'cancelled';
-  const isPast = eventDate < now || isCancelled;
+  const isPast = eventDate < now;
 
   return {
     ...event,
