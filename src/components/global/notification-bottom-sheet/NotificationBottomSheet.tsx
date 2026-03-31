@@ -7,6 +7,7 @@ import {
   useRejectEventJoinRequest,
   useAcceptSubscription,
   useDeclineSubscription,
+  useMarkNotificationAsRead,
 } from '@hooks';
 import { colors } from '@theme';
 import type {
@@ -32,6 +33,7 @@ export const NotificationBottomSheet: React.FC<NotificationBottomSheetProps> = (
   const rejectEventJoinRequestMutation = useRejectEventJoinRequest();
   const acceptSubscriptionMutation = useAcceptSubscription();
   const declineSubscriptionMutation = useDeclineSubscription();
+  const markAsReadMutation = useMarkNotificationAsRead();
 
   // Use API data only
   const notifications: Notification[] = notificationData?.notifications || [];
@@ -122,7 +124,12 @@ export const NotificationBottomSheet: React.FC<NotificationBottomSheetProps> = (
       <TouchableOpacity
         key={notification.notificationId}
         style={[styles.notificationItem, !notification.isRead && styles.notificationItemUnread]}
-        onPress={() => onNotificationPress?.(notification)}
+        onPress={() => {
+          if (!notification.isRead) {
+            markAsReadMutation.mutate(notification.notificationId);
+          }
+          onNotificationPress?.(notification);
+        }}
         activeOpacity={0.7}
       >
         <Image source={{ uri: userAvatar }} style={styles.userAvatar} />
@@ -192,6 +199,13 @@ export const NotificationBottomSheet: React.FC<NotificationBottomSheetProps> = (
             <TextDs style={[styles.tabText, activeTab === 'general' && styles.tabTextActive]}>
               General
             </TextDs>
+            {generalNotifications.filter((n) => !n.isRead).length > 0 && (
+              <FlexView style={styles.badge}>
+                <TextDs style={styles.badgeText}>
+                  {generalNotifications.filter((n) => !n.isRead).length}
+                </TextDs>
+              </FlexView>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -202,9 +216,11 @@ export const NotificationBottomSheet: React.FC<NotificationBottomSheetProps> = (
             <TextDs style={[styles.tabText, activeTab === 'requests' && styles.tabTextActive]}>
               Requests
             </TextDs>
-            {requestNotifications.length > 0 && (
+            {requestNotifications.filter((n) => !n.isRead).length > 0 && (
               <FlexView style={styles.badge}>
-                <TextDs style={styles.badgeText}>{requestNotifications.length}</TextDs>
+                <TextDs style={styles.badgeText}>
+                  {requestNotifications.filter((n) => !n.isRead).length}
+                </TextDs>
               </FlexView>
             )}
           </TouchableOpacity>

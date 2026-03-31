@@ -17,7 +17,7 @@ import { ArrowRight, ChevronUp, ChevronDown, X } from 'lucide-react-native';
 import { colors, spacing, borderRadius } from '@theme';
 import type { IBookingModalProps } from './BookingModal.types';
 import { styles } from './style/BookingModal.styles';
-import { useStripe } from '@stripe/stripe-react-native';
+import { useStripe, initStripe } from '@stripe/stripe-react-native';
 import { paymentService, SavedCard } from '@services';
 import { logger } from '@dev-tools/logger';
 import { useAuthStore } from '@store';
@@ -259,6 +259,16 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       // Update the global Stripe publishable key if provided by backend
       if (data.publishableKey) {
         useAuthStore.getState().setStripePublishableKey(data.publishableKey);
+        // Ensure native Stripe SDK is initialized with the new key before proceeding
+        try {
+          await initStripe({
+            publishableKey: data.publishableKey,
+            merchantIdentifier: 'merchant.com.rally.app',
+          });
+          logger.info('Stripe SDK re-initialized with new publishable key');
+        } catch (initError) {
+          logger.error('Failed to re-initialize Stripe SDK:', initError);
+        }
       }
 
       // Check if it's a free event
@@ -363,6 +373,15 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       // Update the global Stripe publishable key if provided by backend
       if (data.publishableKey) {
         useAuthStore.getState().setStripePublishableKey(data.publishableKey);
+        // Ensure native Stripe SDK is initialized with the new key before proceeding (Apple Pay)
+        try {
+          await initStripe({
+            publishableKey: data.publishableKey,
+            merchantIdentifier: 'merchant.com.rally.app',
+          });
+        } catch (initError) {
+          logger.error('Failed to re-initialize Stripe SDK for Apple Pay:', initError);
+        }
       }
 
       // Check if it's a free event

@@ -260,12 +260,8 @@ class Logger {
         error: errorData.error ?? undefined,
       };
     } else if (isSuccess && data && typeof data === 'object') {
-      // For success, only log success status and message
-      const responseData = data as Record<string, unknown>;
-      logData = {
-        success: responseData.success ?? true,
-        message: responseData.message ?? 'Request successful',
-      };
+      // For success, log the full response data to help debugging
+      logData = data;
     }
 
     const message = `${this.colorize(String(status), statusColor)} ${url}`;

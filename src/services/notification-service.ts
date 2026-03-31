@@ -53,11 +53,18 @@ export interface OrganiserNotificationsApiResponse {
   data: {
     unreadCount: number;
     notifications: Array<{
-      type: 'organiser-join-request' | 'event-join-request';
-      requestId: string;
+      type: 'organiser-join-request' | 'event-join-request' | 'event_cancelled' | 'player_cancel_event' | 'invitation_accepted' | 'player_accept_invitation' | string;
+      requestId?: string;
+      notificationId?: string;
       requestSubtype?: string;
       joinRequestId?: string;
       waitlistId?: string | null;
+      title?: string | null;
+      message?: string | null;
+      body?: string | null;
+      content?: string | null;
+      text?: string | null;
+      isRead?: boolean;
       user: {
         userId: number;
         userType: string;
@@ -109,19 +116,65 @@ export const notificationService = {
     const { data } = await apiClient.get<OrganiserNotificationsApiResponse>('/api/notifications/organiser', {
       params: { page },
     });
-    const mappedNotifications: Notification[] = (data.data.notifications || []).map((notification) => {
-      const isEventJoin = notification.type === 'event-join-request';
-      const type = isEventJoin ? 'event_join_request' : 'subscription_request';
+    
+    // Some endpoints may return { data: { notifications: [] } } while others may use top-level field
+    const raw = data.data || (data as any);
+    const notificationsList = raw.notifications || [];
+
+    const mappedNotifications: Notification[] = (notificationsList || []).map((notification) => {
+      // Prioritize backend-provided fields, similar to player side
+      const displayMessage =
+        notification.message ??
+        notification.body ??
+        notification.content ??
+        notification.text ??
+        notification.title ??
+        'You have a new notification';
+      
+      const displayTitle = notification.title ?? 'Notification';
+
+      const isEventJoin = notification.type === 'event-join-request' || notification.type === 'event_join_request';
+      const isOrganiserJoin = notification.type === 'organiser-join-request' || notification.type === 'organiser_join_request' || notification.type === 'subscription_request';
+      const isBooking = notification.type === 'event_booked' || notification.type === 'new_booking' || notification.type === 'player_joined' || notification.type === 'booking_confirmed';
+      const isCancellation = notification.type === 'player_cancel_event' || notification.type === 'booking_cancelled' || notification.type === 'event_cancelled' || notification.type === 'event_booking_cancelled';
+      
+      let type: Notification['type'] = notification.type as Notification['type'];
+      
+      // Keep internal request types mapping for compatibility with UI filters/actions
+      if (isEventJoin) type = 'event_join_request';
+      if (isOrganiserJoin) type = 'subscription_request';
+
       const userName = notification.user?.fullName ?? 'Someone';
       const eventTitle = notification.event?.eventTitle ?? notification.event?.eventName ?? null;
+      
+      // Fallback message construction if the backend didn't provide one
+      const fallbackMessage = isEventJoin
+        ? `${userName} requested to join the waitlist for your event${eventTitle ? ` "${eventTitle}"` : ''}`
+        : isOrganiserJoin
+          ? `${userName} requested to join your community`
+          : isBooking
+            ? `${userName} joined your event${eventTitle ? ` "${eventTitle}"` : ''}`
+            : isCancellation
+              ? `${userName} cancelled their booking for event${eventTitle ? ` "${eventTitle}"` : ''}`
+              : displayMessage;
+
+      const fallbackTitle = isEventJoin 
+        ? 'Event join request' 
+        : isOrganiserJoin 
+          ? 'Organiser join request' 
+          : isBooking
+            ? 'New Booking'
+            : isCancellation
+              ? 'Booking Cancelled'
+              : displayTitle;
+
       return {
-        notificationId: notification.requestId,
+        notificationId: notification.notificationId ?? notification.requestId ?? Math.random().toString(),
         type,
-        title: isEventJoin ? 'Event join request' : 'Organiser join request',
-        message: isEventJoin
-          ? `${userName} requested to join the waitlist for your event${eventTitle ? ` "${eventTitle}"` : ''}`
-          : `${userName} requested to join your community`,
-        isRead: notification.status !== 'pending',
+        title: notification.title ?? fallbackTitle,
+        message: notification.message ?? fallbackMessage,
+        // If the backend provides isRead, use it. Otherwise derive from status for requests.
+        isRead: !!notification.isRead || (notification.status?.toLowerCase() !== 'pending' && (isEventJoin || isOrganiserJoin)),
         createdAt: notification.createdAt,
         data: {
           eventId: notification.event?.eventId,
@@ -147,7 +200,7 @@ export const notificationService = {
     });
 
     return {
-      unreadCount: data.data.unreadCount,
+      unreadCount: mappedNotifications.filter((n) => !n.isRead).length,
       notifications: mappedNotifications,
       pagination: data.data.pagination,
     };

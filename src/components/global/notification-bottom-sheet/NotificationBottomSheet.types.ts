@@ -5,7 +5,10 @@ export type NotificationType =
   | 'follow'
   | 'event_joined'
   | 'booking_cancelled'
-  | 'subscription_request';
+  | 'subscription_request'
+  | 'event_cancelled'
+  | 'invitation_accepted'
+  | (string & {});
 
 export interface NotificationUser {
   userId: number;

@@ -54,6 +54,7 @@ const baseColors = {
     light: '#FAFAF0', // Light cream
     cream: '#FFFCF5', // Cream for event cards
     lightYellow: '#FFF9E6', // Very light yellow for alternating sections
+    lightBlue: '#C1D3E3', // Light blue for unread notifications
     white: '#FFFFFF', // Pure white for cards
   },
 

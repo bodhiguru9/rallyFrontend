@@ -59,10 +59,10 @@ export const styles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     borderBottomWidth: 1,
     borderBottomColor: colors.border.light,
-    backgroundColor: colors.background.white,
+    backgroundColor: 'transparent',
   },
   notificationItemUnread: {
-    backgroundColor: colors.background.lightYellow,
+    backgroundColor: colors.background.lightBlue,
   },
   userAvatar: {
     width: avatarSize.md,

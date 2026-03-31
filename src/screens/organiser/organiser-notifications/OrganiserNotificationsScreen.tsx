@@ -10,6 +10,7 @@ import {
   useRejectRequest,
   useAcceptSubscriptionRequest,
   useRejectSubscriptionRequest,
+  useMarkNotificationAsRead
 } from '@hooks';
 import { colors } from '@theme';
 import { styles } from './style/OrganiserNotificationsScreen.styles';
@@ -30,6 +31,7 @@ export const OrganiserNotificationsScreen: React.FC = () => {
   const rejectEventWaitlistMutation = useRejectRequest();
   const acceptSubscriptionMutation = useAcceptSubscriptionRequest();
   const rejectSubscriptionMutation = useRejectSubscriptionRequest();
+  const markAsReadMutation = useMarkNotificationAsRead();
 
   const notifications: Notification[] = useMemo(
     () => notificationData?.notifications || [],
@@ -77,9 +79,15 @@ export const OrganiserNotificationsScreen: React.FC = () => {
     }
   };
   const handleNotificationPress = (notification: Notification) => {
-    // Navigate to event details if it's an event-join-request with event data
-    if (notification.type === 'event_join_request' && notification.event?.eventId) {
-      navigation.navigate('OrganiserEventDetails', { eventId: notification.event.eventId });
+    // Mark as read when clicked
+    if (!notification.isRead) {
+      markAsReadMutation.mutate(notification.notificationId);
+    }
+
+    // Navigate to event details if it's an event-related notification
+    const eventId = notification.event?.eventId || notification.data?.eventId;
+    if (eventId) {
+      navigation.navigate('OrganiserEventDetails', { eventId });
     }
   };
 
@@ -137,7 +145,7 @@ export const OrganiserNotificationsScreen: React.FC = () => {
       <TouchableOpacity
         key={notification.notificationId}
         style={[styles.notificationItem, !notification.isRead && styles.notificationItemUnread]}
-        activeOpacity={0.7}
+        // activeOpacity={0.7}
         onPress={() => handleNotificationPress(notification)}
       >
         <Image source={{ uri: userAvatar }} style={styles.userAvatar} />
@@ -191,6 +199,13 @@ export const OrganiserNotificationsScreen: React.FC = () => {
           <TextDs style={[styles.tabText, activeTab === 'general' && styles.tabTextActive]}>
             General
           </TextDs>
+          {generalNotifications.filter((n) => !n.isRead).length > 0 && (
+            <FlexView style={styles.badge}>
+              <TextDs style={styles.badgeText}>
+                {generalNotifications.filter((n) => !n.isRead).length}
+              </TextDs>
+            </FlexView>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -201,9 +216,11 @@ export const OrganiserNotificationsScreen: React.FC = () => {
           <TextDs style={[styles.tabText, activeTab === 'requests' && styles.tabTextActive]}>
             Requests
           </TextDs>
-          {requestNotifications.length > 0 && (
+          {requestNotifications.filter((n) => !n.isRead).length > 0 && (
             <FlexView style={styles.badge}>
-              <TextDs style={styles.badgeText}>{requestNotifications.length}</TextDs>
+              <TextDs style={styles.badgeText}>
+                {requestNotifications.filter((n) => !n.isRead).length}
+              </TextDs>
             </FlexView>
           )}
         </TouchableOpacity>

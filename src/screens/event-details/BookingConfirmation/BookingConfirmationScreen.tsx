@@ -284,7 +284,7 @@ export const BookingConfirmationScreen: React.FC = () => {
               Amount Paid
             </TextDs>
             <FlexView style={styles.amountRow}>
-              {currency === 'AED' ? (
+              {currency === 'aed' ? (
                 <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
                   <ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />
                   <TextDs size={14} weight="regular" color="blueGray">
