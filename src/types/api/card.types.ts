@@ -24,5 +24,11 @@ export interface CardResponse {
 }
 
 export interface CardsListResponse {
-  cards: CardResponse[];
+  success: boolean;
+  publishableKey?: string;
+  debugUserId?: string | number;
+  debugCardsCount?: number;
+  data: {
+    cards: CardResponse[];
+  };
 }

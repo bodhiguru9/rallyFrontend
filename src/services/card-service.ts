@@ -1,20 +1,14 @@
 import { apiClient } from './api/api-client';
-import type { AddCardRequest, CardResponse } from '../types/api/card.types';
+import type { AddCardRequest, CardResponse, CardsListResponse } from '../types/api/card.types';
 
 export const cardService = {
   /**
    * Get all saved cards for the current user
    * @returns Promise with list of cards
    */
-  getCards: async (): Promise<CardResponse[]> => {
-    const response = await apiClient.get('/api/cards');
-    // API wraps responses in { success, message, data }
-    const payload = (response.data as any)?.data ?? response.data;
-    // Handle both array response and wrapped response
-    if (Array.isArray(payload)) {
-      return payload;
-    }
-    return payload?.cards || [];
+  getCards: async (): Promise<CardsListResponse> => {
+    const response = await apiClient.get<CardsListResponse>('/api/cards');
+    return response.data;
   },
 
   /**

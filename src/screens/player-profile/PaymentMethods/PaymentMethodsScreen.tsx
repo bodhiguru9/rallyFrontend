@@ -34,7 +34,25 @@ export const PaymentMethodsScreen: React.FC = () => {
   const fetchCards = async () => {
     try {
       setIsLoading(true);
-      const fetchedCards = await cardService.getCards();
+      const response = await cardService.getCards();
+      console.log('[DEBUG] PaymentMethodsScreen - Fetched Cards Response:', JSON.stringify(response, null, 2));
+
+      // Initialize Stripe if publishableKey is provided
+      if (response.publishableKey) {
+        const { initStripe } = require('@stripe/stripe-react-native');
+        try {
+          await initStripe({
+            publishableKey: response.publishableKey,
+            merchantIdentifier: 'merchant.com.rally.app',
+          });
+          console.log('[Stripe] SDK initialized in PaymentMethodsScreen');
+        } catch (initError) {
+          console.error('[Stripe] Failed to initialize in PaymentMethodsScreen:', initError);
+        }
+      }
+
+      const fetchedCards = response.data?.cards || [];
+
       // Map API response to PaymentCard format
       const mappedCards: PaymentCard[] = fetchedCards.map((card) => ({
         id: card.cardId,

@@ -102,6 +102,9 @@ export interface SavedCard {
 
 export interface GetSavedCardsResponse {
   success: boolean;
+  publishableKey?: string;
+  debugUserId?: string | number;
+  debugCardsCount?: number;
   data: {
     cards: SavedCard[];
   };

@@ -76,6 +76,20 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
     setIsLoadingCards(true);
     try {
       const response = await paymentService.getSavedCards();
+      
+      // Initialize Stripe if publishableKey is provided
+      if (response.publishableKey) {
+        try {
+          await initStripe({
+            publishableKey: response.publishableKey,
+            merchantIdentifier: 'merchant.com.rally.app',
+          });
+          logger.info('Stripe SDK initialized with key from getSavedCards');
+        } catch (initError) {
+          logger.error('Failed to initialize Stripe SDK in fetchCards:', initError);
+        }
+      }
+
       if (response.success && response.data.cards) {
         setSavedCards(response.data.cards);
         // Set default or first card if none selected

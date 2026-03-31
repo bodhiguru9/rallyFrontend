@@ -80,6 +80,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
             'Stripe is using an invalid publishable key. Restart the app after setting EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY to a real pk_test/pk_live key.',
           );
         } else {
+          console.log(error);
           Alert.alert('Card Error', message);
         }
         setIsSubmitting(false);
