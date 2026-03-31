@@ -247,7 +247,7 @@ export const useEventDetails = () => {
     
     navigation.navigate('BookingConfirmation', {
       eventId: event.eventId ?? eventId,
-      bookingId: paymentData.bookingId ?? generateBookingId(),
+      bookingId: paymentData.bookingId || generateBookingId(),
       amountPaid: paymentData.amount ?? totalPrice,
       currency: paymentData.currency || 'AED',
       guestsCount: guestsCount,

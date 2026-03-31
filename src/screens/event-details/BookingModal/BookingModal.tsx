@@ -13,15 +13,15 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { ArrowRight, ChevronUp, ChevronDown, X, Check, Plus } from 'lucide-react-native';
+import { ArrowRight, ChevronUp, ChevronDown, X } from 'lucide-react-native';
 import { colors, spacing, borderRadius } from '@theme';
 import type { IBookingModalProps } from './BookingModal.types';
 import { styles } from './style/BookingModal.styles';
 import { useStripe } from '@stripe/stripe-react-native';
-import { paymentService, cardService } from '@services';
+import { paymentService, SavedCard } from '@services';
 import { logger } from '@dev-tools/logger';
-import type { CardResponse } from '../../../types/api/card.types';
-import { AddCardModal } from '../../player-profile/PaymentMethods/components/AddCardModal';
+import { useAuthStore } from '@store';
+import { AddCardModal } from '@screens/player-profile/PaymentMethods/components/AddCardModal';
 
 export const BookingModal: React.FC<IBookingModalProps> = ({
   visible,
@@ -42,15 +42,11 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaymentDetailsExpanded, setIsPaymentDetailsExpanded] = useState(false);
   const [keyboardPadding, setKeyboardPadding] = useState(0);
-  const scrollViewRef = useRef<ScrollView>(null);
-
-  // Saved cards state
-  const [savedCards, setSavedCards] = useState<CardResponse[]>([]);
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [isAddCardModalVisible, setIsAddCardModalVisible] = useState(false);
   const [isLoadingCards, setIsLoadingCards] = useState(false);
-  const [showAddCardModal, setShowAddCardModal] = useState(false);
-
-  const { confirmPayment } = useStripe();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Listen for keyboard events to adjust bottom padding inside the modal
   useEffect(() => {
@@ -76,43 +72,55 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
     };
   }, []);
 
-  // Fetch saved cards when modal becomes visible
-  useEffect(() => {
-    if (visible) {
-      fetchSavedCards();
-    }
-  }, [visible]);
-
-  const fetchSavedCards = async () => {
+  const fetchCards = async () => {
+    setIsLoadingCards(true);
     try {
-      setIsLoadingCards(true);
-      const cards = await cardService.getCards();
-      setSavedCards(cards);
-      // Auto-select the default card or first card
-      const defaultCard = cards.find(c => c.isDefault) || cards[0];
-      if (defaultCard) {
-        setSelectedCardId(defaultCard.cardId);
+      const response = await paymentService.getSavedCards();
+      if (response.success && response.data.cards) {
+        setSavedCards(response.data.cards);
+        // Set default or first card if none selected
+        if (!selectedCardId) {
+          const defaultCard = response.data.cards.find((c) => c.isDefault);
+          if (defaultCard) {
+            setSelectedCardId(defaultCard.cardId);
+          } else if (response.data.cards.length > 0) {
+            setSelectedCardId(response.data.cards[0].cardId);
+          }
+        }
       }
-    } catch (error) {
-      logger.error('Failed to fetch cards:', error);
+    } catch (err) {
+      logger.error('Failed to fetch cards:', err);
     } finally {
       setIsLoadingCards(false);
     }
   };
 
-  const handleAddCardSubmit = async (cardData: {
+  useEffect(() => {
+    if (visible) {
+      fetchCards();
+    }
+  }, [visible]);
+
+  const onCardAdded = () => {
+    setIsAddCardModalVisible(false);
+    fetchCards();
+  };
+
+  const handleAddCard = async (cardData: {
     paymentMethodId: string;
     cardHolderName: string;
     isDefault: boolean;
   }) => {
     try {
-      const newCard = await cardService.addCard(cardData);
-      setSavedCards(prev => [...prev, newCard]);
-      setSelectedCardId(newCard.cardId);
-      setShowAddCardModal(false);
-    } catch (error) {
-      logger.error('Failed to add card:', error);
-      Alert.alert('Error', 'Failed to add card. Please try again.');
+      const response = await paymentService.saveCard(cardData);
+      if (response.success) {
+        onCardAdded();
+      } else {
+        Alert.alert('Error', response.message || 'Failed to save card');
+      }
+    } catch (err) {
+      logger.error('Failed to save card:', err);
+      Alert.alert('Error', 'An unexpected error occurred while saving the card.');
     }
   };
 
@@ -209,30 +217,10 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   const vat = Math.round(subtotalBeforeVAT * vatRate * 100) / 100; // Calculate VAT
   const finalTotal = subtotalBeforeVAT + vat;
 
-  const formatCardExpiry = (month: number, year: number): string => {
-    const m = String(month).padStart(2, '0');
-    const y = String(year).slice(-2);
-    return `${m}/${y}`;
-  };
+  const { confirmPayment } = useStripe();
 
   const handlePrimaryAction = async () => {
     if (isProcessing) {
-      return;
-    }
-
-    // Validate selected card
-    const selectedCard = savedCards.find(c => c.cardId === selectedCardId);
-    if (!selectedCard) {
-      Alert.alert('No Card Selected', 'Please select a payment card or add a new one.');
-      return;
-    }
-
-    // Saved cards must include Stripe payment method id so Stripe can charge them.
-    if (!selectedCard.stripePaymentMethodId) {
-      Alert.alert(
-        'Card Setup Required',
-        'This saved card is missing Stripe payment details. Please add the card again and retry payment.',
-      );
       return;
     }
 
@@ -246,9 +234,6 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         setIsProcessing(false);
         onBookEvent({
           promoCode: appliedPromoCode || (promoCode.trim() || null),
-          cardLast4: selectedCard.last4,
-          expiryMonth: selectedCard.expMonth,
-          expiryYear: selectedCard.expYear,
           amount: finalTotal,
           currency,
         });
@@ -257,7 +242,6 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
 
       // Step 1: Create booking and get Stripe Payment Intent
       logger.info(`Creating booking for event: ${eventId}, guests: ${guestsCount}`);
-      console.log('DEBUG: createBookingWithPayment called with:', { eventId, guestsCount });
       const bookingResponse = await paymentService.createBookingWithPayment(
         eventId,
         appliedPromoCode || (promoCode.trim() || null),
@@ -265,13 +249,17 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         occurrenceStart ?? null,
         occurrenceEnd ?? null,
       );
-      console.log('DEBUG: bookingResponse:', JSON.stringify(bookingResponse, null, 2));
 
       if (!bookingResponse.success) {
         throw new Error(bookingResponse.message || 'Failed to create booking');
       }
 
       const { data } = bookingResponse;
+
+      // Update the global Stripe publishable key if provided by backend
+      if (data.publishableKey) {
+        useAuthStore.getState().setStripePublishableKey(data.publishableKey);
+      }
 
       // Check if it's a free event
       if (data.isFreeEvent || !data.paymentRequired) {
@@ -281,47 +269,42 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
           promoCode: appliedPromoCode || (promoCode.trim() || null),
           amount: 0,
           currency,
+          bookingId: data.booking.bookingId,
         });
         return;
       }
 
-      // Step 2: Confirm payment with Stripe using card details
-      logger.info('Confirming payment with Stripe');
-      const { error, paymentIntent } = await confirmPayment(data.paymentIntent.clientSecret, {
+      // Step 2: Confirm Payment via Stripe Direct Flow
+      const selectedCard = savedCards.find((c) => c.cardId === selectedCardId);
+      if (!selectedCard) {
+        Alert.alert('Payment Required', 'Please select a payment method or add a new card.');
+        setIsProcessing(false);
+        return;
+      }
+
+      logger.info(`Confirming payment with card: ${selectedCard.cardId}`);
+      const { error: confirmError } = await confirmPayment(data.paymentIntent.clientSecret, {
         paymentMethodType: 'Card',
         paymentMethodData: {
           paymentMethodId: selectedCard.stripePaymentMethodId,
-          billingDetails: {
-            name: selectedCard.cardHolderName || data.user.fullName,
-            email: data.user.email,
-            phone: data.user.mobileNumber,
-          },
         },
       });
 
-      if (error) {
-        logger.error('Payment failed:', error);
-        Alert.alert(
-          'Payment Failed',
-          error.message || 'Your payment could not be processed. Please try again.',
-        );
+      if (confirmError) {
+        // User canceled or payment failed
+        if (confirmError.code === 'Canceled') {
+          logger.info('Payment canceled by user');
+        } else {
+          logger.error('Payment failed:', confirmError);
+          Alert.alert('Payment Error', confirmError.message || 'Your payment could not be processed.');
+        }
         setIsProcessing(false);
         return;
       }
 
-      if (paymentIntent?.status !== 'Succeeded') {
-        logger.warn('Payment Intent status:', paymentIntent?.status);
-        Alert.alert(
-          'Payment Incomplete',
-          'Payment was not completed successfully. Please try again.',
-        );
-        setIsProcessing(false);
-        return;
-      }
-
-      // Step 3: Verify payment on backend
+      // Step 4: Verify payment on backend
       logger.info('Verifying payment on backend');
-      const verifyResponse = await paymentService.verifyPayment(paymentIntent.id);
+      const verifyResponse = await paymentService.verifyPayment(data.paymentIntent.id);
 
       if (!verifyResponse.success) {
         throw new Error(verifyResponse.message || 'Failed to verify payment');
@@ -330,15 +313,12 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       logger.info('Payment verified successfully');
       setIsProcessing(false);
 
-      // Call onBookEvent with payment details
+      // Call onBookEvent to handle final navigation
       onBookEvent({
         promoCode: appliedPromoCode || (promoCode.trim() || null),
-        cardLast4: selectedCard.last4,
-        expiryMonth: selectedCard.expMonth,
-        expiryYear: selectedCard.expYear,
         amount: data.payment.finalAmount,
         currency: data.payment.currency,
-        paymentIntentId: paymentIntent.id,
+        paymentIntentId: data.paymentIntent.id,
         bookingId: data.booking.bookingId,
       });
     } catch (error) {
@@ -379,6 +359,11 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       }
 
       const { data } = bookingResponse;
+
+      // Update the global Stripe publishable key if provided by backend
+      if (data.publishableKey) {
+        useAuthStore.getState().setStripePublishableKey(data.publishableKey);
+      }
 
       // Check if it's a free event
       if (data.isFreeEvent || !data.paymentRequired) {
@@ -487,6 +472,44 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
               </FlexView>
             </FlexView>
 
+            {/* Saved Cards Section */}
+            <FlexView style={styles.section}>
+              <FlexView style={styles.paymentDetailsHeader}>
+                <TextDs style={styles.sectionTitle}>Saved Cards</TextDs>
+                <TouchableOpacity onPress={() => setIsAddCardModalVisible(true)} activeOpacity={0.7}>
+                  <TextDs style={styles.addCardText}>+ Add New</TextDs>
+                </TouchableOpacity>
+              </FlexView>
+
+              {isLoadingCards ? (
+                <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
+              ) : savedCards.length > 0 ? (
+                savedCards.map((card) => (
+                  <Pressable
+                    key={card.cardId}
+                    style={[
+                      styles.cardItem,
+                      selectedCardId === card.cardId && styles.selectedCardItem,
+                    ]}
+                    onPress={() => setSelectedCardId(card.cardId)}
+                  >
+                    <FlexView flexDirection="row" alignItems="center" gap={spacing.sm} flex={1}>
+                      <TextDs style={styles.cardBrand}>{card.brand}</TextDs>
+                      <TextDs style={styles.cardLast4}>•••• {card.last4}</TextDs>
+                    </FlexView>
+                    <FlexView
+                      style={[
+                        styles.radioButton,
+                        selectedCardId === card.cardId && styles.radioButtonSelected,
+                      ]}
+                    />
+                  </Pressable>
+                ))
+              ) : (
+                <TextDs style={styles.noCardsText}>No cards saved yet.</TextDs>
+              )}
+            </FlexView>
+
             {/* Payment Details Section */}
             <FlexView style={styles.section}>
               <TouchableOpacity
@@ -564,77 +587,6 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
               </FlexView>
             </FlexView>
 
-            {/* Credit/Debit Card Section */}
-            <FlexView style={styles.section}>
-              <TextDs style={styles.sectionTitle}>Credit/Debit Card</TextDs>
-              {isLoadingCards ? (
-                <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: spacing.md }} />
-              ) : savedCards.length > 0 ? (
-                savedCards.map((card) => (
-                  <TouchableOpacity
-                    key={card.cardId}
-                    activeOpacity={0.7}
-                    onPress={() => setSelectedCardId(card.cardId)}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingVertical: spacing.sm,
-                      gap: spacing.sm,
-                    }}
-                  >
-                    {/* Checkbox */}
-                    <FlexView
-                      style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: 4,
-                        borderWidth: 2,
-                        borderColor: selectedCardId === card.cardId ? colors.primary : colors.border.medium,
-                        backgroundColor: selectedCardId === card.cardId ? colors.primary : 'transparent',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {selectedCardId === card.cardId && (
-                        <Check size={14} color={colors.text.white} />
-                      )}
-                    </FlexView>
-                    {/* Card Info */}
-                    <FlexView style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <TextDs style={{ color: colors.text.primary, fontSize: 14 }}>
-                        {card.last4 ? `${card.last4.slice(0, 2)}** **** **** **${card.last4.slice(-2)}` : '•••• •••• •••• ••••'}
-                      </TextDs>
-                      <TextDs style={{ color: colors.text.secondary, fontSize: 13 }}>
-                        {formatCardExpiry(card.expMonth, card.expYear)}
-                      </TextDs>
-                    </FlexView>
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <TextDs style={{ color: colors.text.tertiary, fontSize: 13, marginVertical: spacing.sm }}>No saved cards</TextDs>
-              )}
-
-              {/* Add New Card Button */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => setShowAddCardModal(true)}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: spacing.xs,
-                  marginTop: spacing.sm,
-                  backgroundColor: colors.primary,
-                  paddingHorizontal: spacing.md,
-                  paddingVertical: spacing.sm,
-                  borderRadius: borderRadius.full,
-                  alignSelf: 'flex-start',
-                }}
-              >
-                <Plus size={16} color={colors.text.white} />
-                <TextDs style={{ color: colors.text.white, fontSize: 13, fontWeight: '600' }}>Add New Card</TextDs>
-              </TouchableOpacity>
-            </FlexView>
-
             {/* Disclaimer */}
             <TextDs style={styles.disclaimer}>
               By joining the session, you agree that you fit all the requirements of this event.
@@ -670,11 +622,10 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         </Animated.View>
       </Pressable>
 
-      {/* Add Card Modal */}
       <AddCardModal
-        visible={showAddCardModal}
-        onClose={() => setShowAddCardModal(false)}
-        onAddCard={handleAddCardSubmit}
+        visible={isAddCardModalVisible}
+        onClose={() => setIsAddCardModalVisible(false)}
+        onAddCard={handleAddCard}
       />
     </Modal>
   );

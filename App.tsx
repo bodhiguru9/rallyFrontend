@@ -54,7 +54,9 @@ function App() {
   const globalLoadingMessage = useAuthStore((state) => state.globalLoadingMessage);
   const isAuthInitialized = useAuthStore((state) => state.isAuthInitialized);
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
+  const storedStripeKey = useAuthStore((state) => state.stripePublishableKey);
   const stripePublishableKey = pickStripePublishableKey(
+    storedStripeKey,
     process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     (Constants.expoConfig?.extra as { stripe?: { publishableKey?: string } } | undefined)?.stripe
       ?.publishableKey,

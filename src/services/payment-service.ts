@@ -18,6 +18,7 @@ export interface BookingPaymentData {
     fullName: string;
     mobileNumber: string;
     profilePic: string | null;
+    stripeCustomerId?: string;
   };
   event: {
     eventId: string;
@@ -86,9 +87,31 @@ export interface VerifyPaymentResponse {
   };
 }
 
+export interface SavedCard {
+  cardId: string;
+  brand: string | null;
+  last4: string | null;
+  expiry: string | null;
+  expMonth: number | null;
+  expYear: number | null;
+  cardHolderName: string | null;
+  isDefault: boolean;
+  stripePaymentMethodId: string;
+  createdAt: string;
+}
+
+export interface GetSavedCardsResponse {
+  success: boolean;
+  data: {
+    cards: SavedCard[];
+  };
+}
+
 export const paymentService: {
   createBookingWithPayment: (eventId: string, promoCode?: string | null, guestsCount?: number, occurrenceStart?: string | null, occurrenceEnd?: string | null) => Promise<BookEventPaymentResponse>;
   verifyPayment: (paymentIntentId: string) => Promise<VerifyPaymentResponse>;
+  getSavedCards: () => Promise<GetSavedCardsResponse>;
+  saveCard: (cardData: { paymentMethodId: string; cardHolderName: string; isDefault: boolean }) => Promise<{ success: boolean; message: string }>;
 } = {
   /**
    * Create booking and get Stripe Payment Intent
@@ -124,6 +147,24 @@ export const paymentService: {
   verifyPayment: async (paymentIntentId: string): Promise<VerifyPaymentResponse> => {
     const { data } = await apiClient.post<VerifyPaymentResponse>('/api/payments/verify', {
       payment_intent_id: paymentIntentId,
+    });
+    return data;
+  },
+
+  getSavedCards: async (): Promise<GetSavedCardsResponse> => {
+    const { data } = await apiClient.get<GetSavedCardsResponse>('/api/cards');
+    return data;
+  },
+
+  saveCard: async (cardData: {
+    paymentMethodId: string;
+    cardHolderName: string;
+    isDefault: boolean;
+  }): Promise<{ success: boolean; message: string }> => {
+    const { data } = await apiClient.post<{ success: boolean; message: string }>('/api/cards', {
+      paymentMethodId: cardData.paymentMethodId,
+      cardHolderName: cardData.cardHolderName,
+      isDefault: cardData.isDefault,
     });
     return data;
   },

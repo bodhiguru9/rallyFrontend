@@ -14,9 +14,6 @@ export interface IBookingModalProps {
 
 export interface BookingModalPaymentPayload {
   promoCode?: string | null;
-  cardLast4?: string | null;
-  expiryMonth?: number | null;
-  expiryYear?: number | null;
   amount?: number;
   currency?: string;
   paymentIntentId?: string;

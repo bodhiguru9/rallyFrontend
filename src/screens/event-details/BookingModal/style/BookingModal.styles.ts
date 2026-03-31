@@ -252,4 +252,51 @@ export const styles = StyleSheet.create({
     ...getFontStyle(16, 'bold'),
     color: colors.text.white,
   },
+  addCardText: {
+    ...getFontStyle(12, 'bold'),
+    color: colors.primary,
+  },
+  cardItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#effcffff',
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border.white,
+  },
+  selectedCardItem: {
+    borderColor: colors.primary,
+    backgroundColor: '#e6f9faff',
+  },
+  cardBrand: {
+    ...getFontStyle(12, 'bold'),
+    color: colors.text.primary,
+    textTransform: 'capitalize',
+  },
+  cardLast4: {
+    ...getFontStyle(12, 'regular'),
+    color: colors.text.secondary,
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.border.medium,
+    backgroundColor: 'transparent',
+  },
+  radioButtonSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+    borderWidth: 4,
+  },
+  noCardsText: {
+    ...getFontStyle(14, 'regular'),
+    color: colors.text.tertiary,
+    textAlign: 'center',
+    marginVertical: spacing.md,
+  },
 });

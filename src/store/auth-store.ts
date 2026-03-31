@@ -17,11 +17,13 @@ interface AuthState {
   signupToken: string | null;
   verificationToken: string | null;
   selectedLocation: string;
+  stripePublishableKey: string | null;
   setUser: (user: User) => void;
   setToken: (token: string) => Promise<void>;
   setAuth: (user: User, token: string, requiresOTP?: boolean) => Promise<void>;
   setRequiresOTPVerification: (requires: boolean) => void;
   setGlobalLoading: (isLoading: boolean, message?: string) => void;
+  setStripePublishableKey: (key: string) => void;
   setSignupToken: (token: string | null) => void;
   clearSignupToken: () => void;
   setVerificationToken: (token: string | null) => void;
@@ -44,6 +46,7 @@ export const useAuthStore = create<AuthState>()(
       signupToken: null,
       verificationToken: null,
       selectedLocation: 'Dubai',
+      stripePublishableKey: null,
       setUser: (user) => {
         logger.store('setUser', {
           userId: user.id,
@@ -83,6 +86,10 @@ export const useAuthStore = create<AuthState>()(
       setGlobalLoading: (isLoading, message) => {
         logger.store('setGlobalLoading', { isLoading, message });
         set({ isGlobalLoading: isLoading, globalLoadingMessage: message });
+      },
+      setStripePublishableKey: (key) => {
+        logger.store('setStripePublishableKey', { keyPrefix: key.slice(0, 10) });
+        set({ stripePublishableKey: key });
       },
       setSignupToken: (token) => {
         logger.store('setSignupToken', { hasToken: !!token });
@@ -125,6 +132,7 @@ export const useAuthStore = create<AuthState>()(
           requiresOTPVerification: false,
           signupToken: null,
           verificationToken: null,
+          stripePublishableKey: null,
         });
         // Clear any in-progress signup form data
         useSignupFormStore.getState().clearSignupForm();
@@ -244,6 +252,7 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
         requiresOTPVerification: state.requiresOTPVerification,
         selectedLocation: state.selectedLocation,
+        stripePublishableKey: state.stripePublishableKey,
         // Exclude: token (stored in secure storage), signupToken, verificationToken, isGlobalLoading, globalLoadingMessage
       }),
     },
