@@ -60,7 +60,7 @@ export const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   notificationItemUnread: {
-    backgroundColor: 'rgba(91, 124, 153, 0.15)',
+    backgroundColor: "#C1D3E3",
   },
   userAvatar: {
     width: avatarSize.md,

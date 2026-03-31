@@ -131,8 +131,11 @@ export const useGroupedEvents = ({
 
     // Use local time comparison to determine if event is past
     filteredEvents.forEach((event) => {
+      const isCancelled = event.booking.bookingStatus === 'cancelled' || event.eventStatus === 'cancelled';
       let isLocalPast = false;
-      if (event.eventEndDateTime) {
+      if (isCancelled) {
+        isLocalPast = true;
+      } else if (event.eventEndDateTime) {
         isLocalPast = new Date(event.eventEndDateTime) < now;
       } else {
         // Fallback: assume 1 hour duration if end time missing
