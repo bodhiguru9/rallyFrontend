@@ -68,7 +68,8 @@
         "iosClientId": "204335986948-l22091iooiff6vn3m08k8cq2756tgpo6.apps.googleusercontent.com",
         "androidClientId": "204335986948-l22091iooiff6vn3m08k8cq2756tgpo6.apps.googleusercontent.com",
         "webClientId": "204335986948-l22091iooiff6vn3m08k8cq2756tgpo6.apps.googleusercontent.com"
-      }
+      },
+      "GOOGLE_MAPS_API_KEY": "AIzaSyDZ8ayOu_K2Qz_GQk6CkdWHsQeSBWnAPeI"
     }
   }
 }
