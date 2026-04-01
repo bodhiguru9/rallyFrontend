@@ -5,6 +5,7 @@ import { Activity, User, Users } from 'lucide-react-native';
 import { colors } from '@theme';
 import type { CalendarEventCardProps } from './CalendarEventCard.types';
 import { styles } from './style/CalendarEventCard.styles';
+import { IconTag } from '@components/global/IconTag';
 
 export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
   event,
@@ -38,18 +39,8 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
         <TextDs style={styles.title}>{event.title}</TextDs>
 
         <FlexView style={styles.tagsContainer}>
-          <FlexView style={[styles.tag, { backgroundColor: sportStyle.bg }]}>
-            <Activity size={12} color={sportStyle.text} />
-            <TextDs style={[styles.tagText, { color: sportStyle.text }]} numberOfLines={1}>
-              {event.sport}
-            </TextDs>
-          </FlexView>
-          <FlexView style={[styles.tag, { backgroundColor: eventTypeStyle.bg }]}>
-            <Users size={12} color={eventTypeStyle.text} />
-            <TextDs style={[styles.tagText, { color: eventTypeStyle.text }]} numberOfLines={1}>
-              {event.eventType}
-            </TextDs>
-          </FlexView>
+          <IconTag title={event.sport} />
+          <IconTag title={event.eventType} />
         </FlexView>
 
         <FlexView style={styles.infoRow}>

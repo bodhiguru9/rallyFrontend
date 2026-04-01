@@ -251,6 +251,9 @@ export const useEventDetails = () => {
       amountPaid: paymentData.amount ?? totalPrice,
       currency: paymentData.currency || 'AED',
       guestsCount: guestsCount,
+      subtotal: paymentData.subtotal,
+      vatAmount: paymentData.vatAmount,
+      discountAmount: paymentData.discountAmount,
     });
   };
 

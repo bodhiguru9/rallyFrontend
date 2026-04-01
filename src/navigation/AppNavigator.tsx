@@ -105,6 +105,9 @@ export type RootStackParamList = {
     amountPaid: number;
     currency: string;
     guestsCount: number;
+    subtotal?: number;
+    vatAmount?: number;
+    discountAmount?: number;
   };
   PlayerProfile: undefined;
   TopOrganiserPage: undefined;

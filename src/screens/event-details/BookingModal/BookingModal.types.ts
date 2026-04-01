@@ -18,4 +18,7 @@ export interface BookingModalPaymentPayload {
   currency?: string;
   paymentIntentId?: string;
   bookingId?: string;
+  subtotal?: number;
+  vatAmount?: number;
+  discountAmount?: number;
 }

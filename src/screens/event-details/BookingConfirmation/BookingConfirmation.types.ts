@@ -8,6 +8,9 @@ export interface BookingConfirmationProps {
   amountPaid: number;
   currency: string;
   guestsCount: number;
+  subtotal?: number;
+  vatAmount?: number;
+  discountAmount?: number;
   onDone: () => void;
   onAddToCalendar?: () => void;
   onShare?: () => void;

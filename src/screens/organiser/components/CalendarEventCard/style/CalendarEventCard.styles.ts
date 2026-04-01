@@ -26,6 +26,7 @@ export const styles = StyleSheet.create({
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'flex-start',
     gap: spacing.sm,
     marginBottom: spacing.sm,
   },

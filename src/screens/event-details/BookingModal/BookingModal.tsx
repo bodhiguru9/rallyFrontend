@@ -250,6 +250,9 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
           promoCode: appliedPromoCode || (promoCode.trim() || null),
           amount: finalTotal,
           currency,
+          subtotal: subtotalBeforeVAT,
+          vatAmount: vat,
+          discountAmount: promoDiscount,
         });
         return;
       }
@@ -344,13 +347,44 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         currency: data.payment.currency,
         paymentIntentId: data.paymentIntent.id,
         bookingId: data.booking.bookingId,
+        subtotal: subtotalBeforeVAT,
+        vatAmount: vat,
+        discountAmount: promoDiscount,
       });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Booking error:', error);
-      Alert.alert(
-        'Booking Failed',
-        error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.',
-      );
+      
+      let alertTitle = 'Booking Failed';
+      let alertMessage = 'An unexpected error occurred. Please try again.';
+
+      // Extract error from backend response if available (Axios)
+      const backendError = error.response?.data?.error || error.message;
+
+      if (backendError) {
+        if (backendError.includes('past occurrence')) {
+          alertTitle = 'Invalid Date';
+          alertMessage = 'You cannot book an event that has already started.';
+        } else if (backendError.includes('Already joined')) {
+          alertTitle = 'Already Booked';
+          alertMessage = 'You have already registered for this event.';
+        } else if (backendError.includes('at least')) {
+          alertTitle = 'Payment Amount Too Low';
+          alertMessage = 'Stripe requires a minimum payment of 2.00 AED. Please check the event price or number of guests.';
+        } else if (backendError.toLowerCase().includes('age') || backendError.toLowerCase().includes('old')) {
+          alertTitle = 'Age Restriction';
+          alertMessage = backendError;
+        } else if (backendError.toLowerCase().includes('promo code')) {
+          alertTitle = 'Promo Code Error';
+          alertMessage = backendError;
+        } else if (backendError.includes('occurrenceStart is required')) {
+          alertTitle = 'Selection Required';
+          alertMessage = 'Please select a date and time for this event.';
+        } else {
+          alertMessage = backendError;
+        }
+      }
+
+      Alert.alert(alertTitle, alertMessage);
       setIsProcessing(false);
     }
   };
