@@ -292,7 +292,7 @@ export const BookingConfirmationScreen: React.FC = () => {
               <FlexView style={[styles.amountRow, { marginBottom: spacing.xs }]}>
                 <TextDs size={14} weight="regular" color="secondary">Discount</TextDs>
                 <TextDs size={14} weight="regular" color="error">
-                  -{currency === 'aed' ? 'AED ' : `${currency} `}{route.params.discountAmount.toFixed(2)}
+                  -{currency === 'aed' ? `${<ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />}` : `${currency} `}{route.params.discountAmount.toFixed(2)}
                 </TextDs>
               </FlexView>
             )}
@@ -300,7 +300,7 @@ export const BookingConfirmationScreen: React.FC = () => {
               <FlexView style={[styles.amountRow, { marginBottom: spacing.xs }]}>
                 <TextDs size={14} weight="regular" color="secondary">VAT (5%)</TextDs>
                 <TextDs size={14} weight="regular" color="blueGray">
-                  {currency === 'aed' ? 'AED ' : `${currency} `}{route.params.vatAmount.toFixed(2)}
+                  {currency === 'aed' ? `${<ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />}` : `${currency} `}{route.params.vatAmount.toFixed(2)}
                 </TextDs>
               </FlexView>
             )}
@@ -360,6 +360,6 @@ export const BookingConfirmationScreen: React.FC = () => {
           <TextDs style={styles.doneButtonText}>Done</TextDs>
         </TouchableOpacity>
       </FlexView>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 };

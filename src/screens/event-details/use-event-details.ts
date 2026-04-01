@@ -20,6 +20,7 @@ import { usePlayerBookings } from '@hooks/use-bookings';
 import { useMyEventInvitations, useAcceptEventInvitation, useDeclineEventInvitation } from '@hooks/use-event-invites';
 import { formatDate, shareEvent } from '@utils';
 import { logger } from '@dev-tools/logger';
+import { isRecurringEvent, expandEventsForward } from '@utils/recurrence-utils';
 
 type EventDetailsScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -32,7 +33,11 @@ export const useEventDetails = () => {
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
   const navigation = useNavigation<EventDetailsScreenNavigationProp>();
   const route = useRoute<EventDetailsRouteProp>();
-  const { eventId, occurrenceStart, occurrenceEnd } = route.params;
+  const { eventId, occurrenceStart: routeOccurrenceStart, occurrenceEnd: routeOccurrenceEnd } = route.params;
+
+  // Fallback for missing occurrenceStart on recurring events
+  const [occurrenceStart, setOccurrenceStart] = useState<string | undefined | null>(routeOccurrenceStart);
+  const [occurrenceEnd, setOccurrenceEnd] = useState<string | undefined | null>(routeOccurrenceEnd);
 
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -57,6 +62,30 @@ export const useEventDetails = () => {
     forPlayer: true,
     allowPrivate: true   // Backend is the source of truth for access control
   });
+
+  // Handle occurrence metadata fallback for recurring events
+  useEffect(() => {
+    if (event && isRecurringEvent(event) && !occurrenceStart) {
+      logger.info('useEventDetails: Missing occurrenceStart for recurring event, finding next instance', { eventId });
+      // Find upcoming instances in the next month
+      const expanded = expandEventsForward([event as any], 1, 0); 
+      // Find the first instance that is NOT in the past
+      const nextInstance = expanded.find(inst => new Date(inst.eventDateTime) >= new Date());
+      
+      if (nextInstance) {
+        logger.info('useEventDetails: Found next instance', { 
+          start: (nextInstance as any).occurrenceStart,
+          original: event.eventDateTime 
+        });
+        setOccurrenceStart((nextInstance as any).occurrenceStart);
+        setOccurrenceEnd((nextInstance as any).occurrenceEnd);
+      } else {
+        // Final fallback to base date to at least have a value (backend may still 400 if it's past)
+        setOccurrenceStart(event.eventDateTime);
+        setOccurrenceEnd(event.eventEndDateTime);
+      }
+    }
+  }, [event, occurrenceStart]);
 
   const { data: playerBookingsData } = usePlayerBookings({
     enabled: isAuthenticated && !!eventId,

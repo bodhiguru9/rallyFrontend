@@ -83,6 +83,7 @@ export interface OrganiserNotificationsApiResponse {
       status: string;
       createdAt: string;
       requestType: string;
+      data?: any;
     }>;
     organiserJoinRequests?: number;
     eventWaitlistRequests?: number;
@@ -177,9 +178,10 @@ export const notificationService = {
         isRead: !!notification.isRead || (notification.status?.toLowerCase() !== 'pending' && (isEventJoin || isOrganiserJoin)),
         createdAt: notification.createdAt,
         data: {
-          eventId: notification.event?.eventId,
-          waitlistId: notification.waitlistId ?? undefined,
-          userId: notification.user?.userId.toString(),
+          ...notification.data,
+          eventId: notification.event?.eventId || (notification.data as any)?.eventId,
+          waitlistId: notification.waitlistId ?? (notification.data as any)?.waitlistId ?? undefined,
+          userId: notification.user?.userId?.toString() || (notification.data as any)?.userId?.toString(),
         },
         user: notification.user
           ? {

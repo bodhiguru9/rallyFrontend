@@ -149,9 +149,18 @@ export function expandRecurringEvents<T extends EventWithRecurrence>(
       const d = parseLocalDate(fullDate);
       if (isRecurringEventOnDate(event, d)) {
         const instanceDateTime = getRecurringEventInstanceDateTime(event, d);
+        let newEndDateTime = (event as any).eventEndDateTime;
+        if (newEndDateTime) {
+          const eventStart = new Date(event.eventDateTime);
+          const durationMs = new Date(newEndDateTime).getTime() - eventStart.getTime();
+          newEndDateTime = new Date(new Date(instanceDateTime).getTime() + durationMs).toISOString();
+        }
         result.push({
           ...event,
           eventDateTime: instanceDateTime,
+          eventEndDateTime: newEndDateTime,
+          occurrenceStart: instanceDateTime,
+          occurrenceEnd: newEndDateTime,
         } as T);
       }
     }
