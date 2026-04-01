@@ -22,10 +22,9 @@ import type { EventLocation } from '@app-types/location.types';
 import type { EventLocationSearchProps } from './EventLocationSearch.types';
 import { styles } from './style/EventLocationSearch.styles';
 
-/** Nominatim public server: avoid autocomplete spam; 4 chars reduces request volume. */
-const MIN_SEARCH_LENGTH = 4;
-/** 1s debounce required by Nominatim usage policy (~1 req/s). Not 300/500ms. */
-const DEBOUNCE_MS = 1000;
+/** Google Maps API allows more requests, so we can reduce debounce and min length. */
+const MIN_SEARCH_LENGTH = 3;
+const DEBOUNCE_MS = 500;
 
 export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
   value,
@@ -38,7 +37,7 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
   containerStyle,
   onDropdownVisibilityChange,
 }) => {
-  const [inputText, setInputText] = useState(value?.displayName ?? '');
+  const [inputText, setInputText] = useState(value?.name ?? value?.displayName ?? '');
   const [suggestions, setSuggestions] = useState<EventLocation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,8 +51,8 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
 
   // Sync input text when value is set externally (e.g. form reset)
   useEffect(() => {
-    setInputText(value?.displayName ?? '');
-  }, [value?.displayName]);
+    setInputText(value?.name ?? value?.displayName ?? '');
+  }, [value?.name, value?.displayName]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -142,7 +141,7 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
         city: location.city,
         country: location.country,
       });
-      setInputText(location.displayName);
+      setInputText(location.name || location.displayName);
       setSuggestions([]);
       setShowEmptyState(false);
       setError(null);
@@ -160,7 +159,7 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
     // Sync typed text to form immediately (so validation on submit gets it)
     const trimmed = inputTextRef.current.trim();
     if (!isSelectingRef.current) {
-      if (trimmed.length >= 3 && value?.displayName !== trimmed) {
+      if (trimmed.length >= 3 && value?.name !== trimmed && value?.displayName !== trimmed) {
         onChange({
           name: trimmed,
           displayName: trimmed,
@@ -178,7 +177,7 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
         setShowEmptyState(false);
       }
     }, 200);
-  }, [value?.displayName, value, onChange]);
+  }, [value?.name, value?.displayName, value, onChange]);
 
   const handleInputFocus = useCallback(() => {
     isSelectingRef.current = false;
