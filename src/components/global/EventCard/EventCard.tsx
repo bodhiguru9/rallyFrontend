@@ -240,20 +240,20 @@ export const EventCard: React.FC<EventCardProps> = ({
 
   // Cascading fallback logic: Event Image -> Organiser Profile Pic -> Rally Logo
   useEffect(() => {
-    console.log('🖼️ [EventCard] DEBUG DATA', {
-      id,
-      eventName: event.eventName,
-      isOrganiserUser,
-      userProfilePic: user?.profilePic,
-      hasEventImages: !!event.eventImages?.length,
-      rawEventImage,
-      organizerProfilePic,
-      eventImageUri,
-      organizerImageUri,
-      hasCreator: !!event.creator,
-      hasParticipants: !!(event as any).participants?.length,
-      foundCreatorInParts: !!creatorFromParticipants,
-    });
+    // console.log('🖼️ [EventCard] DEBUG DATA', {
+    //   id,
+    //   eventName: event.eventName,
+    //   isOrganiserUser,
+    //   userProfilePic: user?.profilePic,
+    //   hasEventImages: !!event.eventImages?.length,
+    //   rawEventImage,
+    //   organizerProfilePic,
+    //   eventImageUri,
+    //   organizerImageUri,
+    //   hasCreator: !!event.creator,
+    //   hasParticipants: !!(event as any).participants?.length,
+    //   foundCreatorInParts: !!creatorFromParticipants,
+    // });
 
     if (eventImageUri) {
       setImageSource({ uri: eventImageUri });
@@ -404,7 +404,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                 const playerBooking = displayEvent as PlayerBooking;
                 const spotsBooked = eventData.spotsInfo?.spotsBooked ?? (playerBooking as any).bookedCount ?? playerBooking.eventTotalAttendNumber ?? 0;
                 const capacity = eventData.spotsInfo?.totalSpots ?? playerBooking.eventMaxGuest ?? Math.max(spotsBooked, eventData.participantsCount || 0);
-                
+
                 const spotsFull = spotsBooked >= capacity;
                 const spotsLeft = Math.max(0, capacity - spotsBooked);
 
