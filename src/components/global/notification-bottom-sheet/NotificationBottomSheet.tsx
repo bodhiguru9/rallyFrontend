@@ -7,7 +7,7 @@ import {
   useRejectEventJoinRequest,
   useAcceptSubscription,
   useDeclineSubscription,
-  useMarkNotificationAsRead,
+  useMarkOrganiserNotificationAsRead,
 } from '@hooks';
 import { colors } from '@theme';
 import type {
@@ -33,7 +33,7 @@ export const NotificationBottomSheet: React.FC<NotificationBottomSheetProps> = (
   const rejectEventJoinRequestMutation = useRejectEventJoinRequest();
   const acceptSubscriptionMutation = useAcceptSubscription();
   const declineSubscriptionMutation = useDeclineSubscription();
-  const markAsReadMutation = useMarkNotificationAsRead();
+  const markAsReadMutation = useMarkOrganiserNotificationAsRead();
 
   // Use API data only
   const notifications: Notification[] = notificationData?.notifications || [];

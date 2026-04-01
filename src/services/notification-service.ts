@@ -255,6 +255,14 @@ export const notificationService = {
   },
 
   /**
+   * Mark an organiser notification as read
+   * @param notificationId - The notification ID
+   */
+  markOrganiserNotificationAsRead: async (notificationId: string): Promise<void> => {
+    await apiClient.put(`/api/notifications/organiser/${notificationId}/read`);
+  },
+
+  /**
    * Mark a player notification as read
    * @param notificationId - The notification ID
    */

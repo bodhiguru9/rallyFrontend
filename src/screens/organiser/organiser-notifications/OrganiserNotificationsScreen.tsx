@@ -10,7 +10,7 @@ import {
   useRejectRequest,
   useAcceptSubscriptionRequest,
   useRejectSubscriptionRequest,
-  useMarkNotificationAsRead
+  useMarkOrganiserNotificationAsRead
 } from '@hooks';
 import { colors } from '@theme';
 import { styles } from './style/OrganiserNotificationsScreen.styles';
@@ -31,7 +31,7 @@ export const OrganiserNotificationsScreen: React.FC = () => {
   const rejectEventWaitlistMutation = useRejectRequest();
   const acceptSubscriptionMutation = useAcceptSubscriptionRequest();
   const rejectSubscriptionMutation = useRejectSubscriptionRequest();
-  const markAsReadMutation = useMarkNotificationAsRead();
+  const markAsReadMutation = useMarkOrganiserNotificationAsRead();
 
   const notifications: Notification[] = useMemo(
     () => notificationData?.notifications || [],

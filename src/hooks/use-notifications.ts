@@ -53,6 +53,21 @@ export const useMarkNotificationAsRead = () => {
 };
 
 /**
+ * Hook to mark an organiser notification as read
+ */
+export const useMarkOrganiserNotificationAsRead = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (notificationId: string) => notificationService.markOrganiserNotificationAsRead(notificationId),
+    onSuccess: () => {
+      // Invalidate and refetch organiser notifications
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'organiser'] });
+    },
+  });
+};
+
+/**
  * Hook to mark a player notification as read
  */
 export const useMarkPlayerNotificationAsRead = () => {
