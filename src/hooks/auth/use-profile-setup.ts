@@ -113,21 +113,8 @@ export const useProfileSetup = () => {
     try {
       const result = await signUpMutation.mutateAsync(signUpData);
 
-      if (result.success) {
-        // Show success message and navigate to Home
-        Alert.alert(
-          'Success',
-          'Your account has been created successfully!',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                navigation.navigate('Home');
-              },
-            },
-          ]
-        );
-      }
+      // Navigation is handled automatically by global route protection listeners
+      // No manual navigation or Alert is required.
     } catch (error: unknown) {
       // Use centralized error handling utility
       logError(error, 'ProfileSetup - Complete Signup');

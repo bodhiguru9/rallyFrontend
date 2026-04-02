@@ -97,7 +97,7 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
       eventId: event.eventId ?? eventId,
       eventName: event.eventName ?? 'Event',
       creatorName: event.creator?.fullName ?? event.eventCreatorName ?? '',
-      formattedDateTime: formatDate(event.eventDateTime ?? '', 'display-range'),
+      formattedDateTime: formatDate(event.eventDateTime ?? '', 'display-range', { endTime: event.eventEndDateTime ?? undefined }),
       eventLocation: event.eventLocation ?? undefined,
     });
   };
@@ -165,7 +165,7 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
               <FlexView style={eventStyles.infoRow}>
                 <ImageDs image="time" size={16} />
                 <TextDs style={eventStyles.infoText}>
-                  {formatDate(event.eventDateTime ?? '', 'display-range')}
+                  {formatDate(event.eventDateTime ?? '', 'display-range', { endTime: event.eventEndDateTime ?? undefined })}
                 </TextDs>
               </FlexView>
               <FlexView style={eventStyles.infoRow}>

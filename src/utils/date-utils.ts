@@ -116,7 +116,7 @@ export const formatDate = (
 
       case 'booking-slot':
         // e.g., "23 Oct, 4:00 - 6:30 PM" (Figma: day + month, no weekday)
-        return formatBookingSlotRange(date, options?.endTime);
+        return formatBookingSlotRange(date, options?.endTime, locale, timeZone);
 
       default:
         return formatDate(date, 'datetime', options);
@@ -207,14 +207,46 @@ const formatDisplayRange = (
 /** Format for booking slots: "23 Oct, 4:00 - 6:30 PM" (no weekday, per Figma) */
 const formatBookingSlotRange = (
   startDate: Date,
-  endTime: string | Date | number | undefined
+  endTime: string | Date | number | undefined,
+  locale: string = 'en-US',
+  timeZone?: string,
 ): string => {
-  const start = moment(startDate);
-  const end = endTime ? moment(endTime) : moment(startDate).add(1, 'hour');
-  const datePart = start.format('D MMM');
-  const startTimeStr = start.format('h:mm');
-  const endTimeStr = end.format('h:mm A');
-  return `${datePart}, ${startTimeStr} - ${endTimeStr}`;
+  if (!timeZone) {
+    const start = moment(startDate);
+    const end = endTime ? moment(endTime) : moment(startDate).add(1, 'hour');
+    const datePart = start.format('D MMM');
+    const startTimeStr = start.format('h:mm');
+    const endTimeStr = end.format('h:mm A');
+    return `${datePart}, ${startTimeStr} - ${endTimeStr}`;
+  }
+
+  const endDate = endTime ? new Date(endTime) : new Date(startDate.getTime() + 60 * 60 * 1000);
+
+  const startParts = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone,
+  }).formatToParts(startDate);
+
+  const endParts = new Intl.DateTimeFormat(locale, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone,
+  }).formatToParts(endDate);
+
+  const day = getPartValue(startParts, 'day');
+  const month = getPartValue(startParts, 'month');
+  const startHour = getPartValue(startParts, 'hour');
+  const startMinute = getPartValue(startParts, 'minute');
+  const endHour = getPartValue(endParts, 'hour');
+  const endMinute = getPartValue(endParts, 'minute');
+  const endDayPeriod = getPartValue(endParts, 'dayPeriod').toUpperCase();
+
+  return `${day} ${month}, ${startHour}:${startMinute} - ${endHour}:${endMinute} ${endDayPeriod}`;
 };
 
 /**

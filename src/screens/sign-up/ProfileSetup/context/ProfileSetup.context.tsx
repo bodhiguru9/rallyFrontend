@@ -269,18 +269,8 @@ export const ProfileSetupProvider: React.FC<IProfileSetupProviderProps> = ({ chi
           );
           return;
         }
-        // Show success message and navigate - reset stack so back from Home doesn't return to auth
-        Alert.alert('Success', 'Your account has been created successfully!', [
-          {
-            text: 'OK',
-            onPress: () => {
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Home' }],
-              });
-            },
-          },
-        ]);
+        // Navigation is handled automatically by global route protection listeners
+        // No manual navigation or Alert is required.
       }
     } catch (error: unknown) {
       const err = error as Record<string, unknown>;

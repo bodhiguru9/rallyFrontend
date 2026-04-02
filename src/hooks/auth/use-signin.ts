@@ -151,17 +151,8 @@ export const useSignIn = () => {
     try {
       const result = await signInMutation.mutateAsync(signInData);
 
-      if (result.success) {
-        // Navigate to Home (handles both player and organiser)
-        Alert.alert('Success', 'Signed in successfully!', [
-          {
-            text: 'OK',
-            onPress: () => {
-              navigation.navigate('Home');
-            },
-          },
-        ]);
-      }
+      // Navigation is now handled by the global auth state change (e.g. useRouteProtection)
+      // No manual navigation or Alert is required.
     } catch (error: unknown) {
       // Use centralized error handling utility
       logError(error, 'SignIn - handleSignIn');

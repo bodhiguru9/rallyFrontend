@@ -258,7 +258,7 @@ export const useEventDetails = () => {
         eventId: event.eventId ?? eventId,
         eventName: event.eventName ?? 'Event',
         creatorName: event.creator?.fullName ?? event.eventCreatorName ?? '',
-        formattedDateTime: formatDate(effectiveEventDateTime ?? '', 'display-range'),
+        formattedDateTime: formatDate(effectiveEventDateTime ?? '', 'display-range', { endTime: effectiveEventEndDateTime ?? undefined }),
         eventLocation: event.eventLocation ?? undefined,
       });
     }
@@ -316,7 +316,7 @@ export const useEventDetails = () => {
             eventTitle: ev.eventName ?? 'Event',
             organizerName: ev.creator?.fullName || ev.eventCreatorName || 'Unknown Organizer',
             eventImage: ev.eventImages?.[0] || ev.gameImages?.[0] || 'https://via.placeholder.com/150',
-            eventDate: formatDate(effectiveEventDateTime ?? '', 'display-range'),
+            eventDate: formatDate(effectiveEventDateTime ?? '', 'display-range', { endTime: effectiveEventEndDateTime ?? undefined }),
             eventLocation: ev.eventLocation ?? '',
             amountDue: totalPrice,
             currency: 'AED',
@@ -339,7 +339,7 @@ export const useEventDetails = () => {
             eventTitle: ev.eventName ?? 'Event',
             organizerName: ev.creator?.fullName || ev.eventCreatorName || 'Unknown Organizer',
             eventImage: ev.eventImages?.[0] || ev.gameImages?.[0] || 'https://via.placeholder.com/150',
-            eventDate: formatDate(effectiveEventDateTime ?? '', 'display-range'),
+            eventDate: formatDate(effectiveEventDateTime ?? '', 'display-range', { endTime: effectiveEventEndDateTime ?? undefined }),
             eventLocation: ev.eventLocation ?? '',
             amountDue: totalPrice,
             currency: 'AED',
@@ -363,7 +363,7 @@ export const useEventDetails = () => {
             eventTitle: ev.eventName ?? 'Event',
             organizerName: ev.creator?.fullName || ev.eventCreatorName || 'Unknown Organizer',
             eventImage: ev.eventImages?.[0] || ev.gameImages?.[0] || 'https://via.placeholder.com/150',
-            eventDate: formatDate(effectiveEventDateTime ?? '', 'display-range'),
+            eventDate: formatDate(effectiveEventDateTime ?? '', 'display-range', { endTime: effectiveEventEndDateTime ?? undefined }),
             eventLocation: ev.eventLocation ?? '',
             amountDue: totalPrice,
             currency: 'AED',
@@ -459,6 +459,12 @@ export const useEventDetails = () => {
     navigation.navigate('Booking', { eventId, totalPrice, currency: 'AED', guestsCount });
   };
 
+  const exactPaidAmount = joinedBooking?.payment?.finalAmount 
+    ?? joinedBooking?.payment?.amount 
+    ?? event?.payment?.finalAmount 
+    ?? event?.payment?.amount 
+    ?? totalPrice;
+
   return {
     event: event ? {
       ...event,
@@ -483,6 +489,7 @@ export const useEventDetails = () => {
     setIsPaymentExpanded,
     isMembersModalVisible,
     totalPrice,
+    exactPaidAmount,
     variant: getVariant(),
     buttonText: getButtonText(),
     isBookingModalVisible,

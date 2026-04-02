@@ -43,7 +43,7 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({ event, onP
     setIsMembersModalVisible(false);
   };
 
-  const formattedDateTime = formatDate(event.eventDateTime, 'display-range');
+  const formattedDateTime = formatDate(event.eventDateTime, 'display-range', { endTime: event.eventEndDateTime ?? undefined });
   const handleShare = () => {
     shareEvent({
       eventId: event.id,
@@ -97,7 +97,7 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({ event, onP
             {/* Date and Time */}
             <FlexView flexDirection="row" gap={spacing.sm} alignItems="center" style={styles.infoRow}>
               <ImageDs image="time" size={16} />
-              <TextDs style={styles.infoText}>{formatDate(event.eventDateTime, 'display-range')}</TextDs>
+              <TextDs style={styles.infoText}>{formatDate(event.eventDateTime, 'display-range', { endTime: event.eventEndDateTime ?? undefined })}</TextDs>
             </FlexView>
             <FlexView flexDirection="row" gap={spacing.sm} alignItems="center" style={styles.infoRow}>
               <ImageDs image="locationPin" size={16} />

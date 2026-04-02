@@ -52,7 +52,6 @@ export const OrganiserHomeContent: React.FC<OrganiserHomeContentProps> = ({
           handleMostBookedPress: onMostBookedPress,
           onMemberPress,
           handleTotalMembersPress: onTotalMembersPress,
-          onMemberPress,
           transactions,
           isLoadingTransactions,
           onRefresh,

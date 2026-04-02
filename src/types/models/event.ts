@@ -71,6 +71,9 @@ export interface EventPayment {
   bookingId: string | null;
   paymentId: string | null;
   stripePaymentIntentId: string | null;
+  amount?: number;
+  discountAmount?: number;
+  finalAmount?: number;
 }
 
 export type EventType = 'social' | 'competitive' | 'training' | 'tournament';

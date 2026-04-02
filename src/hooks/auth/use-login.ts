@@ -108,17 +108,8 @@ export const useLogin = () => {
     try {
       const result: LoginResponse = await loginMutation.mutateAsync(loginData);
 
-      if (result.success) {
-        // Navigate to Home (handles both player and organiser)
-        Alert.alert('Success', 'Login successful!', [
-          {
-            text: 'OK',
-            onPress: () => {
-              navigation.navigate('Home');
-            },
-          },
-        ]);
-      }
+      // Navigation is handled automatically by global route protection listeners
+      // No manual navigation or Alert is required.
     } catch (error: unknown) {
       // Use centralized error handling utility
       logError(error, 'Login - handleLogin');

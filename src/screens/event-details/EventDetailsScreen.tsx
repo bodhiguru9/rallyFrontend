@@ -94,6 +94,7 @@ export const EventDetailsScreen: React.FC = () => {
     setGuestsCount,
     isMembersModalVisible,
     totalPrice,
+    exactPaidAmount,
     variant,
     buttonText,
     handleShare,
@@ -215,7 +216,7 @@ export const EventDetailsScreen: React.FC = () => {
         <FlexView style={styles.card}>
           <FlexView style={styles.infoRow}>
             <ImageDs image="Time" size={16} />
-            <TextDs style={styles.infoText}>{formatDate(event.eventDateTime ?? '', 'display-range')}</TextDs>
+            <TextDs style={styles.infoText}>{formatDate(event.eventDateTime ?? '', 'display-range', { endTime: event.eventEndDateTime ?? undefined })}</TextDs>
           </FlexView>
           <FlexView style={styles.infoRow}>
             <ImageDs image="LocationPin" size={16} />
@@ -312,7 +313,7 @@ export const EventDetailsScreen: React.FC = () => {
               <FlexView style={styles.paymentMethodRow}>
                 <TextDs size={16} weight="semibold" color='blueGray'>
                   <ImageDs image="DhiramIcon" size={14} style={{ marginRight: 4 }} />
-                  {totalPrice || event.eventPricePerGuest || 0}
+                  {exactPaidAmount || totalPrice || event.eventPricePerGuest || 0}
                 </TextDs>
                 <TextDs style={styles.paymentMethodText}>
                   Paid via Apple pay

@@ -107,7 +107,7 @@ export const useGoogleAuth = () => {
 
       await setAuth(user, data.data.token);
       setGlobalLoading(false);
-      navigation.navigate('Home');
+      // Navigation is handled automatically by global route protection listeners
     },
     onError: (error: unknown) => {
       setGlobalLoading(false);

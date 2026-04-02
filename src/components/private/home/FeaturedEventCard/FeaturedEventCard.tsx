@@ -138,7 +138,7 @@ export const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
             >
               <ImageDs image="time" size={17} />
               <TextDs size={14} weight="regular" color="white">
-                {formatDate(event.eventDateTime, 'display-range')}
+                {formatDate(event.eventDateTime, 'display-range', { endTime: event.eventEndDateTime ?? undefined })}
               </TextDs>
             </FlexView>
           </FlexView>

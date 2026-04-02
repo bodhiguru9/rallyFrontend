@@ -219,7 +219,7 @@ export const BookingConfirmationScreen: React.FC = () => {
       eventId: event.eventId ?? eventId,
       eventName: event.eventName ?? 'Event',
       creatorName: event.creator?.fullName ?? event.eventCreatorName ?? '',
-      formattedDateTime: formatDate(event.eventDateTime ?? '', 'display-range'),
+      formattedDateTime: formatDate(event.eventDateTime ?? '', 'display-range', { endTime: event.eventEndDateTime ?? undefined }),
       eventLocation: event.eventLocation ?? undefined,
     });
   };
@@ -268,7 +268,7 @@ export const BookingConfirmationScreen: React.FC = () => {
           <FlexView style={styles.eventDetailsRow}>
             <ImageDs image="time" size={16} />
             <TextDs style={styles.eventDetailText}>
-              {formatDate(event.eventDateTime ?? '', 'display-range')}
+              {formatDate(event.eventDateTime ?? '', 'display-range', { endTime: event.eventEndDateTime ?? undefined })}
             </TextDs>
           </FlexView>
 
@@ -291,17 +291,40 @@ export const BookingConfirmationScreen: React.FC = () => {
             {route.params.discountAmount !== undefined && route.params.discountAmount > 0 && (
               <FlexView style={[styles.amountRow, { marginBottom: spacing.xs }]}>
                 <TextDs size={14} weight="regular" color="secondary">Discount</TextDs>
-                <TextDs size={14} weight="regular" color="error">
-                  -{currency === 'aed' ? `${<ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />}` : `${currency} `}{route.params.discountAmount.toFixed(2)}
-                </TextDs>
+                <FlexView flexDirection="row" alignItems="center">
+                  <TextDs size={14} weight="regular" color="error">-</TextDs>
+                  {currency === 'aed' ? (
+                    <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
+                      <ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />
+                      <TextDs size={14} weight="regular" color="error">
+                        {route.params.discountAmount.toFixed(2)}
+                      </TextDs>
+                    </FlexView>
+                  ) : (
+                    <TextDs size={14} weight="regular" color="error">
+                      {currency} {route.params.discountAmount.toFixed(2)}
+                    </TextDs>
+                  )}
+                </FlexView>
               </FlexView>
             )}
             {route.params.vatAmount !== undefined && (
               <FlexView style={[styles.amountRow, { marginBottom: spacing.xs }]}>
                 <TextDs size={14} weight="regular" color="secondary">VAT (5%)</TextDs>
-                <TextDs size={14} weight="regular" color="blueGray">
-                  {currency === 'aed' ? `${<ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />}` : `${currency} `}{route.params.vatAmount.toFixed(2)}
-                </TextDs>
+                <FlexView flexDirection="row" alignItems="center">
+                  {currency === 'aed' ? (
+                    <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
+                      <ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />
+                      <TextDs size={14} weight="regular" color="blueGray">
+                        {route.params.vatAmount.toFixed(2)}
+                      </TextDs>
+                    </FlexView>
+                  ) : (
+                    <TextDs size={14} weight="regular" color="blueGray">
+                      {currency} {route.params.vatAmount.toFixed(2)}
+                    </TextDs>
+                  )}
+                </FlexView>
               </FlexView>
             )}
 

@@ -137,9 +137,9 @@ export const EventCard: React.FC<EventCardProps> = ({
     setIsMembersModalVisible(false);
   };
 
-  // Format date for display: "Sat 24 Oct, 1:00 - 2:00 PM"
   const formattedDateTime = formatDate(displayEvent.eventDateTime, 'display-range', {
     timeZone: displayTimeZone,
+    endTime: displayEvent.eventEndDateTime ?? undefined,
   });
 
   const handleShare = () => {

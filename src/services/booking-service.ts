@@ -101,6 +101,9 @@ export interface PlayerBooking {
   };
   payment?: {
     paymentStatus: string;
+    amount?: number;
+    discountAmount?: number;
+    finalAmount?: number;
   };
   creator?: {
     userId: number;
