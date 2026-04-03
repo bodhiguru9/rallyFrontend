@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@components/global/Card';
 import { ProgressBar } from '@components/global/ProgressBar';
@@ -110,13 +111,6 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
       };
     });
 
-  // Joined = participants from API, excluding only those with explicit paymentStatus='pending'.
-  // If backend doesn't send paymentStatus, treat as joined (backend is source of truth).
-  const hasExplicitPaymentPending = (p: typeof allParticipants[0]) => {
-    const ps = String(p.paymentStatus ?? (p as any).payment_status ?? '').toLowerCase();
-    return ps === 'pending' || ps.includes('pending');
-  };
-  const participants = allParticipants.filter((p) => !hasExplicitPaymentPending(p));
   const spotsBooked = calculateSpotsFilled(event);
   const totalSpots = event.spotsInfo?.totalSpots || event.eventMaxGuest || 0;
 
@@ -129,13 +123,93 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
 
   const spotsAvailable = totalSpots - spotsBooked;
 
-  // Fetch participants with joinedAt (booking time) from GET /api/events/:eventId/participants
+  // Fetch participants directly as a fallback when event details payload has empty participants.
   const { data: participantsData } = useQuery({
-    queryKey: ['event-participants', event.eventId],
-    queryFn: () => eventService.getEventParticipants(event.eventId),
-    enabled: !!event.eventId && participants.length > 0,
+    queryKey: ['event-participants', event.eventId, eventStart],
+    queryFn: async () => {
+      try {
+        const { data } = await apiClient.get(`/api/events/${event.eventId}/participants`, {
+          params: eventStart ? { occurrenceStart: eventStart } : undefined,
+        });
+        return ((data as any)?.data?.participants ?? (data as any)?.participants ?? []) as Array<Record<string, any>>;
+      } catch {
+        const { data } = await apiClient.get(`/api/events/${event.eventId}/participants`);
+        return ((data as any)?.data?.participants ?? (data as any)?.participants ?? []) as Array<Record<string, any>>;
+      }
+    },
+    enabled: !!event.eventId,
   });
-  const participantsWithJoinedAt = participantsData?.participants ?? [];
+  const participantsFromApi = useMemo(() => {
+    return (participantsData ?? []).map((p) => {
+      const raw = p as any;
+      const booking = raw.booking ?? raw.bookingDetails ?? {};
+      const bookingSlots = Array.isArray(booking?.bookingSlots) ? booking.bookingSlots : [];
+      const slots = Array.isArray(booking?.slots) ? booking.slots : [];
+      const firstSlot = bookingSlots[0] ?? slots[0] ?? null;
+      const slotFromNested = firstSlot
+        ? { start: firstSlot.startTime ?? firstSlot.start_time ?? firstSlot.start, end: firstSlot.endTime ?? firstSlot.end_time ?? firstSlot.end }
+        : null;
+
+      const guestCountRaw =
+        raw.guestCount ??
+        raw.guest_count ??
+        raw.guests ??
+        raw.guestsCount ??
+        raw.guests_count ??
+        booking.guestCount ??
+        booking.guest_count ??
+        booking.guests ??
+        booking.guestsCount ??
+        booking.guests_count;
+      const guestCount =
+        typeof guestCountRaw === 'number'
+          ? guestCountRaw
+          : typeof raw.eventTotalAttendNumber === 'number' && raw.eventTotalAttendNumber > 1
+            ? raw.eventTotalAttendNumber - 1
+            : typeof booking.eventTotalAttendNumber === 'number' && booking.eventTotalAttendNumber > 1
+              ? booking.eventTotalAttendNumber - 1
+              : 0;
+
+      return {
+        ...raw,
+        userId: raw.userId ?? raw.user?.userId ?? raw.id,
+        fullName: raw.fullName ?? raw.user?.fullName ?? raw.name ?? 'Participant',
+        profilePic: raw.profilePic ?? raw.user?.profilePic ?? null,
+        guestCount,
+        paymentStatus: raw.paymentStatus ?? raw.payment_status ?? null,
+        slotStartTime:
+          raw.slotStartTime ??
+          raw.slot_start_time ??
+          raw.startTime ??
+          raw.start_time ??
+          raw.bookingStartTime ??
+          raw.booking_start_time ??
+          booking.slotStartTime ??
+          booking.slot_start_time ??
+          booking.startTime ??
+          booking.start_time ??
+          slotFromNested?.start ??
+          undefined,
+        slotEndTime:
+          raw.slotEndTime ??
+          raw.slot_end_time ??
+          raw.endTime ??
+          raw.end_time ??
+          raw.bookingEndTime ??
+          raw.booking_end_time ??
+          booking.slotEndTime ??
+          booking.slot_end_time ??
+          booking.endTime ??
+          booking.end_time ??
+          slotFromNested?.end ??
+          undefined,
+        amountPaid: raw.amountPaid ?? raw.amount_paid ?? booking.amountPaid ?? booking.amount_paid ?? undefined,
+      };
+    });
+  }, [participantsData]);
+
+  const participants = allParticipants.length > 0 ? allParticipants : participantsFromApi;
+  const participantsWithJoinedAt = participantsData ?? [];
   const joinedAtByUserId = new Map<number, string>();
   for (const p of participantsWithJoinedAt) {
     const bookingTime = (p as any).joinedAt ?? (p as any).joined_at ?? (p as any).bookedAt ?? (p as any).booked_at ?? (p as any).createdAt ?? (p as any).created_at;
@@ -164,7 +238,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
 
   const allPendingRequests = pendingRequestsData?.data?.pendingRequests ?? [];
   // Anyone in participants (from API) is joined - filter them from Requests
-  const joinedUserIds = allParticipants.map((p) => p.userId);
+  const joinedUserIds = participants.map((p) => p.userId).filter(Boolean);
   const joinedSet = new Set(joinedUserIds);
   const isRequestPaid = (r: { user: { userId: number }; paymentStatus?: string | null; payment_status?: string | null }) => {
     const s = String(r.paymentStatus ?? r.payment_status ?? '').toLowerCase();
