@@ -147,10 +147,11 @@ export const styles = StyleSheet.create({
     gap: spacing.xs,
     borderWidth: 1,
     borderColor: colors.border.white,
-    backgroundColor: colors.glass.background.white,
+    backgroundColor: colors.background.secondary,
     borderRadius: borderRadius.full,
     justifyContent: 'center',
     paddingInline: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   addToCalendarText: {
     ...getFontStyle(8, 'medium'),

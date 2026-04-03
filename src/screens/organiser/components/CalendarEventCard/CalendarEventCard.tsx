@@ -1,32 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TextDs, FlexView, ImageDs } from '@components';
 import { TouchableOpacity, Image } from 'react-native';
-import { Activity, User, Users } from 'lucide-react-native';
+import { User } from 'lucide-react-native';
 import { colors } from '@theme';
 import type { CalendarEventCardProps } from './CalendarEventCard.types';
 import { styles } from './style/CalendarEventCard.styles';
 import { IconTag } from '@components/global/IconTag';
+import { MembersModal } from '@screens/event-details/MembersModal';
+import { useEvent } from '@hooks/use-events';
+import { calculateSpotsFilled } from '@utils';
+import type { EventData } from '@app-types';
 
 export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
   event,
   onPress,
 }) => {
+  const [isMembersModalVisible, setIsMembersModalVisible] = useState(false);
+
+  const { data: fullEvent } = useEvent(event.id, {
+    enabled: isMembersModalVisible,
+    allowPrivate: true,
+  });
+
   const handlePress = () => {
     if (onPress) {
       onPress(event.id);
     }
   };
 
-  const getCategoryStyle = (category: string) => {
-    const cat = category.toLowerCase();
-    if (cat === 'social') {
-      return { bg: '#E3F2FD', text: colors.primary };
-    }
-    return { bg: '#FFF3E7', text: '#FF6B35' };
+  const handleOpenMembersModal = () => {
+    setIsMembersModalVisible(true);
   };
 
-  const sportStyle = { bg: '#FFF3E7', text: '#FF6B35' };
-  const eventTypeStyle = getCategoryStyle(event.eventType);
+  const handleCloseMembersModal = () => {
+    setIsMembersModalVisible(false);
+  };
+
+  const displayParticipants = fullEvent?.participants || event.participants.map(p => ({
+    userId: parseInt(p.id),
+    profilePic: p.avatar,
+    fullName: 'Player',
+  }));
 
   return (
     <TouchableOpacity
@@ -55,7 +69,11 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
           <TextDs style={styles.infoText}>{event.location}</TextDs>
         </FlexView>
 
-        <FlexView style={styles.participantsContainer}>
+        <TouchableOpacity 
+          style={styles.participantsContainer} 
+          onPress={handleOpenMembersModal}
+          activeOpacity={0.7}
+        >
           {event.participants.slice(0, 4).map((participant, index) => (
             <FlexView
               key={participant.id}
@@ -76,9 +94,22 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
               )}
             </FlexView>
           ))}
-          <TextDs style={styles.spotsText}>Spots Available</TextDs>
-        </FlexView>
+          <TextDs style={styles.spotsText}>
+            {fullEvent ? `${calculateSpotsFilled(fullEvent)}/${fullEvent.eventMaxGuest} joined` : 'View Members'}
+          </TextDs>
+        </TouchableOpacity>
       </FlexView>
+
+      <MembersModal
+        visible={isMembersModalVisible}
+        eventTitle={event.title}
+        organizerName="You"
+        participants={displayParticipants as any[]}
+        spotsFilled={fullEvent ? calculateSpotsFilled(fullEvent) : event.participants.length}
+        totalSpots={fullEvent?.eventMaxGuest || event.participants.length}
+        isLoading={!fullEvent && isMembersModalVisible}
+        onClose={handleCloseMembersModal}
+      />
     </TouchableOpacity>
   );
 };

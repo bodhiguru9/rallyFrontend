@@ -45,6 +45,8 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
     isEditMode,
     editFormData,
     isSaving,
+    occurrenceStart,
+    occurrenceEnd,
     handleShare,
     handleEdit,
     handleCancelEdit,
@@ -134,7 +136,10 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
         >
           <TextDs size={16} weight="regular" color={editFormData.eventDateTime ? 'primary' : 'secondary'}>
             {editFormData.eventDateTime
-              ? formatDate(editFormData.eventDateTime, 'display-range', { timeZone: DEFAULT_DISPLAY_TIME_ZONE })
+              ? formatDate(editFormData.eventDateTime, 'display-range', { 
+                  endTime: editFormData.eventEndDateTime ?? undefined,
+                  timeZone: DEFAULT_DISPLAY_TIME_ZONE 
+                })
               : 'Date & Time'}
           </TextDs>
         </TouchableOpacity>
@@ -210,7 +215,6 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
 
   // About Tab Content (read-only)
   const renderAboutTab = () => (
-    console.log("EVEBNT IBFO:", event),
     <ScrollView
       style={styles.scrollView}
       showsVerticalScrollIndicator={false}
@@ -221,7 +225,7 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
       <FlexView style={styles.card}>
         <FlexView style={styles.infoRow}>
           <ImageDs image="PeachClock" size={16} />
-          <TextDs style={styles.infoText}>{formatDate(event.eventDateTime ?? '', 'display-range', { timeZone: DEFAULT_DISPLAY_TIME_ZONE })}</TextDs>
+          <TextDs style={styles.infoText}>{formatDate((occurrenceStart || event.eventDateTime) ?? '', 'display-range', { endTime: (occurrenceEnd || event.eventEndDateTime) ?? undefined, timeZone: DEFAULT_DISPLAY_TIME_ZONE })}</TextDs>
         </FlexView>
         <FlexView style={styles.infoRow}>
           <ImageDs image="GreenPin" size={16} />
@@ -404,8 +408,9 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
         <DateTimePickerModal
           visible={showEditDateTimePicker}
           onClose={() => setShowEditDateTimePicker(false)}
-          onConfirm={(date) => {
-            updateEditFormData('eventDateTime', date.toISOString());
+          onConfirm={(startDate, endDate) => {
+            updateEditFormData('eventDateTime', startDate.toISOString());
+            updateEditFormData('eventEndDateTime', endDate.toISOString());
             setShowEditDateTimePicker(false);
           }}
           initialDate={editInitialDate}
@@ -435,6 +440,8 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
           }
           spotsFilled={event.spotsInfo?.spotsBooked || 0}
           totalSpots={event.spotsInfo?.totalSpots || 0}
+          occurrenceStart={occurrenceStart}
+          occurrenceEnd={occurrenceEnd}
           onClose={handleCloseMembersModal}
         />
       )}

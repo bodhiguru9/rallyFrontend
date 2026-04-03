@@ -177,6 +177,7 @@ export const eventService = {
     eventApprovalReq: boolean;
     eventRegistrationStartTime?: string;
     eventRegistrationEndTime?: string;
+    eventEndDateTime?: string;
     eventFrequency?: string[];
     /** Recurrence end date (YYYY-MM-DD) when "Ends On" is selected */
     eventFrequencyEndDate?: string;
@@ -193,6 +194,9 @@ export const eventService = {
     formData.append('eventType', eventData.eventType);
     if (eventData.eventDateTime != null) {
       formData.append('eventDateTime', eventData.eventDateTime);
+    }
+    if (eventData.eventEndDateTime != null) {
+      formData.append('eventEndDateTime', eventData.eventEndDateTime);
     }
     formData.append('eventLocation', eventData.eventLocation);
     formData.append('eventDescription', eventData.eventDescription);

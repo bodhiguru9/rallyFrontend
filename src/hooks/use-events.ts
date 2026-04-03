@@ -41,6 +41,8 @@ export interface UseEventOptions {
   allowPrivate?: boolean;
   /** From useQuery options */
   enabled?: boolean;
+  /** For recurring events, specify which occurrence date to fetch participants for. */
+  occurrenceStart?: string;
 }
 
 /**
@@ -49,15 +51,15 @@ export interface UseEventOptions {
  * When forPlayer is true, private events are not shown (throws so UI shows not found).
  */
 export const useEvent = (id: string, options?: UseEventOptions) => {
-  const { forPlayer = false, allowPrivate = false, enabled } = options ?? {};
+  const { forPlayer = false, allowPrivate = false, enabled, occurrenceStart } = options ?? {};
   return useQuery({
-    queryKey: ['event', id, forPlayer, allowPrivate],
+    queryKey: ['event', id, forPlayer, allowPrivate, occurrenceStart],
     queryFn: async () => {
       const response = await apiClient.get<{
         success: boolean;
         message: string;
         data: { event: ApiEvent };
-      }>(`/api/events/${id}`);
+      }>(`/api/events/${id}`); // REVERT: No occurrenceStart passed here anymore
 
       if (!response.data.success || !response.data.data.event) {
         throw new Error('Failed to fetch event details');
@@ -66,7 +68,7 @@ export const useEvent = (id: string, options?: UseEventOptions) => {
       const apiEvent = response.data.data.event;
 
       // Transform ApiEvent to EventData by adding missing fields (API booking shape may differ)
-      const apiEventAny = apiEvent as Record<string, unknown>;
+      const apiEventAny = apiEvent as unknown as Record<string, unknown>;
       const normalized = normalizeEventJoinFlags({
         ...apiEvent,
         id: apiEvent.eventId, // Map eventId to id for BaseEntity
@@ -88,6 +90,40 @@ export const useEvent = (id: string, options?: UseEventOptions) => {
         isPending: apiEvent.isPending ?? false,
         isLeave: apiEvent.isLeave ?? false,
       } as AnyEvent) as EventData;
+
+      // DO NOT Re-fetch participants if they already exist (though they're usually empty on load)
+      // If occurrenceStart is specified, always fetch from the dedicated endpoint for accuracy
+      if (occurrenceStart) {
+        try {
+          const { data: participantsData } = await apiClient.get(`/api/events/${id}/participants`, {
+            params: { occurrenceStart }
+          });
+          
+          if (participantsData?.success) {
+            normalized.participants = participantsData.data?.participants ?? participantsData.participants ?? [];
+            
+            // Also update spots info from the count in the participant result if available (or calculate)
+            if (participantsData.data?.pagination) {
+              const spotsBooked = participantsData.data.pagination.totalCount;
+              
+              if (normalized.spotsInfo) {
+                normalized.spotsInfo.spotsBooked = spotsBooked;
+                normalized.spotsInfo.spotsLeft = Math.max(0, (normalized.spotsInfo.totalSpots || normalized.eventMaxGuest || 0) - spotsBooked);
+                normalized.spotsInfo.spotsFull = normalized.spotsInfo.spotsLeft <= 0;
+              }
+              
+              // Map back to top-level fields for components that expect them
+              // We override ALL related fields to ensure consistency throughout the app
+              normalized.participantsCount = spotsBooked;
+              normalized.eventTotalAttendNumber = spotsBooked; // Synchronize with total attend number
+              normalized.availableSpots = Math.max(0, (normalized.eventMaxGuest || 0) - spotsBooked);
+              normalized.isFull = normalized.availableSpots <= 0;
+            }
+          }
+        } catch (error) {
+          console.log('useEvent: Failed to fetch occurrence participants', error);
+        }
+      }
 
       // Do not show private events to players at all, unless explicitly allowed
       if (forPlayer && !allowPrivate && normalized.IsPrivateEvent === true) {

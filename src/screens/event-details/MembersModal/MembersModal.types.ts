@@ -21,6 +21,8 @@ export interface MembersModalProps {
   participants: Participant[];
   spotsFilled: number;
   totalSpots: number;
+  occurrenceStart?: string;
+  occurrenceEnd?: string;
   onClose: () => void;
 }
 

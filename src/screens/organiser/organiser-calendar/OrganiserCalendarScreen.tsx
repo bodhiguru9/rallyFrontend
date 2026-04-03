@@ -125,9 +125,11 @@ export const OrganiserCalendarScreen: React.FC = () => {
     });
   };
 
-  const handleEventPress = (id: string) => {
+  const handleEventPress = (id: string, occurrenceStart?: string, occurrenceEnd?: string) => {
     navigation.navigate('OrganiserEventDetails', {
       eventId: id,
+      occurrenceStart,
+      occurrenceEnd,
       isReadOnly: activeTab === 'past',
     });
   };

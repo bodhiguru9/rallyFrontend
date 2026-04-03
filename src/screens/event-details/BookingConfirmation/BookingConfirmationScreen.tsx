@@ -282,26 +282,36 @@ export const BookingConfirmationScreen: React.FC = () => {
           <FlexView style={styles.amountSection}>
             {route.params.subtotal !== undefined && (
               <FlexView style={[styles.amountRow, { marginBottom: spacing.xs }]}>
-                <TextDs size={14} weight="regular" color="secondary">Subtotal</TextDs>
-                <TextDs size={14} weight="regular" color="blueGray">
-                  {currency === 'aed' ? 'AED ' : `${currency} `}{route.params.subtotal.toFixed(2)}
-                </TextDs>
+                <TextDs size={12} weight="regular" color="secondary">Subtotal</TextDs>
+                <TextDs size={14} weight="regular" color="error">-</TextDs>
+                {currency === 'aed' ? (
+                  <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
+                    <ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />
+                    <TextDs size={14} weight="regular" color="blueGray">
+                      {route.params.subtotal.toFixed(2)}
+                    </TextDs>
+                  </FlexView>
+                ) : (
+                  <TextDs size={14} weight="regular" color="blueGray">
+                    {currency} {route.params.subtotal.toFixed(2)}
+                  </TextDs>
+                )}
               </FlexView>
             )}
             {route.params.discountAmount !== undefined && route.params.discountAmount > 0 && (
               <FlexView style={[styles.amountRow, { marginBottom: spacing.xs }]}>
-                <TextDs size={14} weight="regular" color="secondary">Discount</TextDs>
+                <TextDs size={12} weight="regular" color="secondary">Discount</TextDs>
                 <FlexView flexDirection="row" alignItems="center">
                   <TextDs size={14} weight="regular" color="error">-</TextDs>
                   {currency === 'aed' ? (
                     <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
                       <ImageDs image="dhiramIcon" size={16} style={styles.priceIcon} />
-                      <TextDs size={14} weight="regular" color="error">
+                      <TextDs size={14} weight="regular" color="blueGray">
                         {route.params.discountAmount.toFixed(2)}
                       </TextDs>
                     </FlexView>
                   ) : (
-                    <TextDs size={14} weight="regular" color="error">
+                    <TextDs size={14} weight="regular" color="blueGray">
                       {currency} {route.params.discountAmount.toFixed(2)}
                     </TextDs>
                   )}
@@ -310,7 +320,7 @@ export const BookingConfirmationScreen: React.FC = () => {
             )}
             {route.params.vatAmount !== undefined && (
               <FlexView style={[styles.amountRow, { marginBottom: spacing.xs }]}>
-                <TextDs size={14} weight="regular" color="secondary">VAT (5%)</TextDs>
+                <TextDs size={12} weight="regular" color="secondary">VAT (5%)</TextDs>
                 <FlexView flexDirection="row" alignItems="center">
                   {currency === 'aed' ? (
                     <FlexView flexDirection="row" alignItems="center" gap={spacing.xs}>
@@ -345,29 +355,31 @@ export const BookingConfirmationScreen: React.FC = () => {
                     {currency} {amountPaid.toFixed(2)}
                   </TextDs>
                 )}
-                {route.params.guestsCount !== undefined && (
-                  <TextDs size={14} weight="regular" color="secondary" style={{ marginLeft: spacing.md }}>
-                    • {route.params.guestsCount} {route.params.guestsCount === 1 ? 'Person' : 'People'}
-                  </TextDs>
-                )}
               </FlexView>
             </FlexView>
-
-            <TouchableOpacity
-              style={[styles.addToCalendarButton, { marginTop: spacing.md, alignSelf: 'flex-start' }]}
-              onPress={handleAddToCalendar}
-              disabled={isAddingToCalendar}
-              activeOpacity={0.7}
-            >
-              {isCalendarAdded ? (
-                <Check size={12} color={colors.text.blueGray} />
-              ) : (
-                <CalendarPlus size={12} color={colors.text.blueGray} />
+            <FlexView style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md }}>
+              {route.params.guestsCount !== undefined && (
+                <TextDs size={14} weight="regular" color="secondary" style={{ marginTop: spacing.md }}>
+                  • {route.params.guestsCount} {route.params.guestsCount === 1 ? 'Person' : 'People'}
+                </TextDs>
               )}
-              <TextDs size={14} weight="regular" color="blueGray">
-                {isAddingToCalendar ? 'Adding...' : isCalendarAdded ? 'Done' : 'Add to Calendar'}
-              </TextDs>
-            </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.addToCalendarButton, { marginTop: spacing.md, alignSelf: 'flex-start' }]}
+                onPress={handleAddToCalendar}
+                disabled={isAddingToCalendar}
+                activeOpacity={0.7}
+              >
+                {isCalendarAdded ? (
+                  <Check size={12} color={colors.text.blueGray} />
+                ) : (
+                  <CalendarPlus size={12} color={colors.text.blueGray} />
+                )}
+                <TextDs size={14} weight="regular" color="blueGray">
+                  {isAddingToCalendar ? 'Adding...' : isCalendarAdded ? 'Done' : 'Add to Calendar'}
+                </TextDs>
+              </TouchableOpacity>
+            </FlexView>
           </FlexView>
         </FlexView>
 

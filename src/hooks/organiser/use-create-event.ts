@@ -149,7 +149,7 @@ export const useCreateOrganiserEvent = () => {
   /**
    * Formats date to ISO string for API
    */
-  const formatDateForAPI = (date: Date | null): string | undefined => {
+  const formatDateForAPI = (date: Date | null | undefined): string | undefined => {
     if (!date) {
       return undefined;
     }
@@ -185,6 +185,7 @@ export const useCreateOrganiserEvent = () => {
       eventSports: formData.sport,
       eventType: formData.eventType,
       eventDateTime: formatDateForAPI(formData.dateTime),
+      eventEndDateTime: formatDateForAPI(formData.endDateTime),
       eventLocation:
         (typeof formData.location === 'object' && formData.location !== null
           ? formData.location.displayName

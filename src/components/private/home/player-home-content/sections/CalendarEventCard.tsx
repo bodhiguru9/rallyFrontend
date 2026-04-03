@@ -24,9 +24,10 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({ event, onP
   // Fetch full event details if participants are missing (same as EventCard.tsx)
   const hasParticipants = event.participants && event.participants.length > 0;
   const { data: fullEvent, isLoading: isFetchingEvent } = useEvent(event.eventId, {
-    enabled: isMembersModalVisible && !hasParticipants,
+    enabled: (!hasParticipants || isMembersModalVisible),
     forPlayer: true,
     allowPrivate: true,
+    occurrenceStart: (event as any).occurrenceStart || event.eventDateTime,
   });
 
   const displayEvent = fullEvent || event;

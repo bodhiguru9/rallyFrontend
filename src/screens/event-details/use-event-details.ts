@@ -60,7 +60,8 @@ export const useEventDetails = () => {
   // The frontend should not block viewing private events for authenticated users.
   const { data: event, isLoading, error } = useEvent(eventId, {
     forPlayer: true,
-    allowPrivate: true   // Backend is the source of truth for access control
+    allowPrivate: true, // Backend is the source of truth for access control
+    occurrenceStart: occurrenceStart ?? undefined,
   });
 
   // Handle occurrence metadata fallback for recurring events

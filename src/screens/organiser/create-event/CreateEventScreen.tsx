@@ -229,11 +229,11 @@ export const CreateEventContent: React.FC = () => {
       updateFormData('location', null);
     }
 
-    // Reset date/times for the new event
-    updateFormData('dateTime', null);
-    updateFormData('endDateTime', null);
-    updateFormData('registrationStartTime', null);
-    updateFormData('registrationEndTime', null);
+    // Preserve date/times from the draft if available
+    updateFormData('dateTime', draft.eventDateTime ? new Date(draft.eventDateTime) : null);
+    updateFormData('endDateTime', draft.eventEndDateTime ? new Date(draft.eventEndDateTime) : null);
+    updateFormData('registrationStartTime', draft.eventRegistrationStartTime ? new Date(draft.eventRegistrationStartTime) : null);
+    updateFormData('registrationEndTime', draft.eventRegistrationEndTime ? new Date(draft.eventRegistrationEndTime) : null);
 
     if (draft.eventImages?.[0]) {
       updateFormData('imageUri', draft.eventImages[0]);

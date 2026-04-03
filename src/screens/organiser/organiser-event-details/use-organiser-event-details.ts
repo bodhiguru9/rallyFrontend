@@ -16,6 +16,7 @@ export interface OrganiserEventEditFormData {
   eventDescription: string;
   eventLocation: string;
   eventDateTime: string;
+  eventEndDateTime?: string | null;
   eventMaxGuest: number;
   eventPricePerGuest: number;
   IsPrivateEvent: boolean;
@@ -30,6 +31,7 @@ const defaultEditFormData: OrganiserEventEditFormData = {
   eventDescription: '',
   eventLocation: '',
   eventDateTime: '',
+  eventEndDateTime: null,
   eventMaxGuest: 0,
   eventPricePerGuest: 0,
   IsPrivateEvent: false,
@@ -45,6 +47,7 @@ function eventToEditFormData(event: EventData): OrganiserEventEditFormData {
     eventDescription: event.eventDescription ?? '',
     eventLocation: event.eventLocation ?? '',
     eventDateTime: event.eventDateTime ?? '',
+    eventEndDateTime: event.eventEndDateTime ?? null,
     eventMaxGuest: event.eventMaxGuest ?? 0,
     eventPricePerGuest: event.eventPricePerGuest ?? 0,
     IsPrivateEvent: event.IsPrivateEvent ?? false,
@@ -68,10 +71,13 @@ type OrganiserEventDetailsRouteProp = NativeStackScreenProps<
 export const useOrganiserEventDetails = () => {
   const navigation = useNavigation<OrganiserEventDetailsScreenNavigationProp>();
   const route = useRoute<OrganiserEventDetailsRouteProp>();
-  const { eventId, isReadOnly = false } = route.params;
+  const { eventId, isReadOnly = false, occurrenceStart, occurrenceEnd } = route.params;
 
   const queryClient = useQueryClient();
-  const { data: event, isLoading, error } = useEvent(eventId);
+  const { data: event, isLoading, error } = useEvent(eventId, {
+    allowPrivate: true,
+    occurrenceStart,
+  });
   const updateEventMutation = useUpdateEvent();
 
   const [activeTab, setActiveTab] = useState<Tab>(isReadOnly ? 'about' : 'members');
@@ -139,6 +145,7 @@ export const useOrganiserEventDetails = () => {
       eventDescription: editFormData.eventDescription,
       eventLocation: editFormData.eventLocation,
       eventDateTime: editFormData.eventDateTime,
+      eventEndDateTime: editFormData.eventEndDateTime ?? undefined,
       eventMaxGuest: editFormData.eventMaxGuest,
       eventPricePerGuest: editFormData.eventPricePerGuest,
       IsPrivateEvent: editFormData.IsPrivateEvent,
@@ -214,7 +221,8 @@ export const useOrganiserEventDetails = () => {
     invitedUserIds,
     setInvitedUserIds,
 
-    // Handlers
+    occurrenceStart,
+    occurrenceEnd,
     handleShare,
     handleEdit,
     handleCancelEdit,

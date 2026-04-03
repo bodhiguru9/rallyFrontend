@@ -110,9 +110,10 @@ export const EventCard: React.FC<EventCardProps> = ({
   const hasParticipants = (event as EventData).participants && (event as EventData).participants!.length > 0;
 
   const { data: fullEvent } = useEvent(id, {
-    enabled: !!id && (showRevenue || isMembersModalVisible || (event as EventData).eventMaxGuest == null),
+    enabled: !!id && (showRevenue || isMembersModalVisible || (event as EventData).eventMaxGuest == null || !hasParticipants),
     forPlayer: true,
     allowPrivate: true,
+    occurrenceStart: (event as any).occurrenceStart || event.eventDateTime,
   });
 
   const displayEvent = {
