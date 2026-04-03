@@ -47,6 +47,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   const [isAddCardModalVisible, setIsAddCardModalVisible] = useState(false);
   const [isLoadingCards, setIsLoadingCards] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const deviceTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
 
   // Listen for keyboard events to adjust bottom padding inside the modal
   useEffect(() => {
@@ -265,6 +266,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         Math.max(1, guestsCount),
         occurrenceStart ?? null,
         occurrenceEnd ?? null,
+        deviceTimeZone,
       );
 
       if (!bookingResponse.success) {
@@ -410,6 +412,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         Math.max(1, guestsCount),
         occurrenceStart ?? null,
         occurrenceEnd ?? null,
+        deviceTimeZone,
       );
 
       if (!bookingResponse.success) {
