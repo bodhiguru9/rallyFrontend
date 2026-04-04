@@ -149,18 +149,25 @@ export const useEventDetails = () => {
     if (joinedBooking) {
       const currentUserParticipant = event?.participants?.find(p => p.userId === user?.userId);
 
+      // 1. Try to infer from payment amount if available (Most reliable for paid events)
+      let inferredGuests = 1;
+      const paymentAmount = (joinedBooking as any)?.payment?.amount ?? (joinedBooking as any)?.payment?.finalAmount;
+      const pricePerGuest = event?.eventPricePerGuest || (event as any)?.gameJoinPrice || 0;
+      
+      if (paymentAmount && pricePerGuest > 0) {
+        // Round to nearest integer to handle minor floating point or VAT issues
+        inferredGuests = Math.max(1, Math.round(paymentAmount / pricePerGuest));
+      }
+
       const bookedGuests =
-        (joinedBooking as any)?.eventTotalAttendNumber ??
         joinedBooking.booking?.guestsCount ??
         (joinedBooking.booking as any)?.guestsCount ??
-        (joinedBooking.booking as any)?.guests ??
         (joinedBooking.booking as any)?.guestCount ??
         (joinedBooking as any)?.guestsCount ??
-        (joinedBooking as any)?.guests ??
         (joinedBooking as any)?.guestCount ??
         (currentUserParticipant as any)?.guestsCount ??
-        (currentUserParticipant as any)?.guests ??
-        1;
+        (currentUserParticipant as any)?.guestCount ??
+        inferredGuests;
 
       if (guestsCount !== bookedGuests) {
         timeoutId = setTimeout(() => {
