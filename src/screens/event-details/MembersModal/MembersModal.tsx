@@ -20,6 +20,8 @@ export const MembersModal: React.FC<MembersModalProps> = ({
   const user = useAuthStore((state) => state.user);
   const isOrganiser = user?.userType === 'organiser';
 
+  const displaySpotsFilled = useMemo(() => Math.min(spotsFilled, totalSpots), [spotsFilled, totalSpots]);
+
   const progressPercentage = useMemo(() => {
     if (totalSpots === 0) { return 0; }
     return Math.min((spotsFilled / totalSpots) * 100, 100);
@@ -59,7 +61,7 @@ export const MembersModal: React.FC<MembersModalProps> = ({
             {/* Spots Info */}
             <FlexView style={styles.spotsInfo}>
               <TextDs style={styles.spotsText}>
-                {spotsFilled}/{totalSpots}
+                {displaySpotsFilled}/{totalSpots}
               </TextDs>
               <TextDs style={styles.spotsAvailableText}>
                 {spotsAvailable > 0 ? 'Spots Available' : 'Full'}

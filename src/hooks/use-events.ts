@@ -66,9 +66,25 @@ export const useEvent = (id: string, options?: UseEventOptions) => {
       }
 
       const apiEvent = response.data.data.event;
+      const apiEventAny = apiEvent as unknown as Record<string, unknown>;
+
+      // Synchronize "scattered" spot data fields for consistency
+      // Backend sometimes returns inconsistent counts (e.g., eventTotalAttendNumber=3 vs participantsCount=0)
+      const maxGuest = apiEvent.eventMaxGuest || 0;
+      const totalBooked = Math.max(
+        apiEvent.eventTotalAttendNumber || 0,
+        apiEvent.participantsCount || 0,
+        apiEvent.spotsInfo?.spotsBooked || 0,
+        (apiEvent.participants || []).length
+      );
+      
+      const spotsLeft = Math.max(0, maxGuest - totalBooked);
+      const isFull = spotsLeft <= 0;
+      
+      // Visual cap for "spots booked" to avoid showing e.g. 3/1 in the primary display fields
+      const displayBooked = Math.min(totalBooked, maxGuest);
 
       // Transform ApiEvent to EventData by adding missing fields (API booking shape may differ)
-      const apiEventAny = apiEvent as unknown as Record<string, unknown>;
       const normalized = normalizeEventJoinFlags({
         ...apiEvent,
         id: apiEvent.eventId, // Map eventId to id for BaseEntity
@@ -79,6 +95,24 @@ export const useEvent = (id: string, options?: UseEventOptions) => {
         eventGender: apiEvent.eventGender as EventData['eventGender'],
         eventSportsLevel: apiEvent.eventSportsLevel as EventData['eventSportsLevel'],
         eventStatus: apiEvent.eventStatus as EventData['eventStatus'],
+        
+        // Synchronized spot fields
+        eventTotalAttendNumber: totalBooked, // Keep actual count for stats
+        participantsCount: totalBooked,      // Keep actual count for stats
+        availableSpots: spotsLeft,
+        isFull: isFull,
+        spotsInfo: apiEvent.spotsInfo ? {
+          ...apiEvent.spotsInfo,
+          spotsBooked: displayBooked, // Capped for visual consistency
+          spotsLeft: spotsLeft,
+          spotsFull: isFull,
+        } : {
+          totalSpots: maxGuest,
+          spotsBooked: displayBooked, // Capped for visual consistency
+          spotsLeft: spotsLeft,
+          spotsFull: isFull,
+        },
+
         // Refund policy from organiser (API may return policyJoind, policy_joind, or refundPolicy)
         policyJoind:
           apiEventAny.policyJoind ??
@@ -92,11 +126,15 @@ export const useEvent = (id: string, options?: UseEventOptions) => {
       } as AnyEvent) as EventData;
 
       // DO NOT Re-fetch participants if they already exist (though they're usually empty on load)
-      // If occurrenceStart is specified, always fetch from the dedicated endpoint for accuracy
-      if (occurrenceStart) {
+      // If occurrenceStart is specified, always fetch from the dedicated endpoint for accuracy.
+      // Also fetch if it's a non-recurring event but the participants list is empty while the count is positive.
+      const isRecurring = !!(apiEvent.eventFrequency && apiEvent.eventFrequency.length > 0);
+      const shouldFetchParticipants = occurrenceStart || (!isRecurring && totalBooked > 0 && (apiEvent.participants || []).length === 0);
+
+      if (shouldFetchParticipants) {
         try {
           const { data: participantsData } = await apiClient.get(`/api/events/${id}/participants`, {
-            params: { occurrenceStart }
+            params: occurrenceStart ? { occurrenceStart } : undefined
           });
           
           if (participantsData?.success) {
@@ -104,20 +142,23 @@ export const useEvent = (id: string, options?: UseEventOptions) => {
             
             // Also update spots info from the count in the participant result if available (or calculate)
             if (participantsData.data?.pagination) {
-              const spotsBooked = participantsData.data.pagination.totalCount;
+              const freshBookedCount = participantsData.data.pagination.totalCount;
+              const actualBooked = Math.max(totalBooked, freshBookedCount);
+              const freshDisplayBooked = Math.min(actualBooked, maxGuest);
+              const freshSpotsLeft = Math.max(0, maxGuest - actualBooked);
+              const freshIsFull = freshSpotsLeft <= 0;
               
               if (normalized.spotsInfo) {
-                normalized.spotsInfo.spotsBooked = spotsBooked;
-                normalized.spotsInfo.spotsLeft = Math.max(0, (normalized.spotsInfo.totalSpots || normalized.eventMaxGuest || 0) - spotsBooked);
-                normalized.spotsInfo.spotsFull = normalized.spotsInfo.spotsLeft <= 0;
+                normalized.spotsInfo.spotsBooked = freshDisplayBooked;
+                normalized.spotsInfo.spotsLeft = freshSpotsLeft;
+                normalized.spotsInfo.spotsFull = freshIsFull;
               }
               
               // Map back to top-level fields for components that expect them
-              // We override ALL related fields to ensure consistency throughout the app
-              normalized.participantsCount = spotsBooked;
-              normalized.eventTotalAttendNumber = spotsBooked; // Synchronize with total attend number
-              normalized.availableSpots = Math.max(0, (normalized.eventMaxGuest || 0) - spotsBooked);
-              normalized.isFull = normalized.availableSpots <= 0;
+              normalized.participantsCount = actualBooked;
+              normalized.eventTotalAttendNumber = actualBooked;
+              normalized.availableSpots = freshSpotsLeft;
+              normalized.isFull = freshIsFull;
             }
           }
         } catch (error) {

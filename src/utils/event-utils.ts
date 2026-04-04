@@ -63,8 +63,11 @@ export const calculateSpotsFilled = (
       }
       return sum + pCount;
     }, 0);
-    return Math.max(participantsListCount, aggregateCount);
+    const count = Math.max(participantsListCount, aggregateCount);
+    const total = event.eventMaxGuest ?? event.spotsInfo?.totalSpots ?? 0;
+    return total > 0 ? Math.min(count, total) : count;
   }
 
-  return aggregateCount;
+  const total = event.eventMaxGuest ?? event.spotsInfo?.totalSpots ?? 0;
+  return total > 0 ? Math.min(aggregateCount, total) : aggregateCount;
 };
