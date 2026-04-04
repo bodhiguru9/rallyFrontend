@@ -311,13 +311,13 @@ export const EventDetailsScreen: React.FC = () => {
             <TextDs style={styles.cardTitle}>Payment Details</TextDs>
             <FlexView style={styles.paymentSectionRow}>
               <FlexView style={styles.paymentMethodRow}>
+                <ImageDs image="DhiramIcon" size={14} style={{ marginRight: 4 }} />
                 <TextDs size={16} weight="semibold" color='blueGray'>
-                  <ImageDs image="DhiramIcon" size={14} style={{ marginRight: 4 }} />
                   {exactPaidAmount || totalPrice || event.eventPricePerGuest || 0}
                 </TextDs>
-                <TextDs style={styles.paymentMethodText}>
+                {/* <TextDs style={styles.paymentMethodText}>
                   Paid via Apple pay
-                </TextDs>
+                </TextDs> */}
               </FlexView>
               <TextDs style={styles.bookingIdText}>
                 Booking ID: {cancelBookingId ? `#RLY-${cancelBookingId.substring(0, 8).toUpperCase()}` : '#RLY-UNKNOWN'}
