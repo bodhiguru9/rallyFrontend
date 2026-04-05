@@ -25,7 +25,7 @@
       },
       "package": "com.rallysports.app",
       "softwareKeyboardLayoutMode": "resize",
-      "versionCode": 30
+      "versionCode": 31
     },
     "web": {
       "favicon": "./assets/favicon.png",
