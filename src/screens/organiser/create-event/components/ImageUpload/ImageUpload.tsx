@@ -82,7 +82,18 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       });
 
       if (!result.canceled && result.assets[0]) {
-        onImageSelect(result.assets[0].uri);
+        const asset = result.assets[0];
+        const MAX_FILE_SIZE = 100 * 1024; // 100KB
+
+        if (asset.fileSize && asset.fileSize > MAX_FILE_SIZE) {
+          Alert.alert(
+            'Image Too Large',
+            `Selected image is too large (${(asset.fileSize / 1024).toFixed(1)}KB). Please select an image smaller than 100KB.`
+          );
+          return;
+        }
+
+        onImageSelect(asset.uri);
       }
     } catch (error) {
       console.error('Error taking photo:', error);
@@ -100,7 +111,18 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       });
 
       if (!result.canceled && result.assets[0]) {
-        onImageSelect(result.assets[0].uri);
+        const asset = result.assets[0];
+        const MAX_FILE_SIZE = 100 * 1024; // 100KB
+
+        if (asset.fileSize && asset.fileSize > MAX_FILE_SIZE) {
+          Alert.alert(
+            'Image Too Large',
+            `Selected image is too large (${(asset.fileSize / 1024).toFixed(1)}KB). Please select an image smaller than 100KB.`
+          );
+          return;
+        }
+
+        onImageSelect(asset.uri);
       }
     } catch (error) {
       console.error('Error picking image:', error);

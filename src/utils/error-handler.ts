@@ -161,6 +161,12 @@ export function formatErrorForAlert(
     title = 'Permission Denied';
   } else if (parsedError.statusCode === 404) {
     title = 'Not Found';
+  } else if (parsedError.statusCode === 413) {
+    title = 'Image Too Large';
+    return {
+      title,
+      message: 'The total request size (including the image) exceeds the server limit of 100KB. Please select a smaller image.',
+    };
   } else if (parsedError.statusCode && parsedError.statusCode >= 500) {
     title = 'Server Error';
   }
