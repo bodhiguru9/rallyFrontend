@@ -10,6 +10,7 @@ import { logger } from '@dev-tools/logger';
 import { appendEventDraft } from '@utils/event-drafts-storage';
 import type { RootStackParamList } from '@navigation';
 import type { CreateEventFormData } from '@screens/organiser/create-event';
+import { formatLocationString } from '@utils/location-utils';
 
 type CreateEventScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'CreateEvent'>;
 
@@ -188,7 +189,7 @@ export const useCreateOrganiserEvent = () => {
       eventEndDateTime: formatDateForAPI(formData.endDateTime),
       eventLocation:
         (typeof formData.location === 'object' && formData.location !== null
-          ? formData.location.displayName
+          ? formatLocationString(formData.location)
           : String(formData.location ?? '').trim()) ||
         (formData.locationRawInput ?? '').trim(),
       eventDescription: formData.description.trim(),

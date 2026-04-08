@@ -21,6 +21,7 @@ import { debounce } from '@utils/debounce';
 import type { EventLocation } from '@app-types/location.types';
 import type { EventLocationSearchProps } from './EventLocationSearch.types';
 import { styles } from './style/EventLocationSearch.styles';
+import { formatLocationString } from '@utils/location-utils';
 
 /** Google Maps API allows more requests, so we can reduce debounce and min length. */
 const MIN_SEARCH_LENGTH = 3;
@@ -141,7 +142,7 @@ export const EventLocationSearch: React.FC<EventLocationSearchProps> = ({
         city: location.city,
         country: location.country,
       });
-      setInputText(location.name || location.displayName);
+      setInputText(formatLocationString(location));
       setSuggestions([]);
       setShowEmptyState(false);
       setError(null);

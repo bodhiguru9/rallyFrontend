@@ -23,6 +23,9 @@ import { DateTimePickerModal } from '@screens/organiser/create-event/components/
 import { DeleteEventModal } from './components/DeleteEventModal';
 import type { EventData } from '@app-types';
 import { DEFAULT_DISPLAY_TIME_ZONE } from '@constants/timezones';
+import { EventLocationSearch } from '@screens/organiser/create-event/components/EventLocationSearch';
+import { formatLocationString } from '@utils/location-utils';
+import type { EventLocation } from '@app-types/location.types';
 
 // type OrganiserEventDetailsScreenNavigationProp = NativeStackNavigationProp<
 //   RootStackParamList,
@@ -145,10 +148,22 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
         </TouchableOpacity>
       </FlexView>
       <Card style={{ marginBottom: spacing.base }}>
-        <FormInput
-          placeholder="Location"
-          value={editFormData.eventLocation}
-          onChangeText={(text) => updateEditFormData('eventLocation', text)}
+        <EventLocationSearch
+          value={
+            typeof editFormData.eventLocation === 'string' && editFormData.eventLocation.trim()
+              ? {
+                name: editFormData.eventLocation.trim(),
+                displayName: editFormData.eventLocation.trim(),
+                latitude: 0,
+                longitude: 0,
+              }
+              : null
+          }
+          onChange={(location: EventLocation | null) =>
+            updateEditFormData('eventLocation', location ? formatLocationString(location) : '')
+          }
+          onInputChange={(text) => updateEditFormData('eventLocation', text)}
+          placeholder={event.eventLocation || "Location"}
           leftIcon={<ImageDs image="LocationPin" size={20} />}
         />
       </Card>
