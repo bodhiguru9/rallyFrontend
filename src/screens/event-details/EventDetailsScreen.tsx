@@ -362,8 +362,8 @@ export const EventDetailsScreen: React.FC = () => {
                   </TextDs>
                 </TouchableOpacity>
               </FlexView>
-            ) : event?.isJoined || event?.userJoinStatus?.action === 'payment-pending' ? (
-              // --- FIRST BLOCK (Joined/Pending) ---
+            ) : (event?.isJoined || event?.userJoinStatus?.action === 'payment-pending' || event?.userJoinStatus?.inWaitlist || event?.isPending || event?.userJoinStatus?.hasRequest) ? (
+              // --- FIRST BLOCK (Joined/Pending/Waitlisted) ---
               showPayNow ? (
                 <TouchableOpacity style={styles.bookButton} onPress={handlePayNow} disabled={isBookingEvent}>
                   <TextDs style={styles.bookButtonText}>{isBookingEvent ? 'Processing...' : 'Pay Now'}</TextDs>
@@ -375,7 +375,7 @@ export const EventDetailsScreen: React.FC = () => {
                   disabled={isLeavingEvent || !canCancelBooking}
                 >
                   <TextDs style={[styles.cancelButtonText, !canCancelBooking && styles.cancelButtonTextDisabled]}>
-                    {isLeavingEvent ? 'Cancelling...' : 'Cancel Booking'}
+                    {buttonText}
                   </TextDs>
                 </TouchableOpacity>
               )

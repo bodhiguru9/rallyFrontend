@@ -77,14 +77,14 @@ export const useEventDetails = () => {
     if (event && isRecurringEvent(event) && !occurrenceStart) {
       logger.info('useEventDetails: Missing occurrenceStart for recurring event, finding next instance', { eventId });
       // Find upcoming instances in the next month
-      const expanded = expandEventsForward([event as any], 1, 0); 
+      const expanded = expandEventsForward([event as any], 1, 0);
       // Find the first instance that is NOT in the past
       const nextInstance = expanded.find(inst => new Date(inst.eventDateTime) >= new Date());
-      
+
       if (nextInstance) {
-        logger.info('useEventDetails: Found next instance', { 
+        logger.info('useEventDetails: Found next instance', {
           start: (nextInstance as any).occurrenceStart,
-          original: event.eventDateTime 
+          original: event.eventDateTime
         });
         setOccurrenceStart((nextInstance as any).occurrenceStart);
         setOccurrenceEnd((nextInstance as any).occurrenceEnd);
@@ -141,7 +141,7 @@ export const useEventDetails = () => {
     apiEventIsJoined: event?.isJoined,
     apiEventIsLeave: event?.isLeave,
     apiUserJoinStatus: event?.userJoinStatus,
-    finalIsJoined: !!joinedBooking || !!event?.isJoined || !!event?.isLeave,
+    finalIsJoined: !!joinedBooking || !!event?.isJoined,
   });
 
   const [guestsCount, setGuestsCount] = useState(1);
@@ -191,7 +191,7 @@ export const useEventDetails = () => {
       let inferredGuests = 1;
       const paymentAmount = (joinedBooking as any)?.payment?.amount ?? (joinedBooking as any)?.payment?.finalAmount;
       const pricePerGuest = event?.eventPricePerGuest || (event as any)?.gameJoinPrice || 0;
-      
+
       if (paymentAmount && pricePerGuest > 0) {
         // Round to nearest integer to handle minor floating point or VAT issues
         inferredGuests = Math.max(1, Math.round(paymentAmount / pricePerGuest));
@@ -472,13 +472,15 @@ export const useEventDetails = () => {
     if (isSendingJoinRequest) return 'Sending Request...';
     if (isBookingEvent) return 'Booking...';
     if (!event) return 'Loading...';
-    if (!!joinedBooking || !!event.isJoined || !!event.isLeave) return 'Leave Event';
+
+    // 1. Paid/Booked -> Cancel Booking
+    if (!!joinedBooking || !!event.isJoined) return 'Cancel Booking';
+
+    // 2. Joined Waitlist / Pending Request -> Leave Event
+    if (event.userJoinStatus?.inWaitlist || event.isPending || event.userJoinStatus?.hasRequest) return 'Leave Waitlist';
+
     if (pendingInvitation) return 'Accept Invitation';
-    if (event.isPending) {
-      if (event.userJoinStatus?.inWaitlist && !event.spotsInfo?.spotsFull) return 'Pay Now';
-      return 'Request Pending';
-    }
-    if (event.userJoinStatus?.hasRequest) return 'Request Sent';
+
     if (isRegistrationEnded) return 'Registration Ended';
     if (!isRegistrationOpen) return 'Add Reminder';
     if (event.spotsInfo?.spotsFull) return 'Join Waitlist';
@@ -500,10 +502,10 @@ export const useEventDetails = () => {
     navigation.navigate('Booking', { eventId, totalPrice, currency: 'AED', guestsCount });
   };
 
-  const exactPaidAmount = joinedBooking?.payment?.finalAmount 
-    ?? joinedBooking?.payment?.amount 
-    ?? event?.payment?.finalAmount 
-    ?? event?.payment?.amount 
+  const exactPaidAmount = joinedBooking?.payment?.finalAmount
+    ?? joinedBooking?.payment?.amount
+    ?? event?.payment?.finalAmount
+    ?? event?.payment?.amount
     ?? totalPrice;
 
   return {
