@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { TextDs, FlexView } from '@components';
 import { Modal, TouchableOpacity, Animated, Platform, KeyboardAvoidingView, ScrollView, Alert } from 'react-native';
 import { FormInput, Checkbox } from '@components/global';
-import { CardField, useStripe } from '@stripe/stripe-react-native';
+import { CardField, useStripe, initStripe } from '@stripe/stripe-react-native';
 import type { AddCardModalProps } from './AddCardModal.types';
 import { styles } from './style/AddCardModal.styles';
 import { colors } from '@theme';
+import { useAuthStore } from '@store';
+import { paymentService } from '@services';
+import { logger } from '@dev-tools/logger';
 
 export const AddCardModal: React.FC<AddCardModalProps> = ({
   visible,
@@ -19,9 +22,54 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
   const [slideAnim] = useState(new Animated.Value(0));
   const { createPaymentMethod } = useStripe();
 
+  /**
+   * Ensures the Stripe SDK is initialized with a valid publishable key.
+   * This guards against race conditions where initStripe() from another screen
+   * hasn't completed, or competing initStripe() calls left the SDK without a key.
+   */
+  const ensureStripeInitialized = async (): Promise<boolean> => {
+    // 1. Try key from Zustand store (set by prior backend responses)
+    let key = useAuthStore.getState().stripePublishableKey;
+
+    // 2. If not in store, fetch from backend (GET /api/cards returns publishableKey)
+    if (!key) {
+      logger.info('AddCardModal: No Stripe key in store, fetching from backend...');
+      try {
+        const response = await paymentService.getSavedCards();
+        if (response.publishableKey) {
+          key = response.publishableKey;
+          useAuthStore.getState().setStripePublishableKey(key);
+        }
+      } catch (err) {
+        logger.error('AddCardModal: Failed to fetch publishable key from backend:', err);
+      }
+    }
+
+    if (!key) {
+      logger.error('AddCardModal: No Stripe publishable key available from any source');
+      return false;
+    }
+
+    // 3. Re-initialize the SDK to ensure it has the correct key
+    try {
+      await initStripe({
+        publishableKey: key,
+        merchantIdentifier: 'merchant.com.rally.app',
+      });
+      logger.info('AddCardModal: Stripe SDK initialized successfully');
+      return true;
+    } catch (err) {
+      logger.error('AddCardModal: Failed to initialize Stripe SDK:', err);
+      return false;
+    }
+  };
+
   // Handle animation
   useEffect(() => {
     if (visible) {
+      // Pre-initialize Stripe when modal opens (fire-and-forget)
+      ensureStripeInitialized();
+
       Animated.spring(slideAnim, {
         toValue: 1,
         useNativeDriver: true,
@@ -62,6 +110,17 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      // Pre-flight: ensure Stripe SDK has a valid key before calling createPaymentMethod
+      const stripeReady = await ensureStripeInitialized();
+      if (!stripeReady) {
+        Alert.alert(
+          'Payment Setup Error',
+          'Could not initialize the payment system. Please close this screen and try again.',
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
       const { paymentMethod, error } = await createPaymentMethod({
         paymentMethodType: 'Card',
         paymentMethodData: {
@@ -74,13 +133,13 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
       if (error || !paymentMethod?.id) {
         const message = error?.message || 'Could not create payment method. Please try again.';
         const normalized = message.toLowerCase();
-        if (normalized.includes('invalid api key')) {
+        if (normalized.includes('api key') || normalized.includes('invalid')) {
           Alert.alert(
             'Card Error',
-            'Stripe is using an invalid publishable key. Restart the app after setting EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY to a real pk_test/pk_live key.',
+            'Payment system configuration issue. Please restart the app and try again.',
           );
         } else {
-          console.log(error);
+          logger.error('createPaymentMethod error:', error);
           Alert.alert('Card Error', message);
         }
         setIsSubmitting(false);

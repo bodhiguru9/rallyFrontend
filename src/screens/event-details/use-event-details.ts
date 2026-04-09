@@ -39,6 +39,14 @@ export const useEventDetails = () => {
   const [occurrenceStart, setOccurrenceStart] = useState<string | undefined | null>(routeOccurrenceStart);
   const [occurrenceEnd, setOccurrenceEnd] = useState<string | undefined | null>(routeOccurrenceEnd);
 
+  // Sync occurrence state with route params when navigation changes
+  // (useState initial value only applies on mount; if React Navigation reuses the screen,
+  // route.params change but state stays stale)
+  useEffect(() => {
+    setOccurrenceStart(routeOccurrenceStart);
+    setOccurrenceEnd(routeOccurrenceEnd);
+  }, [routeOccurrenceStart, routeOccurrenceEnd]);
+
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
@@ -94,16 +102,46 @@ export const useEventDetails = () => {
 
   // Check if user is already joined and has a booking for THIS specific occurrence
   const joinedBooking = playerBookingsData?.data?.bookings?.find(b => {
-    const matchEvent = b.eventId === eventId;
+    // Match against either the sequential eventId or the MongoDB ObjectId
+    // to handle different ID formats passed from notifications vs calendar.
+    const matchEvent = String(b.eventId) === String(eventId) || String(b.mongoId) === String(eventId);
     if (!matchEvent) return false;
 
     // If we are looking for a specific occurrence, match it
     if (occurrenceStart) {
-      return (b.booking as any)?.occurrenceStart === occurrenceStart;
+      // Robust comparison: handle nulls and mixed types
+      const bookingStart = (b.booking as any)?.occurrenceStart;
+      if (bookingStart) {
+        return String(bookingStart) === String(occurrenceStart);
+      }
+      // If the booking doesn't have an occurrenceStart, but the event is recurring,
+      // we might want to be cautious. For now, if we specified a start and the booking doesn't,
+      // it's a mismatch for that specific occurrence unless it's a legacy booking.
+      return false;
     }
 
-    // Otherwise match the parent/default (legacy or first instance)
-    return !(b.booking as any)?.occurrenceStart || (b.booking as any)?.occurrenceStart === event?.eventDateTime;
+    // For non-recurring events: match any booking for this event regardless of occurrenceStart.
+    return true;
+  });
+
+  // Debug: trace isJoined resolution
+  logger.info('useEventDetails: JOIN STATUS DEBUG', {
+    eventId,
+    occurrenceStart,
+    hasPlayerBookingsData: !!playerBookingsData,
+    bookingsCount: playerBookingsData?.data?.bookings?.length ?? 0,
+    availableBookingIds: playerBookingsData?.data?.bookings?.map(b => ({
+      eventId: b.eventId,
+      mongoId: b.mongoId,
+      name: b.eventName,
+      occurrenceStart: (b.booking as any)?.occurrenceStart
+    })),
+    matchingBookingFound: !!joinedBooking,
+    matchingBookingId: joinedBooking?.booking?.bookingId ?? 'none',
+    apiEventIsJoined: event?.isJoined,
+    apiEventIsLeave: event?.isLeave,
+    apiUserJoinStatus: event?.userJoinStatus,
+    finalIsJoined: !!joinedBooking || !!event?.isJoined || !!event?.isLeave,
   });
 
   const [guestsCount, setGuestsCount] = useState(1);
@@ -294,7 +332,7 @@ export const useEventDetails = () => {
     });
   };
 
-  const handleApplePay = () => logger.info('Apple Pay selected');
+
 
   const handleBookNow = async () => {
     if (!event) return;
@@ -434,18 +472,13 @@ export const useEventDetails = () => {
     if (isSendingJoinRequest) return 'Sending Request...';
     if (isBookingEvent) return 'Booking...';
     if (!event) return 'Loading...';
-    if (!!joinedBooking) return 'Leave Event';
+    if (!!joinedBooking || !!event.isJoined || !!event.isLeave) return 'Leave Event';
     if (pendingInvitation) return 'Accept Invitation';
     if (event.isPending) {
       if (event.userJoinStatus?.inWaitlist && !event.spotsInfo?.spotsFull) return 'Pay Now';
       return 'Request Pending';
     }
     if (event.userJoinStatus?.hasRequest) return 'Request Sent';
-    if (event.isLeave) {
-      if (!isRegistrationOpen) return 'Add Reminder';
-      if (event.spotsInfo?.spotsFull) return 'Join Waitlist';
-      return event.IsPrivateEvent || event.eventApprovalReq ? 'Request to Join' : 'Book Now';
-    }
     if (isRegistrationEnded) return 'Registration Ended';
     if (!isRegistrationOpen) return 'Add Reminder';
     if (event.spotsInfo?.spotsFull) return 'Join Waitlist';
@@ -478,7 +511,9 @@ export const useEventDetails = () => {
       ...event,
       eventDateTime: effectiveEventDateTime,
       eventEndDateTime: effectiveEventEndDateTime,
-      isJoined: !!joinedBooking,
+      // Use local booking match first; fall back to API's own isJoined flag so the
+      // Cancel Booking button still shows even if the bookings list lookup fails.
+      isJoined: !!joinedBooking || !!event.isJoined,
     } : undefined,
     isLoading,
     error,
@@ -516,7 +551,6 @@ export const useEventDetails = () => {
     handleCloseMembersModal,
     getRefundDate,
     handleBookEvent,
-    handleApplePay,
     showPayNow,
     handlePayNow,
     canCancelBooking: !isPastCancellationTime(),

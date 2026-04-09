@@ -17,7 +17,7 @@ import { ArrowRight, ChevronUp, ChevronDown, X } from 'lucide-react-native';
 import { colors, spacing, borderRadius } from '@theme';
 import type { IBookingModalProps } from './BookingModal.types';
 import { styles } from './style/BookingModal.styles';
-import { useStripe, initStripe } from '@stripe/stripe-react-native';
+import { useStripe, initStripe, PlatformPay } from '@stripe/stripe-react-native';
 import { paymentService, SavedCard } from '@services';
 import { logger } from '@dev-tools/logger';
 import { useAuthStore } from '@store';
@@ -30,7 +30,6 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   guestsCount,
   onClose,
   onBookEvent,
-  onApplePay,
   primaryButtonText = 'Book Event',
   eventId,
   occurrenceStart,
@@ -232,7 +231,18 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   const vat = Math.round(subtotalBeforeVAT * vatRate * 100) / 100; // Calculate VAT
   const finalTotal = subtotalBeforeVAT + vat;
 
-  const { confirmPayment } = useStripe();
+  const { confirmPayment, isPlatformPaySupported, confirmPlatformPayPayment } = useStripe();
+  const [isApplePayAvailable, setIsApplePayAvailable] = useState(false);
+
+  // Check if Apple Pay is supported on this device
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      isPlatformPaySupported().then((supported) => {
+        setIsApplePayAvailable(supported);
+        logger.info(`Apple Pay supported: ${supported}`);
+      }).catch(() => setIsApplePayAvailable(false));
+    }
+  }, []);
 
   const handlePrimaryAction = async () => {
     if (isProcessing) {
@@ -424,12 +434,12 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       // Update the global Stripe publishable key if provided by backend
       if (data.publishableKey) {
         useAuthStore.getState().setStripePublishableKey(data.publishableKey);
-        // Ensure native Stripe SDK is initialized with the new key before proceeding (Apple Pay)
         try {
           await initStripe({
             publishableKey: data.publishableKey,
             merchantIdentifier: 'merchant.com.rally.app',
           });
+          logger.info('Stripe SDK re-initialized for Apple Pay');
         } catch (initError) {
           logger.error('Failed to re-initialize Stripe SDK for Apple Pay:', initError);
         }
@@ -443,30 +453,82 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
           promoCode: appliedPromoCode || (promoCode.trim() || null),
           amount: 0,
           currency,
+          bookingId: data.booking.bookingId,
         });
         return;
       }
 
-      // Step 2: Call parent's onApplePay handler if provided
-      if (onApplePay) {
-        logger.info('Calling parent Apple Pay handler');
+      // Step 2: Present Apple Pay sheet and confirm payment in one call
+      logger.info('Presenting Apple Pay and confirming payment...');
+      const { error: applePayError } = await confirmPlatformPayPayment(
+        data.paymentIntent.clientSecret,
+        {
+          applePay: {
+            cartItems: [
+              {
+                label: `Event Booking (${guestsCount} ${guestsCount === 1 ? 'guest' : 'guests'})`,
+                amount: String(data.payment.finalAmount),
+                paymentType: PlatformPay.PaymentType.Immediate,
+              },
+            ],
+            merchantCountryCode: 'AE',
+            currencyCode: data.payment.currency || 'AED',
+          },
+        },
+      );
+
+      if (applePayError) {
+        if (applePayError.code === 'Canceled') {
+          logger.info('Apple Pay cancelled by user');
+        } else {
+          logger.error('Apple Pay error:', applePayError);
+          Alert.alert('Apple Pay Error', applePayError.message || 'Apple Pay payment could not be completed.');
+        }
         setIsProcessing(false);
-        onApplePay();
         return;
       }
 
-      logger.warn('Apple Pay not configured - no onApplePay handler provided');
-      Alert.alert(
-        'Apple Pay Not Configured',
-        'Apple Pay is not configured for this event. Please try another payment method.',
-      );
+      // Step 3: Verify payment on backend
+      logger.info('Verifying Apple Pay payment on backend...');
+      const verifyResponse = await paymentService.verifyPayment(data.paymentIntent.id);
+
+      if (!verifyResponse.success) {
+        throw new Error(verifyResponse.message || 'Failed to verify payment');
+      }
+
+      logger.info('Apple Pay payment verified successfully');
       setIsProcessing(false);
-    } catch (error) {
+
+      onBookEvent({
+        promoCode: appliedPromoCode || (promoCode.trim() || null),
+        amount: data.payment.finalAmount,
+        currency: data.payment.currency,
+        paymentIntentId: data.paymentIntent.id,
+        bookingId: data.booking.bookingId,
+        subtotal: subtotalBeforeVAT,
+        vatAmount: vat,
+        discountAmount: promoDiscount,
+      });
+    } catch (error: any) {
       logger.error('Apple Pay booking error:', error);
-      Alert.alert(
-        'Booking Failed',
-        error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.',
-      );
+
+      let alertTitle = 'Booking Failed';
+      let alertMessage = 'An unexpected error occurred. Please try again.';
+      const backendError = error.response?.data?.error || error.message;
+
+      if (backendError) {
+        if (backendError.includes('past occurrence')) {
+          alertTitle = 'Invalid Date';
+          alertMessage = 'You cannot book an event that has already started.';
+        } else if (backendError.includes('Already joined')) {
+          alertTitle = 'Already Booked';
+          alertMessage = 'You have already registered for this event.';
+        } else {
+          alertMessage = backendError;
+        }
+      }
+
+      Alert.alert(alertTitle, alertMessage);
       setIsProcessing(false);
     }
   };
@@ -663,7 +725,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
             </TextDs>
 
             {/* Apple Pay stays at the bottom of the scroll or below */}
-            {Platform.OS === 'ios' && (
+            {Platform.OS === 'ios' && isApplePayAvailable && (
               <TouchableOpacity
                 style={[styles.applePayButton, isProcessing && { opacity: 0.6 }]}
                 onPress={handleApplePayPress}
@@ -671,7 +733,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
                 disabled={isProcessing}
               >
                 <TextDs style={styles.applePayButtonText}>
-                  {isProcessing ? 'Processing Payment...' : 'Pay with Apple Pay'}
+                  {isProcessing ? 'Processing Payment...' : ' Pay with Apple Pay'}
                 </TextDs>
               </TouchableOpacity>
             )}

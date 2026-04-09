@@ -157,8 +157,11 @@ export const PlayerNotificationsScreen: React.FC = () => {
     }
 
     // Navigate based on notification type
-    if (notification.data?.eventId) {
-      navigation.navigate('EventDetails', { eventId: notification.data.eventId });
+    // Prefer the sequential eventId (e.g. E165) over the mongoId for consistency
+    const navEventId = notification.event?.eventId || notification.data?.eventId;
+    
+    if (navEventId) {
+      navigation.navigate('EventDetails', { eventId: navEventId });
     }
   };
 

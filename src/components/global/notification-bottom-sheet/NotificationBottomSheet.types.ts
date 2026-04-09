@@ -36,6 +36,9 @@ export interface NotificationData {
   price?: number;
   currency?: string;
   guestsCount?: number;
+  // Occurrence fields for recurring event bookings
+  occurrenceStart?: string;
+  occurrenceEnd?: string;
 }
 
 export interface Notification {

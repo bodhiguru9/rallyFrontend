@@ -31,16 +31,19 @@ export const getRestrictionsText = (event: any): string => {
   const restrictions: string[] = [];
 
   if (event.eventGender && event.eventGender !== 'mixed' && event.eventGender.toLowerCase() !== 'open') {
-    restrictions.push(`${event.eventGender.charAt(0).toUpperCase() + event.eventGender.slice(1)} Only`);
+    restrictions.push(`Gender: ${event.eventGender.charAt(0).toUpperCase() + event.eventGender.slice(1)} Only`);
   }
 
   if (event.eventMinAge || event.eventMaxAge) {
     if (event.eventMinAge && event.eventMaxAge) {
-      restrictions.push(`${event.eventMinAge}-${event.eventMaxAge} yrs`);
+      restrictions.push(`Age: ${event.eventMinAge}-${event.eventMaxAge} years`);
     } else if (event.eventMinAge) {
-      restrictions.push(`${event.eventMinAge}+ yrs`);
+      restrictions.push(`Age: ${event.eventMinAge}+ years`);
     } else if (event.eventMaxAge) {
-      restrictions.push(`Up to ${event.eventMaxAge} yrs`);
+      if (event.eventMaxAge === 100) {
+      } else {
+        restrictions.push(`Age: Up to ${event.eventMaxAge} years`);
+      }
     }
   }
 

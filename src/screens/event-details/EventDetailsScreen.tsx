@@ -62,7 +62,6 @@ export const EventDetailsScreen: React.FC = () => {
     handleCloseCancelBookingModal,
     handleCancelBooking,
     handleCancelBookingSuccess,
-    handleApplePay,
     handleBookEvent,
     cancelBookingId,
     cancelVariant,
@@ -457,7 +456,6 @@ export const EventDetailsScreen: React.FC = () => {
         occurrenceEnd={occurrenceEnd}
         onClose={handleCloseBookingModal}
         onBookEvent={handleBookEvent}
-        onApplePay={handleApplePay}
         primaryButtonText="Book Event"
       />
 

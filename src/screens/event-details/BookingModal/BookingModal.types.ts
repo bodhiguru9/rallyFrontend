@@ -8,7 +8,6 @@ export interface IBookingModalProps {
   occurrenceEnd?: string | null;   // ISO string - end of this occurrence
   onClose: () => void;
   onBookEvent: (payload?: BookingModalPaymentPayload) => void;
-  onApplePay?: () => void;
   primaryButtonText?: string;
 }
 
