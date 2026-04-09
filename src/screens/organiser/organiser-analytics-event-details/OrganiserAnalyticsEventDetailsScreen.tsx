@@ -13,6 +13,7 @@ import { colors, spacing } from '@theme';
 import { formatDate, formatBookingSlot, shareEvent, calculateSpotsFilled } from '@utils';
 import { eventService } from '@services/event-service';
 import { resolveImageUri } from '@utils/image-utils';
+import { getRefundPolicyForDisplay, getRestrictionsText } from '@utils/event-formatting';
 import { images } from '@assets/images';
 import { styles } from './style/OrganiserAnalyticsEventDetailsScreen.styles';
 import { styles as eventStyles } from '@screens/event-details/style/EventDetailsScreen.styles';
@@ -29,16 +30,6 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
   const { data: event, isLoading } = useEvent(eventId);
   const [activeTab, setActiveTab] = useState<'about' | 'members'>('about');
 
-  const restrictionsText = useMemo(() => {
-    const parts: string[] = [];
-    if (event?.eventMinAge && event?.eventMaxAge) {
-      parts.push(`${event.eventMinAge} - ${event.eventMaxAge} yrs`);
-    }
-    if (event?.eventSportsLevel) {
-      parts.push(`${event.eventSportsLevel} Level`);
-    }
-    return parts.length > 0 ? parts.join(', ') : 'No restrictions';
-  }, [event?.eventMinAge, event?.eventMaxAge, event?.eventSportsLevel]);
 
   const guestAllowanceText = useMemo(() => {
     const maxGuests = event?.eventMaxGuest ? `${event.eventMaxGuest} members max` : 'Guest limit N/A';
@@ -195,7 +186,7 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
 
             <Card style={eventStyles.card}>
               <TextDs style={eventStyles.cardTitle}>Restrictions</TextDs>
-              <TextDs style={eventStyles.restrictionsText}>{restrictionsText}</TextDs>
+              <TextDs style={eventStyles.restrictionsText}>{getRestrictionsText(event)}</TextDs>
             </Card>
 
             <Card style={eventStyles.card}>
@@ -217,7 +208,9 @@ export const OrganiserAnalyticsEventDetailsScreen: React.FC = () => {
 
             <Card style={eventStyles.card}>
               <TextDs style={eventStyles.cardTitle}>Refund Policy</TextDs>
-              <TextDs style={eventStyles.restrictionsText}>Allow refunds always</TextDs>
+              <TextDs style={eventStyles.restrictionsText}>
+                {getRefundPolicyForDisplay(event.policyJoind, event.eventPricePerGuest > 0) || 'No refund policy available'}
+              </TextDs>
             </Card>
           </>
         ) : (

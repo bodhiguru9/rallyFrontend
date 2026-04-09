@@ -23,6 +23,7 @@ import { DateTimePickerModal } from '@screens/organiser/create-event/components/
 import { DeleteEventModal } from './components/DeleteEventModal';
 import type { EventData } from '@app-types';
 import { DEFAULT_DISPLAY_TIME_ZONE } from '@constants/timezones';
+import { getRefundPolicyForDisplay, getRestrictionsText } from '@utils/event-formatting';
 import { EventLocationSearch } from '@screens/organiser/create-event/components/EventLocationSearch';
 import { formatLocationString } from '@utils/location-utils';
 import type { EventLocation } from '@app-types/location.types';
@@ -313,7 +314,7 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
         {/* Restrictions Card */}
         <TextDs style={styles.cardTitle}>Restrictions</TextDs>
         <TextDs style={styles.restrictionsText}>
-          {event.eventGender || 'Male Only'}, {event.eventMinAge || 12}-{event.eventMaxAge || 24} yrs, {event.eventSportsLevel || 'Intermediate Level'}
+          {getRestrictionsText(event)}
         </TextDs>
       </Card>
 
@@ -326,10 +327,14 @@ export const OrganiserEventDetailsScreen: React.FC = () => {
       </Card>
 
       {/* Refund Policy Card */}
-      <Card style={{ marginBottom: spacing.base }}>
-        <TextDs style={styles.cardTitle}>Refund Policy</TextDs>
-        <TextDs style={styles.refundPolicyText}>Allow refunds always</TextDs>
-      </Card>
+      {event.eventPricePerGuest && event.eventPricePerGuest > 0 && (
+        <Card style={{ marginBottom: spacing.base }}>
+          <TextDs style={styles.cardTitle}>Refund Policy</TextDs>
+          <TextDs style={styles.refundPolicyText}>
+            {getRefundPolicyForDisplay(event.policyJoind, true)}
+          </TextDs>
+        </Card>
+      )}
     </ScrollView>
   );
 
