@@ -3,7 +3,7 @@
     "owner": "rally-sports",
     "name": "Rally Sports",
     "slug": "rally-app",
-    "version": "1.0.18",
+    "version": "1.0.19",
     "scheme": "rally-app",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
