@@ -76,7 +76,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
     setIsLoadingCards(true);
     try {
       const response = await paymentService.getSavedCards();
-      
+
       // Initialize Stripe if publishableKey is provided
       if (response.publishableKey) {
         try {
@@ -365,7 +365,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       });
     } catch (error: any) {
       logger.error('Booking error:', error);
-      
+
       let alertTitle = 'Booking Failed';
       let alertMessage = 'An unexpected error occurred. Please try again.';
 
@@ -725,7 +725,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
             </TextDs>
 
             {/* Apple Pay stays at the bottom of the scroll or below */}
-            {Platform.OS === 'ios' && isApplePayAvailable && (
+            {Platform.OS === 'ios' && (
               <TouchableOpacity
                 style={[styles.applePayButton, isProcessing && { opacity: 0.6 }]}
                 onPress={handleApplePayPress}
