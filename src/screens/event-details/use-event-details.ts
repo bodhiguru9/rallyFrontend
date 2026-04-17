@@ -452,6 +452,11 @@ export const useEventDetails = () => {
 
   const handleCloseCancelBookingModal = () => setIsCancelBookingModalVisible(false);
   const handleCancelBookingSuccess = () => {
+    // Always invalidate caches so PlayerCalendar and EventDetails reflect
+    // the updated booking state, regardless of how the cancel completed.
+    queryClient.invalidateQueries({ queryKey: ['player-bookings'] });
+    queryClient.invalidateQueries({ queryKey: ['event-details'] });
+    queryClient.invalidateQueries({ queryKey: ['event'] });
     setIsCancelBookingModalVisible(false);
     navigation.navigate('PlayerCalendar');
   };

@@ -77,8 +77,12 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
     try {
       const response = await paymentService.getSavedCards();
 
-      // Initialize Stripe if publishableKey is provided
+      // Store the publishable key AND re-initialize Stripe SDK for card operations.
+      // initStripe() is safe here because fetchCards runs early (on modal open),
+      // well before any Apple Pay interaction. Card operations (createPaymentMethod,
+      // confirmPayment) need the SDK initialized immediately.
       if (response.publishableKey) {
+        useAuthStore.getState().setStripePublishableKey(response.publishableKey);
         try {
           await initStripe({
             publishableKey: response.publishableKey,
@@ -285,16 +289,18 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
 
       const { data } = bookingResponse;
 
-      // Update the global Stripe publishable key if provided by backend
+      // Update the global Stripe publishable key if provided by backend.
+      // initStripe() is safe in the CARD flow because card operations
+      // (confirmPayment) don't use PKPaymentAuthorizationCoordinator.
+      // Do NOT add initStripe() to the Apple Pay flow — it breaks Apple Pay.
       if (data.publishableKey) {
         useAuthStore.getState().setStripePublishableKey(data.publishableKey);
-        // Ensure native Stripe SDK is initialized with the new key before proceeding
         try {
           await initStripe({
             publishableKey: data.publishableKey,
             merchantIdentifier: 'merchant.com.rally.app',
           });
-          logger.info('Stripe SDK re-initialized with new publishable key');
+          logger.info('Stripe SDK re-initialized for card payment');
         } catch (initError) {
           logger.error('Failed to re-initialize Stripe SDK:', initError);
         }
@@ -432,17 +438,13 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       const { data } = bookingResponse;
 
       // Update the global Stripe publishable key if provided by backend
+      // NOTE: Do NOT call initStripe() here — the StripeProvider in App.tsx
+      // handles initialization reactively. Calling initStripe() tears down the
+      // native PKPaymentAuthorizationCoordinator, causing Apple Pay to instantly
+      // auto-cancel with "failed to register payment listener endpoint".
       if (data.publishableKey) {
         useAuthStore.getState().setStripePublishableKey(data.publishableKey);
-        try {
-          await initStripe({
-            publishableKey: data.publishableKey,
-            merchantIdentifier: 'merchant.com.rally.app',
-          });
-          logger.info('Stripe SDK re-initialized for Apple Pay');
-        } catch (initError) {
-          logger.error('Failed to re-initialize Stripe SDK for Apple Pay:', initError);
-        }
+        logger.info('Stripe publishable key updated in store for Apple Pay');
       }
 
       // Check if it's a free event

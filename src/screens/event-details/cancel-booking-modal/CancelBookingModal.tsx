@@ -47,15 +47,26 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
             err.response?.data?.message ??
             'Failed to cancel booking.';
           logger.warn('[CancelBookingModal] Cancel booking failed', { message, err });
-          Alert.alert('Cannot cancel', message, [
-            {
-              text: 'OK',
-              onPress: () => {
-                onCancelSuccess?.();
-                onClose();
+
+          // If the backend says the booking is already cancelled, treat it as a
+          // successful outcome — the desired state has been reached.
+          const alreadyCancelled = message.toLowerCase().includes('already cancelled');
+
+          Alert.alert(
+            alreadyCancelled ? 'Already Cancelled' : 'Cancel booking failed',
+            message,
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  if (alreadyCancelled) {
+                    onCancelSuccess?.();
+                  }
+                  onClose();
+                },
               },
-            },
-          ]);
+            ],
+          );
         },
       });
     } else {

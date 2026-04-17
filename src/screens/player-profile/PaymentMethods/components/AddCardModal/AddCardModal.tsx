@@ -23,12 +23,13 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
   const { createPaymentMethod } = useStripe();
 
   /**
-   * Ensures the Stripe SDK is initialized with a valid publishable key.
-   * This guards against race conditions where initStripe() from another screen
-   * hasn't completed, or competing initStripe() calls left the SDK without a key.
+   * Ensures the Stripe SDK has a valid publishable key.
+   * First updates the Zustand store (which the StripeProvider in App.tsx reacts to).
+   * Only calls initStripe() as a last-resort fallback when the key was just fetched
+   * and StripeProvider hasn't re-rendered yet.
    */
   const ensureStripeInitialized = async (): Promise<boolean> => {
-    // 1. Try key from Zustand store (set by prior backend responses)
+    // 1. Check if key is already in the Zustand store (StripeProvider uses this)
     let key = useAuthStore.getState().stripePublishableKey;
 
     // 2. If not in store, fetch from backend (GET /api/cards returns publishableKey)
@@ -39,6 +40,18 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
         if (response.publishableKey) {
           key = response.publishableKey;
           useAuthStore.getState().setStripePublishableKey(key);
+          // Since we just updated the store, StripeProvider will re-render.
+          // But we need the key immediately for createPaymentMethod(),
+          // so call initStripe as a fallback for this render cycle.
+          try {
+            await initStripe({
+              publishableKey: key,
+              merchantIdentifier: 'merchant.com.rally.app',
+            });
+            logger.info('AddCardModal: Stripe SDK initialized with fetched key');
+          } catch (initErr) {
+            logger.error('AddCardModal: initStripe failed:', initErr);
+          }
         }
       } catch (err) {
         logger.error('AddCardModal: Failed to fetch publishable key from backend:', err);
@@ -50,18 +63,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
       return false;
     }
 
-    // 3. Re-initialize the SDK to ensure it has the correct key
-    try {
-      await initStripe({
-        publishableKey: key,
-        merchantIdentifier: 'merchant.com.rally.app',
-      });
-      logger.info('AddCardModal: Stripe SDK initialized successfully');
-      return true;
-    } catch (err) {
-      logger.error('AddCardModal: Failed to initialize Stripe SDK:', err);
-      return false;
-    }
+    return true;
   };
 
   // Handle animation
