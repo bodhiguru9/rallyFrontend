@@ -38,8 +38,15 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
       cancelBooking(bookingId, {
         onSuccess: () => {
           logger.info('[CancelBookingModal] Cancel booking succeeded', { bookingId });
-          onCancelSuccess?.();
-          onClose();
+          Alert.alert('Booking Cancelled', 'Your booking has been cancelled successfully.', [
+            {
+              text: 'OK',
+              onPress: () => {
+                onCancelSuccess?.();
+                onClose();
+              },
+            },
+          ]);
         },
         onError: (err: Error & { response?: { data?: { error?: string; message?: string } } }) => {
           const message =
