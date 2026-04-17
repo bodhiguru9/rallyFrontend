@@ -18,7 +18,7 @@ import { colors, spacing, borderRadius } from '@theme';
 import type { IBookingModalProps } from './BookingModal.types';
 import { styles } from './style/BookingModal.styles';
 import { useStripe, initStripe, PlatformPay } from '@stripe/stripe-react-native';
-import { paymentService, SavedCard } from '@services';
+import { paymentService, bookingService, SavedCard } from '@services';
 import { logger } from '@dev-tools/logger';
 import { useAuthStore } from '@store';
 import { AddCardModal } from '@screens/player-profile/PaymentMethods/components/AddCardModal';
@@ -419,6 +419,8 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
 
     setIsProcessing(true);
 
+    let pendingBookingId: string | null = null;
+
     try {
       // Step 1: Create booking and get Stripe Payment Intent
       logger.info(`Creating booking for event: ${eventId}, guests: ${guestsCount} via Apple Pay`);
@@ -436,6 +438,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       }
 
       const { data } = bookingResponse;
+      pendingBookingId = data.booking?.bookingId || null;
 
       // Update the global Stripe publishable key if provided by backend
       // NOTE: Do NOT call initStripe() here — the StripeProvider in App.tsx
@@ -480,6 +483,14 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       );
 
       if (applePayError) {
+        // Clean up the pending booking since payment won't complete
+        try {
+          logger.info(`Cleaning up pending booking ${data.booking.bookingId} after Apple Pay failure`);
+          await bookingService.cancelBooking(data.booking.bookingId);
+        } catch (cleanupErr) {
+          logger.error('Failed to clean up pending booking:', cleanupErr);
+        }
+
         if (applePayError.code === 'Canceled') {
           logger.info('Apple Pay cancelled by user');
         } else {
@@ -513,6 +524,16 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       });
     } catch (error: any) {
       logger.error('Apple Pay booking error:', error);
+
+      // Clean up pending booking if one was created before the error
+      if (pendingBookingId) {
+        try {
+          logger.info(`Cleaning up pending booking ${pendingBookingId} after error`);
+          await bookingService.cancelBooking(pendingBookingId);
+        } catch (cleanupErr) {
+          logger.error('Failed to clean up pending booking:', cleanupErr);
+        }
+      }
 
       let alertTitle = 'Booking Failed';
       let alertMessage = 'An unexpected error occurred. Please try again.';
