@@ -111,7 +111,7 @@ export interface GetSavedCardsResponse {
 }
 
 export const paymentService: {
-  createBookingWithPayment: (eventId: string, promoCode?: string | null, guestsCount?: number, occurrenceStart?: string | null, occurrenceEnd?: string | null, timeZone?: string | null) => Promise<BookEventPaymentResponse>;
+  createBookingWithPayment: (eventId: string, promoCode?: string | null, guestsCount?: number, occurrenceStart?: string | null, occurrenceEnd?: string | null, timeZone?: string | null, paymentMethod?: string) => Promise<BookEventPaymentResponse>;
   verifyPayment: (paymentIntentId: string) => Promise<VerifyPaymentResponse>;
   getSavedCards: () => Promise<GetSavedCardsResponse>;
   saveCard: (cardData: { paymentMethodId: string; cardHolderName: string; isDefault: boolean }) => Promise<{ success: boolean; message: string }>;
@@ -130,6 +130,7 @@ export const paymentService: {
     occurrenceStart?: string | null,
     occurrenceEnd?: string | null,
     timeZone?: string | null,
+    paymentMethod?: string,
   ): Promise<BookEventPaymentResponse> => {
     const params = new URLSearchParams();
     if (promoCode) params.set('promoCode', promoCode);
@@ -137,6 +138,7 @@ export const paymentService: {
     if (occurrenceStart) params.set('occurrenceStart', occurrenceStart);
     if (occurrenceEnd) params.set('occurrenceEnd', occurrenceEnd);
     if (timeZone) params.set('timeZone', timeZone);
+    if (paymentMethod) params.set('paymentMethod', paymentMethod);
     const query = params.toString();
     const url = query ? `/api/bookings/book-event/${eventId}?${query}` : `/api/bookings/book-event/${eventId}`;
 

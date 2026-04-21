@@ -86,7 +86,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         try {
           await initStripe({
             publishableKey: response.publishableKey,
-            merchantIdentifier: 'merchant.com.rally.app',
+            merchantIdentifier: 'merchant.com.rallysports',
           });
           logger.info('Stripe SDK initialized with key from getSavedCards');
         } catch (initError) {
@@ -281,6 +281,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         occurrenceStart ?? null,
         occurrenceEnd ?? null,
         deviceTimeZone,
+        'card'
       );
 
       if (!bookingResponse.success) {
@@ -289,16 +290,12 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
 
       const { data } = bookingResponse;
 
-      // Update the global Stripe publishable key if provided by backend.
-      // initStripe() is safe in the CARD flow because card operations
-      // (confirmPayment) don't use PKPaymentAuthorizationCoordinator.
-      // Do NOT add initStripe() to the Apple Pay flow — it breaks Apple Pay.
       if (data.publishableKey) {
         useAuthStore.getState().setStripePublishableKey(data.publishableKey);
         try {
           await initStripe({
             publishableKey: data.publishableKey,
-            merchantIdentifier: 'merchant.com.rally.app',
+            merchantIdentifier: 'merchant.com.rallysports',
           });
           logger.info('Stripe SDK re-initialized for card payment');
         } catch (initError) {
@@ -431,6 +428,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         occurrenceStart ?? null,
         occurrenceEnd ?? null,
         deviceTimeZone,
+        'apple_pay'
       );
 
       if (!bookingResponse.success) {

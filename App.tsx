@@ -120,7 +120,7 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <StripeProvider
             publishableKey={stripePublishableKey}
-            merchantIdentifier="merchant.com.rally.app"
+            merchantIdentifier="merchant.com.rallysports"
           >
             <SafeAreaProvider>
               <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
