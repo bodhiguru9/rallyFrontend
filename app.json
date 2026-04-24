@@ -55,7 +55,7 @@
       [
         "@stripe/stripe-react-native",
         {
-          "merchantIdentifier": "merchant.com.rally.app",
+          "merchantIdentifier": "merchant.com.rallysports",
           "enableGooglePay": true
         }
       ]

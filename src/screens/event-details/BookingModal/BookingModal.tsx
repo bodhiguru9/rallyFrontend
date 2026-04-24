@@ -419,8 +419,29 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
     let pendingBookingId: string | null = null;
 
     try {
+      // ──────────────────────────────────────────────
+      // DIAGNOSTIC: Pre-flight checks
+      // ──────────────────────────────────────────────
+      const applePaySupported = await isPlatformPaySupported();
+      logger.info('🍎 Apple Pay pre-flight:', {
+        isPlatformPaySupported: applePaySupported,
+        platform: Platform.OS,
+        merchantIdentifier: 'merchant.com.rallysports',
+      });
+
+      if (!applePaySupported) {
+        Alert.alert(
+          'Apple Pay Unavailable',
+          'Apple Pay is not available on this device. Please ensure you have a card added to your Apple Wallet and that Apple Pay is enabled in your device settings.'
+        );
+        setIsProcessing(false);
+        return;
+      }
+
+      // ──────────────────────────────────────────────
       // Step 1: Create booking and get Stripe Payment Intent
-      logger.info(`Creating booking for event: ${eventId}, guests: ${guestsCount} via Apple Pay`);
+      // ──────────────────────────────────────────────
+      logger.info(`🍎 Creating booking for event: ${eventId}, guests: ${guestsCount} via Apple Pay`);
       const bookingResponse = await paymentService.createBookingWithPayment(
         eventId,
         appliedPromoCode || (promoCode.trim() || null),
@@ -438,6 +459,32 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       const { data } = bookingResponse;
       pendingBookingId = data.booking?.bookingId || null;
 
+      // ──────────────────────────────────────────────
+      // DIAGNOSTIC: Inspect backend response for issues
+      // ──────────────────────────────────────────────
+      logger.info('🍎 Backend booking response:', {
+        bookingId: data.booking?.bookingId,
+        paymentIntentId: data.paymentIntent?.id,
+        paymentIntentStatus: data.paymentIntent?.status,
+        paymentAmount: data.payment?.finalAmount,
+        paymentCurrency: data.payment?.currency,
+        isFreeEvent: data.isFreeEvent,
+        paymentRequired: data.paymentRequired,
+        hasClientSecret: !!data.paymentIntent?.clientSecret,
+        clientSecretPrefix: data.paymentIntent?.clientSecret?.substring(0, 15) + '...',
+      });
+
+      // DIAGNOSTIC: Detect if backend returned a canceled PI
+      if (data.paymentIntent?.status === 'canceled') {
+        logger.error('🍎 ❌ PaymentIntent is already canceled before Apple Pay presentation!');
+        Alert.alert(
+          'Payment Error',
+          'The payment session was canceled before it could be started. This may indicate a configuration issue. Please try again.'
+        );
+        setIsProcessing(false);
+        return;
+      }
+
       // Update the global Stripe publishable key if provided by backend
       // NOTE: Do NOT call initStripe() here — the StripeProvider in App.tsx
       // handles initialization reactively. Calling initStripe() tears down the
@@ -445,12 +492,12 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       // auto-cancel with "failed to register payment listener endpoint".
       if (data.publishableKey) {
         useAuthStore.getState().setStripePublishableKey(data.publishableKey);
-        logger.info('Stripe publishable key updated in store for Apple Pay');
+        logger.info('🍎 Stripe publishable key updated in store for Apple Pay');
       }
 
       // Check if it's a free event
       if (data.isFreeEvent || !data.paymentRequired) {
-        logger.info('Free event - no payment required');
+        logger.info('🍎 Free event - no payment required');
         setIsProcessing(false);
         onBookEvent({
           promoCode: appliedPromoCode || (promoCode.trim() || null),
@@ -461,53 +508,151 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         return;
       }
 
-      // Step 2: Present Apple Pay sheet and confirm payment in one call
-      logger.info('Presenting Apple Pay and confirming payment...');
+      // ──────────────────────────────────────────────
+      // Step 2: Present Apple Pay sheet and confirm payment
+      // ──────────────────────────────────────────────
+      const applePayConfig = {
+        applePay: {
+          cartItems: [
+            {
+              label: `Event Booking (${guestsCount} ${guestsCount === 1 ? 'guest' : 'guests'})`,
+              amount: String(data.payment.finalAmount),
+              paymentType: PlatformPay.PaymentType.Immediate,
+            },
+          ],
+          merchantCountryCode: 'AE',
+          currencyCode: data.payment.currency || 'AED',
+        },
+      };
+
+      logger.info('🍎 Presenting Apple Pay sheet with config:', {
+        merchantCountryCode: 'AE',
+        currencyCode: data.payment.currency || 'AED',
+        cartItemAmount: String(data.payment.finalAmount),
+        clientSecretLength: data.paymentIntent.clientSecret?.length,
+      });
+
       const { error: applePayError } = await confirmPlatformPayPayment(
         data.paymentIntent.clientSecret,
-        {
-          applePay: {
-            cartItems: [
-              {
-                label: `Event Booking (${guestsCount} ${guestsCount === 1 ? 'guest' : 'guests'})`,
-                amount: String(data.payment.finalAmount),
-                paymentType: PlatformPay.PaymentType.Immediate,
-              },
-            ],
-            merchantCountryCode: 'AE',
-            currencyCode: data.payment.currency || 'AED',
-          },
-        },
+        applePayConfig,
       );
 
+      // ──────────────────────────────────────────────
+      // DIAGNOSTIC: Classify Apple Pay errors
+      // ──────────────────────────────────────────────
       if (applePayError) {
+        logger.error('🍎 ❌ Apple Pay failed:', {
+          code: applePayError.code,
+          message: applePayError.message,
+          declineCode: (applePayError as any).declineCode,
+          stripeErrorCode: (applePayError as any).stripeErrorCode,
+          type: (applePayError as any).type,
+        });
+
         // Clean up the pending booking since payment won't complete
         try {
-          logger.info(`Cleaning up pending booking ${data.booking.bookingId} after Apple Pay failure`);
+          logger.info(`🍎 Cleaning up pending booking ${data.booking.bookingId} after Apple Pay failure`);
           await bookingService.cancelBooking(data.booking.bookingId);
         } catch (cleanupErr) {
-          logger.error('Failed to clean up pending booking:', cleanupErr);
+          logger.error('🍎 Failed to clean up pending booking:', cleanupErr);
         }
 
-        if (applePayError.code === 'Canceled') {
-          logger.info('Apple Pay cancelled by user');
-        } else {
-          logger.error('Apple Pay error:', applePayError);
-          Alert.alert('Apple Pay Error', applePayError.message || 'Apple Pay payment could not be completed.');
+        // SDK source: PlatformPayError = 'Canceled' | 'Failed' | 'Unknown'
+        // StripeError fields: code, message, type?, declineCode?, stripeErrorCode?
+        // type: 'card_error' | 'invalid_request_error' | 'api_error' | 'api_connection_error' | ...
+        const errorCode = applePayError.code;
+        const errorMessage = applePayError.message || '';
+        const errorType = (applePayError as any).type as string | undefined;
+        const declineCode = (applePayError as any).declineCode as string | undefined;
+        const stripeErrorCode = (applePayError as any).stripeErrorCode as string | undefined;
+
+        // ─── Code: Canceled ───────────────────────────
+        // User dismissed the sheet, OR the sheet auto-closed due to config issues
+        // (the SDK sometimes returns Canceled for both scenarios)
+        if (errorCode === 'Canceled') {
+          logger.info('🍎 Apple Pay Canceled:', { errorMessage, errorType, stripeErrorCode });
+
+          if (!errorMessage || errorMessage === 'The payment has been canceled') {
+            logger.info('🍎 User dismissed Apple Pay sheet');
+          } else {
+            // Canceled with a message often hints at a config/entitlement issue
+            logger.warn('🍎 ⚠️ Canceled with message — possible config issue:', errorMessage);
+          }
+
+          Alert.alert('Apple Pay Cancelled', errorMessage || 'You dismissed the payment sheet.');
+          setIsProcessing(false);
+          return;
         }
+
+        // ─── Code: Failed ─────────────────────────────
+        if (errorCode === 'Failed') {
+          logger.error('🍎 ❌ Apple Pay Failed:', { errorMessage, errorType, declineCode, stripeErrorCode });
+
+          // Sub-classify using Stripe's error type
+          if (errorType === 'card_error') {
+            Alert.alert(
+              'Payment Declined',
+              `Your card was declined. Please try a different card in your Apple Wallet.\n\nDecline code: ${declineCode || 'unknown'}\nDetails: ${errorMessage}`
+            );
+          } else if (errorType === 'invalid_request_error') {
+            // Bad PI config (e.g. setup_future_usage, wrong payment_method_types)
+            Alert.alert(
+              'Payment Configuration Error',
+              `Stripe rejected the request. The server may have created the PaymentIntent with card-only restrictions.\n\nStripe code: ${stripeErrorCode || 'N/A'}\nPI: ${data.paymentIntent.id}\nDetails: ${errorMessage}`
+            );
+          } else if (errorType === 'api_connection_error') {
+            Alert.alert(
+              'Connection Error',
+              'Unable to reach Stripe servers. Please check your internet connection and try again.'
+            );
+          } else if (errorType === 'api_error') {
+            Alert.alert(
+              'Stripe Service Error',
+              `Stripe encountered an internal error. Please try again in a moment.\n\nDetails: ${errorMessage}`
+            );
+          } else {
+            // Generic Failed (no type) — often means merchant ID / entitlement mismatch
+            Alert.alert(
+              'Apple Pay Failed',
+              `Apple Pay could not complete the payment. This may indicate a Merchant ID or certificate mismatch.\n\nCode: ${errorCode}\nType: ${errorType || 'none'}\nStripe code: ${stripeErrorCode || 'N/A'}\nPI: ${data.paymentIntent.id}\nMessage: ${errorMessage}`
+            );
+          }
+
+          setIsProcessing(false);
+          return;
+        }
+
+        // ─── Code: Unknown ────────────────────────────
+        logger.error('🍎 ❌ Apple Pay Unknown error:', {
+          errorCode, errorMessage, errorType, declineCode, stripeErrorCode,
+          fullError: JSON.stringify(applePayError),
+        });
+        Alert.alert(
+          'Apple Pay Error',
+          `An unexpected error occurred.\n\nCode: ${errorCode}\nType: ${errorType || 'none'}\nStripe code: ${stripeErrorCode || 'N/A'}\nPI: ${data.paymentIntent.id}\nMessage: ${errorMessage}`
+        );
         setIsProcessing(false);
         return;
       }
 
+      // ──────────────────────────────────────────────
       // Step 3: Verify payment on backend
-      logger.info('Verifying Apple Pay payment on backend...');
+      // ──────────────────────────────────────────────
+      logger.info('🍎 ✅ Apple Pay sheet completed — verifying on backend...');
       const verifyResponse = await paymentService.verifyPayment(data.paymentIntent.id);
 
       if (!verifyResponse.success) {
+        logger.error('🍎 ❌ Backend verification failed:', {
+          message: verifyResponse.message,
+          paymentIntentId: data.paymentIntent.id,
+        });
         throw new Error(verifyResponse.message || 'Failed to verify payment');
       }
 
-      logger.info('Apple Pay payment verified successfully');
+      logger.info('🍎 ✅ Apple Pay payment verified successfully!', {
+        bookingId: data.booking.bookingId,
+        paymentIntentId: data.paymentIntent.id,
+      });
       setIsProcessing(false);
 
       onBookEvent({
@@ -521,15 +666,21 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         discountAmount: promoDiscount,
       });
     } catch (error: any) {
-      logger.error('Apple Pay booking error:', error);
+      logger.error('🍎 ❌ Apple Pay booking error (catch block):', {
+        name: error.name,
+        message: error.message,
+        responseStatus: error.response?.status,
+        responseData: JSON.stringify(error.response?.data || {}),
+        stack: error.stack?.substring(0, 300),
+      });
 
       // Clean up pending booking if one was created before the error
       if (pendingBookingId) {
         try {
-          logger.info(`Cleaning up pending booking ${pendingBookingId} after error`);
+          logger.info(`🍎 Cleaning up pending booking ${pendingBookingId} after error`);
           await bookingService.cancelBooking(pendingBookingId);
         } catch (cleanupErr) {
-          logger.error('Failed to clean up pending booking:', cleanupErr);
+          logger.error('🍎 Failed to clean up pending booking:', cleanupErr);
         }
       }
 
@@ -544,6 +695,9 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
         } else if (backendError.includes('Already joined')) {
           alertTitle = 'Already Booked';
           alertMessage = 'You have already registered for this event.';
+        } else if (backendError.toLowerCase().includes('age') || backendError.toLowerCase().includes('old')) {
+          alertTitle = 'Age Restriction';
+          alertMessage = backendError;
         } else {
           alertMessage = backendError;
         }
