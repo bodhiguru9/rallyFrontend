@@ -45,7 +45,7 @@ export const PaymentMethodsScreen: React.FC = () => {
         try {
           await initStripe({
             publishableKey: response.publishableKey,
-            merchantIdentifier: 'merchant.com.rally.app',
+            merchantIdentifier: 'merchant.com.rallysports',
           });
           console.log('[Stripe] SDK initialized in PaymentMethodsScreen');
         } catch (initError) {

@@ -16,7 +16,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.rally.app"
+      "bundleIdentifier": "com.rallysports.app"
     },
     "android": {
       "adaptiveIcon": {

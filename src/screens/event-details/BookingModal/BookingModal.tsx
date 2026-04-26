@@ -511,15 +511,18 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
       // ──────────────────────────────────────────────
       // Step 2: Present Apple Pay sheet and confirm payment
       // ──────────────────────────────────────────────
-      const applePayConfig = {
+
+      const applePayCartItems: PlatformPay.CartSummaryItem[] = [
+        {
+          label: `Event Booking (${guestsCount} ${guestsCount === 1 ? 'guest' : 'guests'})`,
+          amount: String(data.payment.finalAmount),
+          paymentType: PlatformPay.PaymentType.Immediate,
+        },
+      ];
+
+      const applePayConfig: PlatformPay.ConfirmParams = {
         applePay: {
-          cartItems: [
-            {
-              label: `Event Booking (${guestsCount} ${guestsCount === 1 ? 'guest' : 'guests'})`,
-              amount: String(data.payment.finalAmount),
-              paymentType: PlatformPay.PaymentType.Immediate,
-            },
-          ],
+          cartItems: applePayCartItems,
           merchantCountryCode: 'AE',
           currencyCode: data.payment.currency || 'AED',
         },
@@ -900,7 +903,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
             </TextDs>
 
             {/* Apple Pay stays at the bottom of the scroll or below */}
-            {Platform.OS === 'ios' && (
+            {Platform.OS === 'ios' && isApplePayAvailable && (
               <TouchableOpacity
                 style={[styles.applePayButton, isProcessing && { opacity: 0.6 }]}
                 onPress={handleApplePayPress}

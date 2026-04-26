@@ -46,7 +46,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
           try {
             await initStripe({
               publishableKey: key,
-              merchantIdentifier: 'merchant.com.rally.app',
+              merchantIdentifier: 'merchant.com.rallysports',
             });
             logger.info('AddCardModal: Stripe SDK initialized with fetched key');
           } catch (initErr) {
