@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AppNavigator } from '@navigation';
 import { HomeProvider } from '@screens';
 import { useFonts } from '@hooks';
 import Constants from 'expo-constants';
+import * as SplashScreen from 'expo-splash-screen';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -12,6 +13,7 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
+import { SplashVideoScreen } from './src/screens/welcome-splash/SplashVideoScreen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -47,9 +49,16 @@ const pickStripePublishableKey = (
   return valid?.trim() || '';
 };
 
+// Keep the native splash screen visible while we load resources
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Silently fail — the splash screen may have already been hidden
+});
+
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
   const fontsLoaded = useFonts();
+  const [showSplashVideo, setShowSplashVideo] = useState(true);
+  const [isAppReady, setIsAppReady] = useState(false);
   const isGlobalLoading = useAuthStore((state) => state.isGlobalLoading);
   const globalLoadingMessage = useAuthStore((state) => state.globalLoadingMessage);
   const isAuthInitialized = useAuthStore((state) => state.isAuthInitialized);
@@ -92,6 +101,16 @@ function App() {
   }, [isDarkMode, fontsLoaded, isAuthInitialized]);
 
   useEffect(() => {
+    if (fontsLoaded && isAuthInitialized) {
+      console.log('🚀 [APP] Everything loaded, hiding native splash');
+      setIsAppReady(true);
+      SplashScreen.hideAsync().catch((err) => {
+        console.warn('Failed to hide splash screen', err);
+      });
+    }
+  }, [fontsLoaded, isAuthInitialized]);
+
+  useEffect(() => {
     if (!stripePublishableKey) {
       const envKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
       const configKey =
@@ -104,18 +123,31 @@ function App() {
     }
   }, [stripePublishableKey]);
 
-  // Wait for both fonts and auth initialization before rendering app
-  if (!fontsLoaded || !isAuthInitialized) {
-    logger.debug('Loading app...', { fontsLoaded, isAuthInitialized });
+  // Hide the native splash screen once fonts + auth are ready.
+  // The video splash will still be visible on top, providing a seamless transition.
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded && isAuthInitialized) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, isAuthInitialized]);
+
+  const handleSplashVideoFinish = useCallback(() => {
+    console.log('🎬 [APP] Splash video finished');
+    setShowSplashVideo(false);
+  }, []);
+
+  // Wait for both fonts and auth initialization before rendering app content
+  // We return a View to ensure the onLayout (if used) or just the mount happens
+  if (!isAppReady) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#5B7C99" />
+      <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
+        {/* Native splash screen is still visible */}
       </View>
     );
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <StripeProvider
@@ -142,6 +174,11 @@ function App() {
                   </HomeProvider>
                   <LoadingOverlay visible={isGlobalLoading} message={globalLoadingMessage} />
                 </>
+              )}
+
+              {/* Phase 2: Animated splash video overlay */}
+              {showSplashVideo && (
+                <SplashVideoScreen onFinish={handleSplashVideoFinish} />
               )}
             </SafeAreaProvider>
           </StripeProvider>
