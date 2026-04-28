@@ -14,6 +14,7 @@ export { MultiSelectInput } from './global/multi-select-input';
 export { LoadingOverlay } from './global/loading-overlay';
 export type { LoadingOverlayProps } from './global/loading-overlay';
 export { LoadingScreen } from './global/loading-screen';
+export { LoadingIndicator } from './global/LoadingIndicator';
 export { Seperator } from './global/Seperator';
 export type { SeperatorProps } from './global/Seperator';
 export { EventCard } from './global/EventCard';

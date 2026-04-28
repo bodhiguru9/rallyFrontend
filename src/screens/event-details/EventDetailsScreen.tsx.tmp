@@ -1,0 +1,101 @@
+import React from 'react';
+import { ScrollView, TouchableOpacity, Image, View, ActivityIndicator, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '@navigation';
+import { spacing } from '@theme';
+import { styles } from './style/EventDetailsScreen.styles';
+import { MembersModal } from './MembersModal';
+import { CancelBookingModal } from './cancel-booking-modal';
+import { BookingModal } from './BookingModal';
+import { Dropdown } from '@designSystem/molecules/dropdown';
+import { IconTag } from '@components/global/IconTag';
+import { images } from '@assets/images';
+import { Calendar1, Users, ChevronUp } from 'lucide-react-native';
+import { formatDate, calculateSpotsFilled } from '@utils';
+import { resolveImageUri } from '@utils/image-utils';
+import { YellowBanner, EventDetailsMap } from './components';
+import { Card } from '@components/global/Card';
+import { Seperator, TextDs, ImageDs, Avatar } from '@components';
+import { ArrowIcon } from '@components/global/ArrowIcon';
+import { ParticipantProfiles } from '@designSystem/materials/ParticipantProfiles';
+import { useEventDetails } from './use-event-details';
+import { FlexView } from '@designSystem/atoms/FlexView';
+import { BackdropBlur } from '@components/global/BackdropBlur';
+import { Video, ResizeMode } from 'expo-av';
+import { getRefundPolicyForDisplay, getRestrictionsText } from '@utils/event-formatting';
+
+type EventDetailsScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'EventDetails'
+>;
+
+export const EventDetailsScreen: React.FC = () => {
+  const navigation = useNavigation<EventDetailsScreenNavigationProp>();
+  const insets = useSafeAreaInsets();
+
+  const {
+    event,
+    isLoading,
+    isAuthenticated,
+    user,
+    isOrganiser,
+    guestsCount,
+    setGuestsCount,
+    isMembersModalVisible,
+    totalPrice,
+    exactPaidAmount,
+    variant,
+    buttonText,
+    handleShare,
+    handleSignIn,
+    handleBookNow,
+    handleBookEvent,
+    handleCloseBookingModal,
+    isBookingModalVisible,
+    isBookingEvent,
+    canCancelBooking,
+    handleCancelBooking,
+    isCancelBookingModalVisible,
+    handleCloseCancelBookingModal,
+    cancelBookingId,
+    cancelVariant,
+    handleCancelBookingSuccess,
+    isLeavingEvent,
+    handleOpenMembersModal,
+    handleCloseMembersModal,
+    showPayNow,
+    handlePayNow,
+    occurrenceStart,
+    occurrenceEnd,
+    isRegistrationEnded,
+    eventId,
+  } = useEventDetails();
+
+  const pendingInvitation = event?.userJoinStatus?.hasRequest;
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <FlexView style={styles.loadingContainer}>
+          {Platform.OS === 'ios' ? (
+            <Video
+              source={require('../../assets/images/loading-gifs/RALLLY_LOOP_LOADING_02_TRANSPARENT-cmprsd.mov')}
+              style={styles.videoLoader}
+              resizeMode={ResizeMode.CONTAIN}
+              shouldPlay
+              isLooping
+              isMuted
+            />
+          ) : (
+            <ActivityIndicator size="large" color="#000000" />
+          )}
+        </FlexView>
+      </SafeAreaView>
+    );
+  }
+
+  if (!event) {
+    return null;
+  }

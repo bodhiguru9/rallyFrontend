@@ -31,6 +31,7 @@ type EventDetailsRouteProp = NativeStackScreenProps<RootStackParamList, 'EventDe
 
 export const useEventDetails = () => {
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
+  const [isRefetchingEvent, setIsRefetchingEvent] = useState(false);
   const navigation = useNavigation<EventDetailsScreenNavigationProp>();
   const route = useRoute<EventDetailsRouteProp>();
   const { eventId, occurrenceStart: routeOccurrenceStart, occurrenceEnd: routeOccurrenceEnd } = route.params;
@@ -334,96 +335,23 @@ export const useEventDetails = () => {
 
 
 
-  const handleBookNow = async () => {
-    if (!event) return;
-    if (!isAuthenticated) { handleSignIn(); return; }
-    if (!!joinedBooking) return;
-
-    await queryClient.refetchQueries({ queryKey: ['event', eventId, true, true] });
-    const freshEvent = queryClient.getQueryData<typeof event>(['event', eventId, true, true]);
-    const ev = freshEvent ?? event;
-
-    if (ev.isPending && !(ev.userJoinStatus?.inWaitlist && !ev.spotsInfo?.spotsFull)) {
-      logger.info('Join request is pending approval');
-      return;
-    }
-
-    if (ev.userJoinStatus?.hasRequest) {
-      logger.info('Join request already sent');
-      return;
-    }
-
-    if (!isRegistrationOpen) {
-      addReminder(ev.eventId ?? eventId, {
-        onSuccess: () => {
-          navigation.navigate('RequestSent', {
-            variant: 'registration',
-            eventId: ev.eventId ?? eventId,
-            eventTitle: ev.eventName ?? 'Event',
-            organizerName: ev.creator?.fullName || ev.eventCreatorName || 'Unknown Organizer',
-            eventImage: ev.eventImages?.[0] || ev.gameImages?.[0] || 'https://via.placeholder.com/150',
-            eventDate: formatDate(effectiveEventDateTime ?? '', 'display-range', { endTime: effectiveEventEndDateTime ?? undefined }),
-            eventLocation: ev.eventLocation ?? '',
-            amountDue: totalPrice,
-            currency: 'AED',
-            bookingId: generateBookingId(),
-            categories: ev.eventSports ?? [],
-            eventType: ev.eventType ?? 'Event',
-          });
-        },
-      });
-      return;
-    }
-
-    const spotsLeft = ev.spotsInfo?.spotsLeft ?? ev.availableSpots ?? Math.max(0, (ev.eventMaxGuest ?? 0) - (ev.participantsCount ?? ev.spotsInfo?.spotsBooked ?? 0));
-    if (ev.spotsInfo?.spotsFull || spotsLeft <= 0) {
-      joinWaitlist(eventId, {
-        onSuccess: () => {
-          navigation.navigate('RequestSent', {
-            variant: 'waitlist',
-            eventId: ev.eventId ?? eventId,
-            eventTitle: ev.eventName ?? 'Event',
-            organizerName: ev.creator?.fullName || ev.eventCreatorName || 'Unknown Organizer',
-            eventImage: ev.eventImages?.[0] || ev.gameImages?.[0] || 'https://via.placeholder.com/150',
-            eventDate: formatDate(effectiveEventDateTime ?? '', 'display-range', { endTime: effectiveEventEndDateTime ?? undefined }),
-            eventLocation: ev.eventLocation ?? '',
-            amountDue: totalPrice,
-            currency: 'AED',
-            bookingId: generateBookingId(),
-            categories: ev.eventSports ?? [],
-            eventType: ev.eventType ?? 'Event',
-          });
-        },
-      });
-      return;
-    }
-
-    if (guestsCount > spotsLeft) setGuestsCount(Math.max(1, spotsLeft));
-
-    if (ev.IsPrivateEvent || ev.eventApprovalReq) {
-      sendJoinRequest(eventId, {
-        onSuccess: () => {
-          navigation.navigate('RequestSent', {
-            variant: 'private',
-            eventId: ev.eventId ?? eventId,
-            eventTitle: ev.eventName ?? 'Event',
-            organizerName: ev.creator?.fullName || ev.eventCreatorName || 'Unknown Organizer',
-            eventImage: ev.eventImages?.[0] || ev.gameImages?.[0] || 'https://via.placeholder.com/150',
-            eventDate: formatDate(effectiveEventDateTime ?? '', 'display-range', { endTime: effectiveEventEndDateTime ?? undefined }),
-            eventLocation: ev.eventLocation ?? '',
-            amountDue: totalPrice,
-            currency: 'AED',
-            bookingId: generateBookingId(),
-            categories: ev.eventSports ?? [],
-            eventType: ev.eventType ?? 'Event',
-          });
-        },
-      });
-      return;
-    }
-
     setIsBookingModalVisible(true);
   };
+
+  // Refetch event details when the booking modal is opened to ensure we have the latest spots/prices
+  useEffect(() => {
+    if (isBookingModalVisible && eventId) {
+      const refetchEvent = async () => {
+        setIsRefetchingEvent(true);
+        try {
+          await queryClient.refetchQueries({ queryKey: ['event', eventId, true, true] });
+        } finally {
+          setIsRefetchingEvent(false);
+        }
+      };
+      refetchEvent();
+    }
+  }, [isBookingModalVisible, eventId, queryClient]);
 
   const generateBookingId = () => {
     const r1 = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
@@ -543,6 +471,7 @@ export const useEventDetails = () => {
     variant: getVariant(),
     buttonText: getButtonText(),
     isBookingModalVisible,
+    isRefetchingEvent,
     handleCloseBookingModal,
     isAddingReminder,
     isJoiningWaitlist,

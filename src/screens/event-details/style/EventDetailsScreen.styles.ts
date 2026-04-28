@@ -4,7 +4,7 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    experimental_backgroundImage: colors.gradient.mainBackground,
+    backgroundColor: colors.gradient.main,
   },
   persistentFooter: {
     // Remove position: 'absolute', bottom: 0, etc.
@@ -34,6 +34,11 @@ export const styles = StyleSheet.create({
   loadingText: {
     ...getFontStyle(14, 'regular'),
     color: colors.text.secondary,
+  },
+  videoLoader: {
+    width: 80,
+    height: 80,
+    marginBottom: spacing.base,
   },
   header: {
     flexDirection: 'row',

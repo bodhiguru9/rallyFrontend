@@ -17,14 +17,15 @@ import { formatDate, calculateSpotsFilled } from '@utils';
 import { resolveImageUri } from '@utils/image-utils';
 import { YellowBanner, EventDetailsMap } from './components';
 import { Card } from '@components/global/Card';
-import { Seperator, TextDs, ImageDs, Avatar } from '@components';
+import { LoadingIndicator, Seperator, TextDs, ImageDs, Avatar } from '@components';
 import { ArrowIcon } from '@components/global/ArrowIcon';
 import { ParticipantProfiles } from '@designSystem/materials/ParticipantProfiles';
 import { useEventDetails } from './use-event-details';
 import { FlexView } from '@designSystem/atoms/FlexView';
 import { BackdropBlur } from '@components/global/BackdropBlur';
-
+import { Video, ResizeMode } from 'expo-av';
 import { getRefundPolicyForDisplay, getRestrictionsText } from '@utils/event-formatting';
+import { ActivityIndicator, Platform } from 'react-native';
 type EventDetailsScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'EventDetails'
@@ -72,6 +73,7 @@ export const EventDetailsScreen: React.FC = () => {
     acceptInvitationMutation,
     declineInvitationMutation,
     isBookingEvent,
+    isRefetchingEvent,
     isLeavingEvent,
     isRegistrationEnded,
   } = useEventDetails();
@@ -93,6 +95,7 @@ export const EventDetailsScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <FlexView style={styles.loadingContainer}>
+          <LoadingIndicator size={80} />
           <TextDs style={styles.loadingText}>Loading event details...</TextDs>
         </FlexView>
       </SafeAreaView>
@@ -387,11 +390,15 @@ export const EventDetailsScreen: React.FC = () => {
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
-                  style={[styles.bookButton, (isBookingEvent || event?.isPending || isRegistrationEnded) && styles.bookButtonDisabled]}
+                  style={[styles.bookButton, (isBookingEvent || isRefetchingEvent || event?.isPending || isRegistrationEnded) && styles.bookButtonDisabled]}
                   onPress={handleBookNow}
-                  disabled={isBookingEvent || event?.isPending || isRegistrationEnded}
+                  disabled={isBookingEvent || isRefetchingEvent || event?.isPending || isRegistrationEnded}
                 >
-                  <TextDs style={styles.bookButtonText}>{buttonText}</TextDs>
+                  {isRefetchingEvent ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <TextDs style={styles.bookButtonText}>{buttonText}</TextDs>
+                  )}
                 </TouchableOpacity>
               )
             )}
@@ -457,6 +464,7 @@ export const EventDetailsScreen: React.FC = () => {
         onClose={handleCloseBookingModal}
         onBookEvent={handleBookEvent}
         primaryButtonText="Book Event"
+        isLoading={isRefetchingEvent}
       />
 
     </SafeAreaView>

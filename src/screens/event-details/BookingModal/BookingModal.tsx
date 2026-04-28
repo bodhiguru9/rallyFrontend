@@ -34,6 +34,7 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
   eventId,
   occurrenceStart,
   occurrenceEnd,
+  isLoading,
 }) => {
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
@@ -729,6 +730,14 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
           ]}
           {...panResponder.panHandlers}
         >
+          {/* Loading Overlay */}
+          {isLoading && (
+            <FlexView style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <TextDs style={styles.loadingText}>Updating event details...</TextDs>
+            </FlexView>
+          )}
+
           {/* 1. Handle Bar */}
           <FlexView style={styles.handleBarContainer}>
             <FlexView style={styles.handleBar} />

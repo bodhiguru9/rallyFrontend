@@ -299,4 +299,17 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     marginVertical: spacing.md,
   },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(221, 245, 244, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+    borderRadius: borderRadius.xxl,
+  },
+  loadingText: {
+    ...getFontStyle(14, 'medium'),
+    color: colors.primary,
+    marginTop: spacing.sm,
+  },
 });
