@@ -30,7 +30,7 @@ export const OrganiserAvatar: React.FC<OrganiserAvatarProps> = ({ organiser, onP
 
       <FlexView flexDirection="row" gap={spacing.xs} alignItems="center" position='relative' pb={6}>
         <TextDs size={10} weight="semibold" numberOfLines={1} align="center">
-          {organiser.fullName}
+          {organiser.communityName || organiser.fullName}
         </TextDs>
         {organiser.isVerified && (
           <ImageDs image="VerifiedIcon" style={{ position: "absolute", right: -14, top: 0 }} size={10} />
