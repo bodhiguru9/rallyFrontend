@@ -20,8 +20,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { logger } from '@dev-tools/logger';
 import { ErrorBoundary } from '@dev-tools';
-import { LoadingOverlay } from '@components';
 import { useAuthStore, useLocationStore } from '@store';
+import { useAppUpdate } from '@hooks';
+import { UpdateModal, LoadingOverlay } from '@components';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,6 +60,8 @@ function App() {
   const fontsLoaded = useFonts();
   const [showSplashVideo, setShowSplashVideo] = useState(true);
   const [isAppReady, setIsAppReady] = useState(false);
+  const { updateType, redirectToStore, currentVersion } = useAppUpdate();
+  const [showUpdateModal, setShowUpdateModal] = useState(true);
   const isGlobalLoading = useAuthStore((state) => state.isGlobalLoading);
   const globalLoadingMessage = useAuthStore((state) => state.globalLoadingMessage);
   const isAuthInitialized = useAuthStore((state) => state.isAuthInitialized);
@@ -175,6 +178,15 @@ function App() {
                   <LoadingOverlay visible={isGlobalLoading} message={globalLoadingMessage} />
                 </>
               )}
+
+              {/* App Update Prompt */}
+              <UpdateModal
+                visible={updateType !== 'none' && showUpdateModal}
+                type={updateType === 'mandatory' ? 'mandatory' : 'optional'}
+                onUpdate={redirectToStore}
+                onDismiss={() => setShowUpdateModal(false)}
+                currentVersion={currentVersion}
+              />
 
               {/* Phase 2: Animated splash video overlay */}
               {showSplashVideo && (

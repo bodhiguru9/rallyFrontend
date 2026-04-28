@@ -9,10 +9,10 @@ interface LoadingIndicatorProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ 
-  size = 60, 
-  color = '#000000',
-  style 
+export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
+  size = 60,
+  color = '#54a0adff',
+  style
 }) => {
   const numericSize = typeof size === 'number' ? size : size === 'large' ? 80 : 40;
 
@@ -33,10 +33,10 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   }
 
   return (
-    <ActivityIndicator 
-      size={size} 
-      color={color} 
-      style={style} 
+    <ActivityIndicator
+      size={size}
+      color={color}
+      style={style}
     />
   );
 };

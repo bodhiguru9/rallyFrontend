@@ -332,9 +332,7 @@ export const useEventDetails = () => {
       discountAmount: paymentData.discountAmount,
     });
   };
-
-
-
+  const handleBookNow = () => {
     setIsBookingModalVisible(true);
   };
 

@@ -16,7 +16,7 @@ import { useEvent } from '@hooks/use-events';
 import { formatDate, shareEvent, resolveImageUri } from '@utils';
 import { CalendarPlus, Check } from 'lucide-react-native';
 import { IconTag } from '@components/global/IconTag';
-import { TextDs, FlexView, ImageDs } from '@components';
+import { TextDs, FlexView, ImageDs, LoadingIndicator } from '@components';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -41,7 +41,7 @@ export const BookingConfirmationScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <FlexView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <TextDs style={{ color: colors.text.secondary }}>Loading...</TextDs>
+          <LoadingIndicator size={60} />
         </FlexView>
       </SafeAreaView>
     );

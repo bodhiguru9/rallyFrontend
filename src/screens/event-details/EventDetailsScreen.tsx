@@ -95,7 +95,7 @@ export const EventDetailsScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <FlexView style={styles.loadingContainer}>
-          <LoadingIndicator size={80} />
+          <LoadingIndicator size={60} />
           <TextDs style={styles.loadingText}>Loading event details...</TextDs>
         </FlexView>
       </SafeAreaView>

@@ -58,3 +58,4 @@ export type { AvatarProps, AvatarSizeKey } from './global/avatar';
 export { OTPInput } from './private/verify-otp/OTPInput';
 
 export { BottomSheetModal } from './global/bottom-sheet-modal';
+export { UpdateModal } from './global/update-modal/UpdateModal';

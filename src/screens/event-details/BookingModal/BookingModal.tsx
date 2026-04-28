@@ -734,7 +734,6 @@ export const BookingModal: React.FC<IBookingModalProps> = ({
           {isLoading && (
             <FlexView style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color={colors.primary} />
-              <TextDs style={styles.loadingText}>Updating event details...</TextDs>
             </FlexView>
           )}
 
