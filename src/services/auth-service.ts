@@ -20,6 +20,10 @@ import type {
   SetNewPasswordResponse,
   GoogleOAuthRequest,
   GoogleOAuthResponse,
+  FacebookOAuthRequest,
+  FacebookOAuthResponse,
+  AppleOAuthRequest,
+  AppleOAuthResponse,
 } from '../types/api/auth.types';
 
 export const authService = {
@@ -51,7 +55,7 @@ export const authService = {
         sessionId: 'debug-session',
         hypothesisId: 'H1',
       }),
-    }).catch(() => {});
+    }).catch(() => { });
     // #endregion
     try {
       // Axios will automatically handle FormData and set proper Content-Type
@@ -105,7 +109,7 @@ export const authService = {
           sessionId: 'debug-session',
           hypothesisId: 'H1,H2,H4',
         }),
-      }).catch(() => {});
+      }).catch(() => { });
       // #endregion
       // Extract error response from Axios error (data may have .error or .message)
       const responseData = error.response?.data;
@@ -113,13 +117,13 @@ export const authService = {
         const status = error.response?.status;
         const apiError = responseData.error ?? responseData.message ?? 'Signup failed';
         let errorMessage = typeof apiError === 'string' ? apiError : 'Signup failed';
-        
+
         // Handle expired signup token with helpful message
         if (status === 401 || status === 410) {
           errorMessage =
             'Your signup session has expired. Since your OTP is still valid, you can go back to verify your OTP again, or restart the signup process.';
         }
-        
+
         const err = new Error(errorMessage);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (err as any).response = error.response;
@@ -251,6 +255,35 @@ export const authService = {
   },
 
   /**
+   * Authenticate with Facebook OAuth
+   * @param data - Facebook OAuth data (userType and accessToken)
+   * @returns Promise with authentication response
+   */
+  facebookOAuth: async (data: FacebookOAuthRequest): Promise<FacebookOAuthResponse> => {
+    try {
+      const response = await apiClient.post<FacebookOAuthResponse>('/api/auth/oauth/facebook', data);
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message;
+      const statusCode = error.response?.status;
+
+      let userMessage = 'Failed to sign in with Facebook. Please try again.';
+
+      if (statusCode === 400) {
+        userMessage = errorMessage || 'Invalid Facebook token. Please try again.';
+      } else if (statusCode === 401) {
+        userMessage = 'Facebook authentication failed. Please try again.';
+      } else if (errorMessage) {
+        userMessage = errorMessage;
+      }
+
+      const customError = new Error(userMessage) as any;
+      customError.response = error.response;
+      throw customError;
+    }
+  },
+
+  /**
    * Verify OTP for mobile number or email
    * @param data - OTP verification data
    * @returns Promise with verification response
@@ -290,7 +323,7 @@ export const authService = {
         sessionId: 'debug-session',
         hypothesisId: 'H3,H5',
       }),
-    }).catch(() => {});
+    }).catch(() => { });
     // #endregion
     try {
       const response = await apiClient.post<SendSignupOTPResponse>(
@@ -318,7 +351,7 @@ export const authService = {
           sessionId: 'debug-session',
           hypothesisId: 'H2,H4,H5',
         }),
-      }).catch(() => {});
+      }).catch(() => { });
       // #endregion
       const responseData = error.response?.data;
       const statusCode = error.response?.status;

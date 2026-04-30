@@ -52,7 +52,9 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
           const message =
             err.response?.data?.error ??
             err.response?.data?.message ??
-            'Failed to cancel booking.';
+            (err.message?.toLowerCase().includes('timeout')
+              ? 'The request timed out. Please check your internet or refresh the screen — the cancellation might have still succeeded.'
+              : 'Failed to cancel booking.');
           logger.warn('[CancelBookingModal] Cancel booking failed', { message, err });
 
           // If the backend says the booking is already cancelled, treat it as a

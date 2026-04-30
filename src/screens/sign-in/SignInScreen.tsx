@@ -41,6 +41,8 @@ export const SignInScreen: React.FC = () => {
     isLoading,
     handleSignIn,
     handleGoogleSignIn,
+    handleFacebookSignIn,
+    handleAppleSignIn,
     handleUseEmail,
     handleUseWhatsApp,
     handleForgotPassword,
@@ -139,8 +141,8 @@ export const SignInScreen: React.FC = () => {
             {/* Social Login Buttons */}
             <SocialLoginButtons
               onGooglePress={handleGoogleSignIn}
-              onApplePress={() => Alert.alert('Coming Soon', 'Apple login will be available soon.')}
-              onFacebookPress={() => Alert.alert('Coming Soon', 'Facebook login will be available soon.')}
+              onApplePress={handleAppleSignIn}
+              onFacebookPress={handleFacebookSignIn}
             />
 
             {/* Forgot Password Link */}

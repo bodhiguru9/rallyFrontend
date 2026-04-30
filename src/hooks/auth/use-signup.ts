@@ -8,6 +8,8 @@ import { authService } from '@services';
 import { useAuthStore, useSignupFormStore } from '@store';
 import { formatErrorForAlert, logError } from '@utils/error-handler';
 import { useGoogleAuth } from './use-google-auth';
+import { useFacebookAuth } from './use-facebook-auth';
+import { useAppleAuth } from './use-apple-auth';
 
 type SignUpScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'SignUp'>;
 
@@ -20,6 +22,8 @@ export const useSignUp = () => {
   const navigation = useNavigation<SignUpScreenNavigationProp>();
   const setGlobalLoading = useAuthStore((state) => state.setGlobalLoading);
   const { signInWithGoogle } = useGoogleAuth();
+  const { signInWithFacebook } = useFacebookAuth();
+  const { signInWithApple } = useAppleAuth();
 
   // Form state — persisted in signup form store so it survives back-navigation
   const userType = useSignupFormStore((s) => s.userType);
@@ -170,6 +174,10 @@ export const useSignUp = () => {
     logger.info(`${provider} login pressed`);
     if (provider === 'google') {
       await signInWithGoogle(userType as 'player' | 'organiser');
+    } else if (provider === 'facebook') {
+      await signInWithFacebook(userType as 'player' | 'organiser');
+    } else if (provider === 'apple') {
+      await signInWithApple(userType as 'player' | 'organiser');
     } else {
       Alert.alert('Coming Soon', `${provider} login will be available soon.`);
     }

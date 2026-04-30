@@ -10,6 +10,8 @@ import type { LoginRequest } from '../../types/api/auth.types';
 import type { RootStackParamList } from '@navigation';
 import { logger } from '@dev-tools/logger';
 import { useGoogleAuth } from './use-google-auth';
+import { useFacebookAuth } from './use-facebook-auth';
+import { useAppleAuth } from './use-apple-auth';
 
 type SignInScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'SignIn'>;
 
@@ -21,6 +23,8 @@ export const useSignIn = () => {
   const navigation = useNavigation<SignInScreenNavigationProp>();
   const setAuth = useAuthStore((state) => state.setAuth);
   const { signInWithGoogle } = useGoogleAuth();
+  const { signInWithFacebook } = useFacebookAuth();
+  const { signInWithApple } = useAppleAuth();
 
   // Form state
   const [useEmail, setUseEmail] = useState(false);
@@ -203,6 +207,8 @@ export const useSignIn = () => {
     // Actions
     handleSignIn,
     handleGoogleSignIn: () => signInWithGoogle('player'),
+    handleFacebookSignIn: () => signInWithFacebook('player'),
+    handleAppleSignIn: () => signInWithApple('player'),
     handleUseEmail,
     handleUseWhatsApp,
     handleForgotPassword,
