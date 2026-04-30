@@ -138,6 +138,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
       }
     },
     enabled: !!event.eventId,
+    refetchInterval: 10000,
   });
   const participantsFromApi = useMemo(() => {
     return (participantsData ?? []).map((p) => {
@@ -224,6 +225,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
         ? privateEventsService.getPendingRequests(event.eventId, 1)
         : eventService.getEventWaitlist(event.eventId),
     enabled: !!event.eventId,
+    refetchInterval: 5000,
   });
 
   const waitlist = waitlistData?.data?.waitlist || [];
@@ -234,6 +236,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
     queryKey: ['event-pending-requests', event.eventId],
     queryFn: () => eventService.getEventPendingRequests(event.eventId, 1),
     enabled: !!event.eventId,
+    refetchInterval: 5000,
   });
 
   const allPendingRequests = pendingRequestsData?.data?.pendingRequests ?? [];
@@ -554,30 +557,30 @@ export const MembersTab: React.FC<MembersTabProps> = ({ event }) => {
                       </FlexView>
                     </FlexView>
                     <FlexView flex={1} style={styles.playerContent} minWidth={0}>
-                    <TextDs
-                      size={14}
-                      weight="semibold"
-                      color="primary"
-                      numberOfLines={1}
-                    >
-                      {participant.fullName}{guestSuffix}
-                    </TextDs>
-                    <TextDs
-                      size={12}
-                      weight="regular"
-                      color="secondary"
-                      style={styles.bookingText}
-                      numberOfLines={1}
-                    >
-                      Booked: {bookingText || eventBookingText || '—'}
-                    </TextDs>
-                  </FlexView>
-                  <FlexView row alignItems="center" gap={spacing.xs} style={styles.playerPrice}>
-                    <ImageDs image="DhiramIcon" size={14} />
-                    <TextDs size={14} weight="medium" color="primary">
-                      {displayPrice}
-                    </TextDs>
-                  </FlexView>
+                      <TextDs
+                        size={14}
+                        weight="semibold"
+                        color="primary"
+                        numberOfLines={1}
+                      >
+                        {participant.fullName}{guestSuffix}
+                      </TextDs>
+                      <TextDs
+                        size={12}
+                        weight="regular"
+                        color="secondary"
+                        style={styles.bookingText}
+                        numberOfLines={1}
+                      >
+                        Booked: {bookingText || eventBookingText || '—'}
+                      </TextDs>
+                    </FlexView>
+                    <FlexView row alignItems="center" gap={spacing.xs} style={styles.playerPrice}>
+                      <ImageDs image="DhiramIcon" size={14} />
+                      <TextDs size={14} weight="medium" color="primary">
+                        {displayPrice}
+                      </TextDs>
+                    </FlexView>
                   </TouchableOpacity>
                 );
               })}

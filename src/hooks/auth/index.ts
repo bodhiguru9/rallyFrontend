@@ -6,3 +6,5 @@ export { useLogin } from './use-login';
 export { useVerifyOTP } from './use-verify-otp';
 export { useForgotPassword } from './use-forgot-password';
 export { useCreateNewPassword } from './use-create-new-password';
+export { useFacebookAuth } from './use-facebook-auth';
+export { useAppleAuth } from './use-apple-auth';

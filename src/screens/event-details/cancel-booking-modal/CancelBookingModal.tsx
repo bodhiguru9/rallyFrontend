@@ -38,16 +38,7 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
       cancelBooking(bookingId, {
         onSuccess: () => {
           logger.info('[CancelBookingModal] Cancel booking succeeded', { bookingId });
-          onCancelSuccess?.();
-          onClose();
-        },
-        onError: (err: Error & { response?: { data?: { error?: string; message?: string } } }) => {
-          const message =
-            err.response?.data?.error ??
-            err.response?.data?.message ??
-            'Failed to cancel booking.';
-          logger.warn('[CancelBookingModal] Cancel booking failed', { message, err });
-          Alert.alert('Cannot cancel', message, [
+          Alert.alert('Booking Cancelled', 'Your booking has been cancelled successfully.', [
             {
               text: 'OK',
               onPress: () => {
@@ -56,6 +47,35 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
               },
             },
           ]);
+        },
+        onError: (err: Error & { response?: { data?: { error?: string; message?: string } } }) => {
+          const message =
+            err.response?.data?.error ??
+            err.response?.data?.message ??
+            (err.message?.toLowerCase().includes('timeout')
+              ? 'The request timed out. Please check your internet or refresh the screen — the cancellation might have still succeeded.'
+              : 'Failed to cancel booking.');
+          logger.warn('[CancelBookingModal] Cancel booking failed', { message, err });
+
+          // If the backend says the booking is already cancelled, treat it as a
+          // successful outcome — the desired state has been reached.
+          const alreadyCancelled = message.toLowerCase().includes('already cancelled');
+
+          Alert.alert(
+            alreadyCancelled ? 'Already Cancelled' : 'Cancel booking failed',
+            message,
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  if (alreadyCancelled) {
+                    onCancelSuccess?.();
+                  }
+                  onClose();
+                },
+              },
+            ],
+          );
         },
       });
     } else {

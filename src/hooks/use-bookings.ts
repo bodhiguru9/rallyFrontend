@@ -36,5 +36,12 @@ export const useCancelBooking = () => {
       queryClient.invalidateQueries({ queryKey: ['event-details'] });
       queryClient.invalidateQueries({ queryKey: ['event'] });
     },
+    onError: () => {
+      // Even on error (e.g., "already cancelled" or client timeout),
+      // invalidate so the UI reflects the current backend state on refetch.
+      queryClient.invalidateQueries({ queryKey: ['player-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['event-details'] });
+      queryClient.invalidateQueries({ queryKey: ['event'] });
+    },
   });
 };

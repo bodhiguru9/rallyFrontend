@@ -16,7 +16,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.rally.app"
+      "bundleIdentifier": "com.rallysports.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -55,7 +55,7 @@
       [
         "@stripe/stripe-react-native",
         {
-          "merchantIdentifier": "merchant.com.rally.app",
+          "merchantIdentifier": "merchant.com.rallysports",
           "enableGooglePay": true
         }
       ]

@@ -9,6 +9,7 @@ export interface IBookingModalProps {
   onClose: () => void;
   onBookEvent: (payload?: BookingModalPaymentPayload) => void;
   primaryButtonText?: string;
+  isLoading?: boolean;
 }
 
 export interface BookingModalPaymentPayload {

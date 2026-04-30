@@ -37,13 +37,15 @@ export const PaymentMethodsScreen: React.FC = () => {
       const response = await cardService.getCards();
       console.log('[DEBUG] PaymentMethodsScreen - Fetched Cards Response:', JSON.stringify(response, null, 2));
 
-      // Initialize Stripe if publishableKey is provided
+      // Initialize Stripe SDK for card operations (this screen is card-only, no Apple Pay)
       if (response.publishableKey) {
+        const { useAuthStore } = require('@store');
+        useAuthStore.getState().setStripePublishableKey(response.publishableKey);
         const { initStripe } = require('@stripe/stripe-react-native');
         try {
           await initStripe({
             publishableKey: response.publishableKey,
-            merchantIdentifier: 'merchant.com.rally.app',
+            merchantIdentifier: 'merchant.com.rallysports',
           });
           console.log('[Stripe] SDK initialized in PaymentMethodsScreen');
         } catch (initError) {

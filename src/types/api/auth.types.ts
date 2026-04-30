@@ -224,3 +224,21 @@ export interface GoogleOAuthResponse {
     token: string;
   };
 }
+
+// Facebook OAuth Types
+export interface FacebookOAuthRequest {
+  userType: 'player' | 'organiser';
+  accessToken: string;
+}
+
+export type FacebookOAuthResponse = GoogleOAuthResponse;
+235: 
+236: // Apple OAuth Types
+237: export interface AppleOAuthRequest {
+238:   userType: 'player' | 'organiser';
+239:   idToken: string;
+240: }
+241: 
+242: export type AppleOAuthResponse = GoogleOAuthResponse;
+243: 
+

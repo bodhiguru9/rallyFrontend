@@ -35,6 +35,8 @@ module.exports = ({ config }) => {
         ...(baseConfig.extra?.stripe || {}),
         publishableKey: stripePublishableKey,
       },
+      facebookAppId: process.env.FACEBOOK_APP_ID || baseConfig.extra?.facebookAppId,
+      appleServiceId: process.env.APPLE_SERVICE_ID || baseConfig.extra?.appleServiceId,
     },
   };
 };

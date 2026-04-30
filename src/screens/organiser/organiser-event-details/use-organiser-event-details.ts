@@ -77,6 +77,7 @@ export const useOrganiserEventDetails = () => {
   const { data: event, isLoading, error } = useEvent(eventId, {
     allowPrivate: true,
     occurrenceStart,
+    refetchInterval: 5000,
   });
   const updateEventMutation = useUpdateEvent();
 

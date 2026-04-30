@@ -14,6 +14,7 @@ export { MultiSelectInput } from './global/multi-select-input';
 export { LoadingOverlay } from './global/loading-overlay';
 export type { LoadingOverlayProps } from './global/loading-overlay';
 export { LoadingScreen } from './global/loading-screen';
+export { LoadingIndicator } from './global/LoadingIndicator';
 export { Seperator } from './global/Seperator';
 export type { SeperatorProps } from './global/Seperator';
 export { EventCard } from './global/EventCard';
@@ -57,3 +58,4 @@ export type { AvatarProps, AvatarSizeKey } from './global/avatar';
 export { OTPInput } from './private/verify-otp/OTPInput';
 
 export { BottomSheetModal } from './global/bottom-sheet-modal';
+export { UpdateModal } from './global/update-modal/UpdateModal';

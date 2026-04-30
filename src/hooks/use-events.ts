@@ -43,6 +43,8 @@ export interface UseEventOptions {
   enabled?: boolean;
   /** For recurring events, specify which occurrence date to fetch participants for. */
   occurrenceStart?: string;
+  /** Refetch interval in milliseconds */
+  refetchInterval?: number;
 }
 
 /**
@@ -51,7 +53,7 @@ export interface UseEventOptions {
  * When forPlayer is true, private events are not shown (throws so UI shows not found).
  */
 export const useEvent = (id: string, options?: UseEventOptions) => {
-  const { forPlayer = false, allowPrivate = false, enabled, occurrenceStart } = options ?? {};
+  const { forPlayer = false, allowPrivate = false, enabled, occurrenceStart, refetchInterval } = options ?? {};
   return useQuery({
     queryKey: ['event', id, forPlayer, allowPrivate, occurrenceStart],
     queryFn: async () => {
@@ -174,6 +176,7 @@ export const useEvent = (id: string, options?: UseEventOptions) => {
       return normalized;
     },
     enabled: (enabled !== undefined ? enabled : true) && !!id, // Only run query if id is provided and enabled
+    refetchInterval,
   });
 };
 
